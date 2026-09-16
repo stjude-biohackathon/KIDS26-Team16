@@ -9,7 +9,7 @@ to a smaller or quantized model.
 
 27 billion parameters at two bytes per parameter require approximately **54 GB
 of weights**, before runtime buffers and the KV cache. An **80 GB GPU** is a
-practical starting point for sequential 8k-context inference; actual fit depends
+practical starting point for sequential 16k-context inference; actual fit depends
 on Ollama, model conversion, context, and workload.
 
 A 16/24 GB GPU cannot hold these weights by itself. Ollama may offload to system
