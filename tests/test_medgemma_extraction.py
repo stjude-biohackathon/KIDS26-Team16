@@ -444,6 +444,47 @@ def test_a_thousands_separator_is_one_number(value, quote):
     assert (status, got) == ("ok", value)
 
 
+def test_trv_converts_from_centimeters_per_second():
+    assert unit_guard("trv", 280.0, "TRV was 280 cm/s") == (
+        "converted", 2.8, "280.0 cm/s -> 2.8 m/s"
+    )
+    assert unit_guard("trv", 2.8, "TRV 2.8 m/s") == ("ok", 2.8, None)
+
+
+def test_scoped_units_do_not_collide_with_other_measurements():
+    assert unit_guard("wound_area_cm2", 12.0, "wound area 3 cm x 4 cm") == ("ok", 12.0, None)
+    assert unit_guard("creatinine", 2.1, "rose to 2.1 mg/dL over 3 days") == ("ok", 2.1, None)
+    assert unit_guard("hb_nadir", 7.5, "Hb 7.5 g/dL") == ("ok", 7.5, None)
+
+
+def test_hearing_lowest_affected_khz_converts_from_hz():
+    assert unit_guard("hearing_lowest_affected_khz", 4000.0, "loss at 4000 Hz") == (
+        "converted", 4.0, "4000.0 hz -> 4.0 kHz"
+    )
+    assert unit_guard("hearing_lowest_affected_khz", 4.0, "loss at 4 kHz") == ("ok", 4.0, None)
+
+
+def test_fsh_accepts_iu_per_l():
+    assert unit_guard("fsh", 7.6, "FSH 7.6 IU/L") == ("ok", 7.6, None)
+    assert unit_guard("fsh", 7.6, "FSH was 7.6 mIU/mL") == ("ok", 7.6, None)
+
+
+def test_height_loss_cm_converts_from_inches_and_mm():
+    assert unit_guard("height_loss_cm", 2.0, "lost 2 inches in height") == (
+        "converted", 5.08, "2.0 inch -> 5.08 cm"
+    )
+    assert unit_guard("height_loss_cm", 20.0, "height loss 20 mm") == (
+        "converted", 2.0, "20.0 mm -> 2.0 cm"
+    )
+    assert unit_guard("height_loss_cm", 5.0, "height loss 5 cm") == ("ok", 5.0, None)
+
+
+def test_ferritin_converts_from_pmol_per_l():
+    assert unit_guard("ferritin", 2247.0, "ferritin was 2247 pmol/L") == (
+        "converted", 1000.0, "2247.0 pmol/l -> 1000.0 ng/mL"
+    )
+
+
 # ------------------------------------------------------------------ patient age
 #
 # The schema holds age in years; notes write "10-day-old", "18-month-old" and

@@ -547,15 +547,33 @@ UNIT_TOKENS = {
     "g/l":     r"(?<![a-z\u00b5\u03bc])g\s*/\s*l(?![a-z/])|(?<![a-z])grams?\s+per\s+lit",
     "ug/l":    r"(?<![a-z])(?:[\u00b5\u03bcu]|mc)g\s*/\s*l(?![a-z/])|micrograms?\s+per\s+lit",
     "ng/ml":   r"(?<![a-z])ng\s*/\s*ml\b|nanograms?\s+per\s+millilit",
+    "pmol/l":  r"(?<![a-z])pmol\s*/\s*l\b|picomol",
+    "miu/ml":  r"(?<![a-z])m(?:iu|u)\s*/\s*ml\b|milli-?international\s+units?\s+per\s+millilit",
+    "iu/l":    r"(?<![a-z])(?:iu|u)\s*/\s*l(?![a-z/])|international\s+units?\s+per\s+lit",
     "degf":    r"\u00b0\s*f\b|\u00ba\s*f\b|\bfahrenheit",
     "degc":    r"\u00b0\s*c\b|\u00ba\s*c\b|\bcelsius|\bcentigrade",
     "cm/s":    r"(?<![a-z])cm\s*/\s*s(?:ec)?\b|centimeters?\s+per\s+sec",
     "m/s":     r"(?<![a-z])m\s*/\s*s(?:ec)?\b|meters?\s+per\s+sec",
+    "khz":     r"(?<![a-z])khz\b|kilohertz",
+    "hz":      r"(?<![a-z])(?<!k)hz\b|(?<!kilo)hertz",
     "mg/g":    r"(?<![a-z])mg\s*/\s*g\b|mg\s+g\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+gram",
     "ug/mg":   r"(?<![a-z])[\u00b5u]g\s*/\s*mg|mcg\s*/\s*mg|micrograms?\s+per\s+milligram",
     "mg/mmol": r"(?<![a-z])mg\s*/\s*mmol|milligrams?\s+per\s+millimol",
     "cm2":     r"(?<![a-z])cm\s*(?:\^2|2|\u00b2)\b|sq(?:uare)?\s*cm",
     "mm2":     r"(?<![a-z])mm\s*(?:\^2|2|\u00b2)\b|sq(?:uare)?\s*mm",
+    "mg_fe_g": r"(?<![a-z])mg\s+fe\s*/\s*g\b|(?<![a-z])mg\s*/\s*(?:g\s+fe|fe\s*g)\b|milligrams?\s+(?:of\s+)?iron\s+per\s+gram",
+    "umol/g":  r"(?<![a-z])(?:[\u00b5\u03bcu]|micro)mol\s*/\s*g\b|micromol(?:es)?\s+per\s+gram",
+    "mg_fe_100g": r"(?<![a-z])mg(?:\s+fe)?\s*/\s*100\s*g\b",
+}
+
+# Generic words like cm, mm, inch must not be in global UNIT_TOKENS to avoid
+# collision with unrelated quotes (e.g. "3 cm x 4 cm" for wound_area_cm2).
+SCOPED_UNIT_TOKENS = {
+    "cm": {
+        "cm":   r"(?<![a-z])cm\b|centimeters?",
+        "mm":   r"(?<![a-z])mm\b|millimeters?",
+        "inch": r"(?<![a-z])(?:inches|inch)\b|(?<=\d)\s*in(?:\.|\b)",
+    },
 }
 
 # Keyed by the unit the SCHEMA declares, so a factor can never be applied to a
@@ -572,15 +590,29 @@ UNIT_CONVERSIONS = {
               "degf": lambda v: (v - 32.0) * 5.0 / 9.0},
     "cm/s":  {"cm/s": lambda v: v,
               "m/s":  lambda v: v * 100.0},
+    "m/s":   {"m/s":  lambda v: v,
+              "cm/s": lambda v: v / 100.0},
     "mg/g":  {"mg/g": lambda v: v,
               "ug/mg": lambda v: v,
               "mg/mmol": lambda v: v * 8.84},
     "cm2":   {"cm2": lambda v: v,
               "mm2": lambda v: v / 100.0},
+    "cm":    {"cm":   lambda v: v,
+              "mm":   lambda v: v / 10.0,
+              "inch": lambda v: v * 2.54},
     # ug/L and ng/mL are the same unit for any analyte (1 ug/L = 1 ng/mL), so this
     # factor needs no molar mass. Declared only by ferritin.
     "ng/mL": {"ng/ml": lambda v: v,
-              "ug/l":  lambda v: v},
+              "ug/l":  lambda v: v,
+              "pmol/l": lambda v: v / 2.247},
+    "mIU/mL": {"miu/ml": lambda v: v,
+               "iu/l":   lambda v: v},
+    "kHz":   {"khz": lambda v: v,
+              "hz":  lambda v: v / 1000.0},
+    "mg Fe/g dry weight": {
+              "mg_fe_g": lambda v: v,
+              "mg/g":    lambda v: v,
+              "umol/g":  lambda v: v / 17.9},
 }
 
 UNIT_OK, UNIT_CONVERTED, UNIT_AMBIGUOUS = "ok", "converted", "ambiguous"
@@ -750,7 +782,8 @@ def unit_guard(name: str, value: float, quote: str):
     if not table:
         return UNIT_OK, value, None       # no unit declared, or no family for it
     q = normalize(quote)
-    found = [u for u, pat in UNIT_TOKENS.items() if re.search(pat, q, re.I)]
+    tokens = {**UNIT_TOKENS, **SCOPED_UNIT_TOKENS.get(declared, {})}
+    found = [u for u, pat in tokens.items() if re.search(pat, q, re.I)]
     if not found:
         return UNIT_OK, value, None
     if len(found) > 1:
@@ -758,7 +791,7 @@ def unit_guard(name: str, value: float, quote: str):
     src = found[0]
     if src not in table:
         return UNIT_BAD, None, f"{src} is not convertible to {declared}"
-    raw = _number_for_unit(q, UNIT_TOKENS[src])
+    raw = _number_for_unit(q, tokens[src])
     if raw is None:
         return UNIT_OK, value, None       # a unit, but no number to anchor it to
     truth = round(table[src](raw), 4)
