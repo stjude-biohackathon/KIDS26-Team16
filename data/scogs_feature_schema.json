@@ -2097,15 +2097,16 @@
     },
     {
      "grade": 3,
-     "when": "30 <= lvef <= 39"
+     "when": "30 <= lvef < 40"
     },
     {
      "grade": 2,
-     "when": "40 <= lvef <= 49"
+     "when": "40 <= lvef < 50"
     }
    ],
    "notes": [
-    "The rubric says 'with or without the need for medical or surgical intervention' at every grade - intervention is explicitly irrelevant here."
+    "The rubric says 'with or without the need for medical or surgical intervention' at every grade - intervention is explicitly irrelevant here.",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '30-39%' and '40-49%'; half-open reading [30, 40) and [40, 50), for clinical review."
    ]
   },
   "08": {
@@ -2154,23 +2155,24 @@
     },
     {
      "grade": 4,
-     "when": "(50 <= stenosis_pct <= 74 and vessel_segments > 2) or (stenosis_pct >= 75 and vessel_segments <= 2)"
+     "when": "(50 <= stenosis_pct < 75 and vessel_segments > 2) or (stenosis_pct >= 75 and vessel_segments <= 2)"
     },
     {
      "grade": 3,
-     "when": "50 <= stenosis_pct <= 74 and vessel_segments <= 2"
+     "when": "50 <= stenosis_pct < 75 and vessel_segments <= 2"
     },
     {
      "grade": 2,
-     "when": "25 <= stenosis_pct <= 49 and vessel_segments > 2"
+     "when": "25 <= stenosis_pct < 50 and vessel_segments > 2"
     },
     {
      "grade": 1,
-     "when": "25 <= stenosis_pct <= 49 and vessel_segments <= 2"
+     "when": "25 <= stenosis_pct < 50 and vessel_segments <= 2"
     }
    ],
    "notes": [
-    "The segment count qualifies arterial segments, not the number of stenoses (booklet p.29; corrected in the 2026-08-27 rules.md audit)."
+    "The segment count qualifies arterial segments, not the number of stenoses (booklet p.29; corrected in the 2026-08-27 rules.md audit).",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '25-49%' and '50-74%'; half-open reading [25, 50) and [50, 75), for clinical review."
    ]
   },
   "10": {
@@ -2256,15 +2258,16 @@
     },
     {
      "grade": 2,
-     "when": "185 <= tcd_velocity <= 199"
+     "when": "185 <= tcd_velocity < 200"
     },
     {
      "grade": 1,
-     "when": "170 <= tcd_velocity <= 184"
+     "when": "170 <= tcd_velocity < 185"
     }
    ],
    "notes": [
-    "Non-imaging TCD only. The rubric deliberately excludes TCDi because reference ranges for imaging TCD were never established in STOP."
+    "Non-imaging TCD only. The rubric deliberately excludes TCDi because reference ranges for imaging TCD were never established in STOP.",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '170-184' and '185-199'; half-open reading [170, 185) and [185, 200), for clinical review."
    ]
   },
   "13": {
@@ -2511,16 +2514,17 @@
     },
     {
      "grade": 2,
-     "when": "2.0 <= creatinine_x_baseline <= 2.9"
+     "when": "2.0 <= creatinine_x_baseline < 3.0"
     },
     {
      "grade": 1,
-     "when": "1.5 <= creatinine_x_baseline <= 1.9 or creatinine_increase_mg_dl >= 0.3"
+     "when": "1.5 <= creatinine_x_baseline < 2.0 or creatinine_increase_mg_dl >= 0.3"
     }
    ],
    "notes": [
     "ORDER IS LOAD-BEARING: Grades 3 and 4 share an identical trigger set and differ only by progression to ESRD. Evaluating upward would return 3 for every Grade 4 patient.",
-    "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 trigger is UNKNOWN rather than false."
+    "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 trigger is UNKNOWN rather than false.",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '1.5-1.9x' and '2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review."
    ]
   },
   "20": {
@@ -2584,23 +2588,24 @@
     },
     {
      "grade": 4,
-     "when": "(45 <= egfr <= 59 and albuminuria > 300) or (30 <= egfr <= 44 and albuminuria > 30) or (15 <= egfr <= 29)"
+     "when": "(45 <= egfr < 60 and albuminuria > 300) or (30 <= egfr < 45 and albuminuria > 30) or (15 <= egfr < 30)"
     },
     {
      "grade": 3,
-     "when": "(30 <= egfr <= 44 and albuminuria < 30) or (45 <= egfr <= 59 and 30 <= albuminuria <= 300) or (60 <= egfr <= 89 and albuminuria > 300)"
+     "when": "(30 <= egfr < 45 and albuminuria < 30) or (45 <= egfr < 60 and 30 <= albuminuria <= 300) or (60 <= egfr < 90 and albuminuria > 300)"
     },
     {
      "grade": 2,
-     "when": "(45 <= egfr <= 59 and albuminuria < 30) or (egfr >= 60 and 30 <= albuminuria <= 300)"
+     "when": "(45 <= egfr < 60 and albuminuria < 30) or (egfr >= 60 and 30 <= albuminuria <= 300)"
     },
     {
      "grade": 1,
-     "when": "60 <= egfr <= 89 and albuminuria < 30"
+     "when": "60 <= egfr < 90 and albuminuria < 30"
     }
    ],
    "notes": [
-    "A 2-D grid over eGFR x albuminuria, not a ladder - both axes are required."
+    "A 2-D grid over eGFR x albuminuria, not a ladder - both axes are required.",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '15-29', '30-44', '45-59', and '60-89'; half-open reading [15, 30), [30, 45), [45, 60), [60, 90), for clinical review."
    ]
   },
   "22": {
@@ -3061,15 +3066,16 @@
     },
     {
      "grade": 2,
-     "when": "(7 <= liver_iron_conc <= 14.9 or 2000 <= ferritin <= 4999) and mri_t2star >= 20 and not organ_dysfunction_iron"
+     "when": "(7 <= liver_iron_conc < 15 or 2000 <= ferritin < 5000) and mri_t2star >= 20 and not organ_dysfunction_iron"
     },
     {
      "grade": 1,
-     "when": "(2.5 <= liver_iron_conc <= 6.9 or 1000 <= ferritin <= 1999) and mri_t2star >= 20 and not organ_dysfunction_iron"
+     "when": "(2.5 <= liver_iron_conc < 7 or 1000 <= ferritin < 2000) and mri_t2star >= 20 and not organ_dysfunction_iron"
     }
    ],
    "notes": [
-    "ORDER IS LOAD-BEARING: Grades 3 and 4 both trigger on LIC >= 15. Grade 4 additionally requires ferritin > 10,000, a T2* under 20 msec, or iron-attributable organ dysfunction, so it must be tested first."
+    "ORDER IS LOAD-BEARING: Grades 3 and 4 both trigger on LIC >= 15. Grade 4 additionally requires ferritin > 10,000, a T2* under 20 msec, or iron-attributable organ dysfunction, so it must be tested first.",
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '2.5-6.9', '7-14.9' for LIC and '1000-1999', '2000-4999' for ferritin; half-open reading [2.5, 7), [7, 15) and [1000, 2000), [2000, 5000), for clinical review."
    ]
   },
   "35": {
@@ -3805,25 +3811,26 @@
     "pediatric": [
      {
       "grade": 4,
-      "when": "(15.1 <= ahi <= 24.9 and spo2_desat_over_3min) or ahi >= 25"
+      "when": "(15 < ahi < 25 and spo2_desat_over_3min) or ahi >= 25"
      },
      {
       "grade": 3,
-      "when": "(8.0 <= ahi <= 15.0 and spo2_desat_over_3min) or (15.1 <= ahi <= 24.9 and not spo2_desat_over_3min)"
+      "when": "(8 <= ahi <= 15 and spo2_desat_over_3min) or (15 < ahi < 25 and not spo2_desat_over_3min)"
      },
      {
       "grade": 2,
-      "when": "(3.1 <= ahi <= 7.9 and spo2_desat_over_3min) or (8.0 <= ahi <= 15.0 and not spo2_desat_over_3min)"
+      "when": "(3 < ahi < 8 and spo2_desat_over_3min) or (8 <= ahi <= 15 and not spo2_desat_over_3min)"
      },
      {
       "grade": 1,
-      "when": "(ahi <= 3 and spo2_desat_over_3min) or (3.1 <= ahi <= 7.9 and not spo2_desat_over_3min)"
+      "when": "(ahi <= 3 and spo2_desat_over_3min) or (3 < ahi < 8 and not spo2_desat_over_3min)"
      }
     ]
    },
    "notes": [
     "Adult >= 18 / paediatric < 18, per the booklet's table sub-headings.",
-    "The paediatric grades pair an AHI band with the overnight desaturation criterion; clause order was inverted in all four cells and corrected in the 2026-08-27 rules.md audit."
+    "The paediatric grades pair an AHI band with the overnight desaturation criterion; clause order was inverted in all four cells and corrected in the 2026-08-27 rules.md audit.",
+    "ROUNDING GAP CLOSED (2026-09-16): paediatric AHI rubric bands written as '3.1-7.9', '8.0-15.0', '15.1-24.9'; open/half-open reading (3, 8), [8, 15], (15, 25), for clinical review."
    ]
   }
  },

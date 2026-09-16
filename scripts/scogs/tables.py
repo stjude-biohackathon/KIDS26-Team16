@@ -92,10 +92,12 @@ T("06", "Systemic Arterial Hypertension", [
 
 T("07", "Systolic Dysfunction", [
     (4, "lvef < 30"),
-    (3, "30 <= lvef <= 39"),
-    (2, "40 <= lvef <= 49"),
+    (3, "30 <= lvef < 40"),
+    (2, "40 <= lvef < 50"),
 ], notes=["The rubric says 'with or without the need for medical or surgical "
-          "intervention' at every grade - intervention is explicitly irrelevant here."])
+          "intervention' at every grade - intervention is explicitly irrelevant here.",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '30-39%' and "
+          "'40-49%'; half-open reading [30, 40) and [40, 50), for clinical review."])
 
 T("08", "TRV Elevation on Echocardiogram", [
     (4, "trv >= 3.0"),
@@ -111,13 +113,15 @@ T("08", "TRV Elevation on Echocardiogram", [
 
 T("09", "Cerebral Vasculopathy", [
     (5, "(stenosis_pct >= 75 and vessel_segments >= 3) or moyamoya"),
-    (4, "(50 <= stenosis_pct <= 74 and vessel_segments > 2) or "
+    (4, "(50 <= stenosis_pct < 75 and vessel_segments > 2) or "
         "(stenosis_pct >= 75 and vessel_segments <= 2)"),
-    (3, "50 <= stenosis_pct <= 74 and vessel_segments <= 2"),
-    (2, "25 <= stenosis_pct <= 49 and vessel_segments > 2"),
-    (1, "25 <= stenosis_pct <= 49 and vessel_segments <= 2"),
+    (3, "50 <= stenosis_pct < 75 and vessel_segments <= 2"),
+    (2, "25 <= stenosis_pct < 50 and vessel_segments > 2"),
+    (1, "25 <= stenosis_pct < 50 and vessel_segments <= 2"),
 ], notes=["The segment count qualifies arterial segments, not the number of stenoses "
-          "(booklet p.29; corrected in the 2026-08-27 rules.md audit)."])
+          "(booklet p.29; corrected in the 2026-08-27 rules.md audit).",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '25-49%' and "
+          "'50-74%'; half-open reading [25, 50) and [50, 75), for clinical review."])
 
 T("10", "Chronic Pain", [
     (4, "unplanned_visits_12mo > 10 or pro_severe_count >= 2"),
@@ -143,10 +147,12 @@ T("11", "Cognitive Dysfunction", [
 
 T("12", "Elevated TCD Ultrasonography Velocity", [
     (3, "tcd_velocity >= 200"),
-    (2, "185 <= tcd_velocity <= 199"),
-    (1, "170 <= tcd_velocity <= 184"),
+    (2, "185 <= tcd_velocity < 200"),
+    (1, "170 <= tcd_velocity < 185"),
 ], notes=["Non-imaging TCD only. The rubric deliberately excludes TCDi because "
-          "reference ranges for imaging TCD were never established in STOP."])
+          "reference ranges for imaging TCD were never established in STOP.",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '170-184' and "
+          "'185-199'; half-open reading [170, 185) and [185, 200), for clinical review."])
 
 T("13", "Posterior Reversible Encephalopathy Syndrome (PRES)", [
     (5, "death_attributed"),
@@ -212,13 +218,15 @@ T("19", "Acute Kidney Injury (AKI)", [
     (5, "death_attributed"),
     (4, f"{_AKI} and esrd_progression"),
     (3, f"{_AKI} and not esrd_progression"),
-    (2, "2.0 <= creatinine_x_baseline <= 2.9"),
-    (1, "1.5 <= creatinine_x_baseline <= 1.9 or creatinine_increase_mg_dl >= 0.3"),
+    (2, "2.0 <= creatinine_x_baseline < 3.0"),
+    (1, "1.5 <= creatinine_x_baseline < 2.0 or creatinine_increase_mg_dl >= 0.3"),
 ], notes=["ORDER IS LOAD-BEARING: Grades 3 and 4 share an identical trigger set and "
           "differ only by progression to ESRD. Evaluating upward would return 3 for "
           "every Grade 4 patient.",
           "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 "
-          "trigger is UNKNOWN rather than false."])
+          "trigger is UNKNOWN rather than false.",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '1.5-1.9x' and "
+          "'2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review."])
 
 T("20", "Acute Papillary Necrosis", [
     (5, "death_attributed"),
@@ -230,13 +238,16 @@ T("20", "Acute Papillary Necrosis", [
 
 T("21", "Chronic Kidney Disease (CKD)", [
     (5, "egfr < 15 or death_attributed"),
-    (4, "(45 <= egfr <= 59 and albuminuria > 300) or (30 <= egfr <= 44 and albuminuria > 30) "
-        "or (15 <= egfr <= 29)"),
-    (3, "(30 <= egfr <= 44 and albuminuria < 30) or (45 <= egfr <= 59 and 30 <= albuminuria <= 300) "
-        "or (60 <= egfr <= 89 and albuminuria > 300)"),
-    (2, "(45 <= egfr <= 59 and albuminuria < 30) or (egfr >= 60 and 30 <= albuminuria <= 300)"),
-    (1, "60 <= egfr <= 89 and albuminuria < 30"),
-], notes=["A 2-D grid over eGFR x albuminuria, not a ladder - both axes are required."])
+    (4, "(45 <= egfr < 60 and albuminuria > 300) or (30 <= egfr < 45 and albuminuria > 30) "
+        "or (15 <= egfr < 30)"),
+    (3, "(30 <= egfr < 45 and albuminuria < 30) or (45 <= egfr < 60 and 30 <= albuminuria <= 300) "
+        "or (60 <= egfr < 90 and albuminuria > 300)"),
+    (2, "(45 <= egfr < 60 and albuminuria < 30) or (egfr >= 60 and 30 <= albuminuria <= 300)"),
+    (1, "60 <= egfr < 90 and albuminuria < 30"),
+], notes=["A 2-D grid over eGFR x albuminuria, not a ladder - both axes are required.",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '15-29', '30-44', "
+          "'45-59', and '60-89'; half-open reading [15, 30), [30, 45), [45, 60), "
+          "[60, 90), for clinical review."])
 
 T("22", "Female Ovarian Dysfunction", [
     (3, "ovarian_reserve_state == infertility"),
@@ -355,13 +366,16 @@ T("34", "Transfusional Iron Overload (Hemochromatosis or Hemosiderosis)", [
     (4, "(liver_iron_conc >= 15 and ferritin > 10000) or mri_t2star < 20 or organ_dysfunction_iron"),
     (3, "(liver_iron_conc >= 15 or 5000 <= ferritin <= 10000) and mri_t2star >= 20 "
         "and not organ_dysfunction_iron"),
-    (2, "(7 <= liver_iron_conc <= 14.9 or 2000 <= ferritin <= 4999) and mri_t2star >= 20 "
+    (2, "(7 <= liver_iron_conc < 15 or 2000 <= ferritin < 5000) and mri_t2star >= 20 "
         "and not organ_dysfunction_iron"),
-    (1, "(2.5 <= liver_iron_conc <= 6.9 or 1000 <= ferritin <= 1999) and mri_t2star >= 20 "
+    (1, "(2.5 <= liver_iron_conc < 7 or 1000 <= ferritin < 2000) and mri_t2star >= 20 "
         "and not organ_dysfunction_iron"),
 ], notes=["ORDER IS LOAD-BEARING: Grades 3 and 4 both trigger on LIC >= 15. Grade 4 "
           "additionally requires ferritin > 10,000, a T2* under 20 msec, or iron-"
-          "attributable organ dysfunction, so it must be tested first."])
+          "attributable organ dysfunction, so it must be tested first.",
+          "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '2.5-6.9', '7-14.9' "
+          "for LIC and '1000-1999', '2000-4999' for ferritin; half-open reading [2.5, 7), "
+          "[7, 15) and [1000, 2000), [2000, 5000), for clinical review."])
 
 T("35", "Transient Aplastic Crisis Secondary to Parvovirus B19 Infection", [
     (5, "death_attributed"),
@@ -591,17 +605,20 @@ T("53", "Sleep Apnea (obstructive or central)",
         (1, "5 <= ahi <= 15 and not sleep_apnea_treatment_indicated"),
     ],
     "pediatric": [
-        (4, "(15.1 <= ahi <= 24.9 and spo2_desat_over_3min) or ahi >= 25"),
-        (3, "(8.0 <= ahi <= 15.0 and spo2_desat_over_3min) or "
-            "(15.1 <= ahi <= 24.9 and not spo2_desat_over_3min)"),
-        (2, "(3.1 <= ahi <= 7.9 and spo2_desat_over_3min) or "
-            "(8.0 <= ahi <= 15.0 and not spo2_desat_over_3min)"),
+        (4, "(15 < ahi < 25 and spo2_desat_over_3min) or ahi >= 25"),
+        (3, "(8 <= ahi <= 15 and spo2_desat_over_3min) or "
+            "(15 < ahi < 25 and not spo2_desat_over_3min)"),
+        (2, "(3 < ahi < 8 and spo2_desat_over_3min) or "
+            "(8 <= ahi <= 15 and not spo2_desat_over_3min)"),
         (1, "(ahi <= 3 and spo2_desat_over_3min) or "
-            "(3.1 <= ahi <= 7.9 and not spo2_desat_over_3min)"),
+            "(3 < ahi < 8 and not spo2_desat_over_3min)"),
     ]},
   notes=["Adult >= 18 / paediatric < 18, per the booklet's table sub-headings.",
          "The paediatric grades pair an AHI band with the overnight desaturation "
          "criterion; clause order was inverted in all four cells and corrected in the "
-         "2026-08-27 rules.md audit."])
+         "2026-08-27 rules.md audit.",
+         "ROUNDING GAP CLOSED (2026-09-16): paediatric AHI rubric bands written as '3.1-7.9', "
+         "'8.0-15.0', '15.1-24.9'; open/half-open reading (3, 8), [8, 15], (15, 25), "
+         "for clinical review."])
 
 assert len(TABLES) == 53, f"expected 53 outcomes, got {len(TABLES)}"

@@ -274,6 +274,89 @@ def test_08_trv_bands_are_contiguous(trv, expected):
     assert (r.grade if expected else r.status) == (expected or ABSENT)
 
 
+def test_07_lvef_gap_is_closed():
+    assert grade("07", {"lvef": 39.5}).grade == 3
+    assert grade("07", {"lvef": 49.5}).grade == 2
+
+
+def test_19_creatinine_baseline_ratio_gap_is_closed():
+    feats = dict(
+        creatinine_x_baseline=1.95, death_attributed=False, renal_replacement=False,
+        creatinine=1.0, patient_age=30, egfr=90, esrd_progression=False,
+        creatinine_increase_mg_dl=0.0
+    )
+    r = grade("19", feats)
+    assert r.status == GRADED and r.grade == 1
+
+
+def test_53_pediatric_ahi_gap_is_closed():
+    feats_desat = dict(age_stratum="pediatric", ahi=7.95, spo2_desat_over_3min=True)
+    assert grade("53", feats_desat).grade == 2
+    feats_no_desat = dict(age_stratum="pediatric", ahi=7.95, spo2_desat_over_3min=False)
+    assert grade("53", feats_no_desat).grade == 1
+
+
+GAP_SCAN_ALLOWLIST = {
+    "meld", "phq9", "mrs", "unplanned_visits_12mo", "antihypertensive_count",
+    "pain_hurt_score", "hearing_lowest_affected_khz", "wound_area_cm2",
+}
+
+
+def test_no_interior_numeric_gaps():
+    """Scan every numeric feature across all table row groups for interior gaps."""
+    failures = []
+    for num, t in sorted(TABLES.items()):
+        groups = []
+        if t.rows: groups.append(("rows", t.rows))
+        if t.strata: groups.extend((f"stratum:{k}", v) for k, v in t.strata.items())
+        if t.axes: groups.extend((f"axis:{k}", v) for k, v in t.axes.items())
+
+        for gname, rows in groups:
+            atoms = {}
+            literals = {}
+            for _, pred in rows:
+                for n in _nodes(parse(pred)):
+                    if isinstance(n, Cmp) and isinstance(n.operand, (int, float)):
+                        if FEATURES[n.name]["type"] == "num":
+                            atoms.setdefault(n.name, []).append((n.op, n.operand))
+                            literals.setdefault(n.name, set()).add(float(n.operand))
+                    elif isinstance(n, Between):
+                        if FEATURES[n.name]["type"] == "num":
+                            atoms.setdefault(n.name, []).append((n.lo_op, n.lo, n.hi_op, n.hi))
+                            literals.setdefault(n.name, set()).update({float(n.lo), float(n.hi)})
+
+            for feat, lits in sorted(literals.items()):
+                if feat in GAP_SCAN_ALLOWLIST:
+                    continue
+                if len(lits) < 2:
+                    continue
+                min_l, max_l = min(lits), max(lits)
+                steps = int(round((max_l - min_l) / 0.01))
+                gaps = []
+                for i in range(1, steps):
+                    v = round(min_l + i * 0.01, 4)
+                    hit = False
+                    for atom in atoms[feat]:
+                        if len(atom) == 2:
+                            op, opand = atom
+                            if op == "<" and v < opand: hit = True; break
+                            elif op == "<=" and v <= opand: hit = True; break
+                            elif op == ">" and v > opand: hit = True; break
+                            elif op == ">=" and v >= opand: hit = True; break
+                            elif op == "==" and v == opand: hit = True; break
+                        elif len(atom) == 4:
+                            lo_op, lo, hi_op, hi = atom
+                            lo_ok = (v > lo) if lo_op == "<" else (v >= lo)
+                            hi_ok = (v < hi) if hi_op == "<" else (v <= hi)
+                            if lo_ok and hi_ok: hit = True; break
+                    if not hit:
+                        gaps.append(v)
+                if gaps:
+                    failures.append(f"Outcome {num} {gname} {feat}: {len(gaps)} gaps (e.g. {gaps[:3]})")
+
+    assert not failures, "Found interior numeric gaps:\n" + "\n".join(failures)
+
+
 def test_a_definite_grade_reports_the_rubric_clause_that_fired():
     r = grade("12", dict(tcd_velocity=205))
     assert r.status == GRADED and r.grade == 3
