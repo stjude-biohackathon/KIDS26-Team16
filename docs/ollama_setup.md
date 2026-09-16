@@ -125,7 +125,7 @@ Unsupported or missing metadata stops the run before patient notes are sent.
 Then run two cases before a larger experiment:
 
 ```bash
-python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 2 --timeout 600 --out results/smoke.json
+python scripts/experiments/medgemma_extraction.py --cohort scd_primary --notes 2 --timeout 600 --out results/smoke.json
 ```
 
 Every real extraction repeats the preflight. The gate detects configuration and

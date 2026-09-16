@@ -79,10 +79,10 @@ python scripts/experiments/medgemma_extraction.py --backend mock --notes 2
 python scripts/experiments/medgemma_extraction.py --check-model
 
 # Small real run first.
-python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 2 --out results/smoke.json
+python scripts/experiments/medgemma_extraction.py --cohort scd_primary --notes 2 --out results/smoke.json
 
 # Reporting run, with repeatability measured sequentially.
-python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 20 --repeat 2 --out results/full.json
+python scripts/experiments/medgemma_extraction.py --cohort scd_primary --notes 20 --repeat 2 --out results/full.json
 
 # Export worksheets from exactly that saved run; no model call.
 python scripts/experiments/review_results.py results/full.json
@@ -103,7 +103,7 @@ public Ollama registry tags. No weights are stored in this repository.
 | `--notes` | `20` | Number of notes; evaluated pairs = notes x outcomes |
 | `--stratify` / `--no-stratify` | enabled | Outcome-enriched sampling plus a random holdout |
 | `--holdout-frac` | `0.25` | Random fraction used to assess sampling bias |
-| `--prompt-stage` | `0` | Preserved CLI baseline; notebooks explicitly select stage `3` or a comparison |
+| `--prompt-stage` | `2b` | Prompt stage: `0`, `1`, `2a`, `2b` or `3`. `2b` scored best on the prompt comparison; `0` is the original prompt, kept as the baseline |
 | `--repeat` | `1` | Repeated extraction with temperature-zero decoding |
 | `--concurrency` | `1` | In-flight requests; keep at one for repeatability comparisons |
 | `--num-ctx` | `16384` | Context tokens; increase for long notes, allowing extra memory |

@@ -141,6 +141,31 @@ def test_invalid_cli_input_is_rejected_before_running(flags, tmp_path):
     assert not out.exists()
 
 
+def test_a_run_without_prompt_stage_uses_stage_2b(tmp_path):
+    out = tmp_path / "default.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--backend", "mock", "--notes", "1",
+         "--outcomes", "36", "--out", str(out)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert result.returncode == 0, result.stderr
+    provenance = json.loads(out.read_text(encoding="utf-8"))["provenance"]
+    assert provenance["prompt_stage"] == "2b"
+    assert provenance["prompt_stage_flags"]["cot"] is True
+
+
+@pytest.mark.parametrize("name", ["0", "3"])
+def test_any_other_prompt_stage_can_still_be_chosen(name, tmp_path):
+    out = tmp_path / f"stage_{name}.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--backend", "mock", "--notes", "1",
+         "--outcomes", "36", "--prompt-stage", name, "--out", str(out)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(out.read_text(encoding="utf-8"))["provenance"]["prompt_stage"] == name
+
+
 def test_results_and_review_exports_use_the_real_output_contract(ollama_server, tmp_path):
     out = tmp_path / "run with spaces" / "results.json"
     result = subprocess.run(

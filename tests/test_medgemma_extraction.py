@@ -375,7 +375,6 @@ def test_a_feature_with_no_convertible_unit_family_is_never_touched():
     quote spells out as a number. The guard has no business here."""
     assert unit_guard("fio2_pct", 60.0, "FiO2 was escalated to 60%") == ("ok", 60.0, None)
     assert unit_guard("fio2_pct", 21.0, "on room air") == ("ok", 21.0, None)
-    assert unit_guard("patient_age", 30.0, "A 30-year-old female") == ("ok", 30.0, None)
 
 
 def test_tcd_velocity_converts_from_meters_per_second():
@@ -402,6 +401,131 @@ def test_wound_area_converts_from_sq_mm():
         "converted", 8.0, "800.0 mm2 -> 8.0 cm2")
     assert unit_guard("wound_area_cm2", 12.0, "wound area was 12 cm2") == ("ok", 12.0, None)
     assert unit_guard("wound_area_cm2", 15.5, "wound of 15.5 cm²") == ("ok", 15.5, None)
+
+
+# ------------------------------------------------------------------ micrograms
+#
+# The Hb `g/l` token only refused a preceding a-z letter, so the `g/L` inside
+# "µg/L" - micro sign or Greek mu - read as grams per litre, a millionfold apart.
+
+@pytest.mark.parametrize("mu", ["µ", "μ"])
+def test_a_microgram_quote_is_never_read_as_grams(mu):
+    """A ferritin sentence offered as haemoglobin was 'converted' 900 -> 90 g/dL."""
+    status, value, _ = unit_guard("hb_nadir", 900.0, f"ferritin 900 {mu}g/L")
+    assert (status, value) == ("bad", None)
+
+
+def test_grams_per_litre_still_converts_to_grams_per_decilitre():
+    assert unit_guard("hb_nadir", 70.0, "haemoglobin 70 g/L") == (
+        "converted", 7.0, "70.0 g/l -> 7.0 g/dL")
+
+
+@pytest.mark.parametrize("quote", [
+    "ferritin 900 ng/mL", "ferritin 900 µg/L", "ferritin 900 μg/L",
+    "ferritin 900 ug/L", "ferritin 900 mcg/L",
+])
+def test_ferritin_accepts_micrograms_per_litre_as_nanograms_per_millilitre(quote):
+    assert unit_guard("ferritin", 900.0, quote) == ("ok", 900.0, None)
+
+
+def test_ferritin_in_milligrams_per_litre_is_rejected_not_accepted_1000x_low():
+    status, value, _ = unit_guard("ferritin", 900.0, "ferritin 900 mg/L")
+    assert (status, value) == ("bad", None)
+
+
+@pytest.mark.parametrize("value,quote", [
+    (27469.0, "ferritin was 27,469 ng/mL"),
+    (47000.0, "ferritin from 47,000 μg/L"),
+    (1200.0, "urine albumin 1,200 mg/g"),
+])
+def test_a_thousands_separator_is_one_number(value, quote):
+    status, got, _ = unit_guard("ferritin" if "ferritin" in quote else "albuminuria",
+                                value, quote)
+    assert (status, got) == ("ok", value)
+
+
+# ------------------------------------------------------------------ patient age
+#
+# The schema holds age in years; notes write "10-day-old", "18-month-old" and
+# "2 years 10-month-old". Unconverted, an 18-month-old was graded as an adult.
+
+D, W = 1 / 365.25, 7 / 365.25
+
+@pytest.mark.parametrize("value,quote,status,years", [
+    # one unit
+    (30.0, "A 30-year-old female", "ok", 30.0),
+    (13.0, "a 13-yr-old boy", "ok", 13.0),
+    (1.5, "1.5 years-old", "ok", 1.5),
+    (10.0, "a 10-day-old infant", "converted", 10 * D),
+    (5.0, "5 days old", "converted", 5 * D),
+    (3.0, "day of life 3", "converted", 3 * D),
+    (8.0, "8 weeks old", "converted", 8 * W),
+    (10.0, "a 10-week-old", "converted", 10 * W),
+    (18.0, "an 18-month-old boy", "converted", 1.5),
+    (3.0, "3 months of age", "converted", 0.25),
+    # any combination, largest unit first
+    (2.0, "2 years 10-month-old", "converted", 2 + 10 / 12),
+    (3.0, "3 years and 4 months old", "converted", 3 + 4 / 12),
+    (1.0, "1 year 20 days old", "converted", 1 + 20 * D),
+    (2.0, "2 years 3 weeks old", "converted", 2 + 3 * W),
+    (4.0, "4 years, 2 months and 10 days old", "converted", 4 + 2 / 12 + 10 * D),
+    (2.0, "2 months and 5 days old", "converted", 2 / 12 + 5 * D),
+    (1.0, "1 month 2 weeks old", "converted", 1 / 12 + 2 * W),
+    (6.0, "6 weeks and 3 days old", "converted", 6 * W + 3 * D),
+    (1.0, "aged 1 year, 1 month, 1 week and 1 day", "converted", 1 + 1 / 12 + W + D),
+    (2.0, "2y 3m old", "converted", 2.25),
+    # any number in the phrase identifies it; the whole phrase is the age
+    (10.0, "2 years 10-month-old", "converted", 2 + 10 / 12),
+    # the model already did the arithmetic
+    (0.0274, "a 10-day-old infant", "ok", 10 * D),
+    (2.83, "2 years 10-month-old", "ok", 2 + 10 / 12),
+])
+def test_patient_age_is_naturalised_to_years(value, quote, status, years):
+    got_status, got, _ = unit_guard("patient_age", value, quote)
+    assert got_status == status
+    assert got == pytest.approx(years, abs=1e-4)
+
+
+def test_an_age_is_told_apart_from_a_duration():
+    assert unit_guard("patient_age", 12.0, "diagnosed 3 years ago, now 12 years old")[:2] \
+        == ("ok", 12.0)
+    assert unit_guard("patient_age", 5.0, "a 5-year-old with pain for 3 days")[:2] \
+        == ("ok", 5.0)
+    # the duration is not the age once the quote carries a marked one
+    assert unit_guard("patient_age", 3.0, "a 5-year-old with pain for 3 days")[:2] \
+        == ("value_mismatch", None)
+
+
+def test_gestational_age_is_not_the_patients_age():
+    q = "a 7-month-old born at 32 weeks gestation"
+    status, got, _ = unit_guard("patient_age", 7.0, q)
+    assert status == "converted" and got == pytest.approx(7 / 12, abs=1e-4)
+    assert unit_guard("patient_age", 32.0, q)[:2] == ("value_mismatch", None)
+    assert unit_guard("patient_age", 32.0, "delivered at 32 weeks' gestation")[:2] \
+        == ("value_mismatch", None)
+
+
+def test_an_age_the_quote_does_not_carry_is_rejected():
+    assert unit_guard("patient_age", 0.0, "a 10-day-old infant")[:2] == ("value_mismatch", None)
+
+
+def test_two_ages_the_value_fits_equally_are_left_alone():
+    status, got, _ = unit_guard("patient_age", 3.0, "3 months old; her brother is 3 years old")
+    assert (status, got) == ("ambiguous", 3.0)
+
+
+@pytest.mark.parametrize("quote", ["a newborn, age 3", "walked 5m", "given 3 mg/kg daily"])
+def test_an_age_without_a_recognisable_unit_is_untouched(quote):
+    assert unit_guard("patient_age", 3.0, quote) == ("ok", 3.0, None)
+
+
+def test_an_infant_age_reaches_the_tables_in_years():
+    from scogs.evaluate import resolve_derived
+    note = "An 18-month-old boy with HbSS presented with fever."
+    feats, _, t = run_verify([{"feature": "patient_age", "value": 18,
+                               "quote": "An 18-month-old boy"}], note=note)
+    assert feats == {"patient_age": 1.5} and t.unit_converted == 1
+    assert resolve_derived(feats)["age_stratum"] == "pediatric"
 
 
 # ------------------------------------------------------- multi-value reconciliation

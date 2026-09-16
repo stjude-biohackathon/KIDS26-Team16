@@ -264,6 +264,16 @@ def test_an_undocumented_finding_is_not_read_as_negative():
     assert "treated" in r.missing
 
 
+@pytest.mark.parametrize("trv,expected", [
+    (2.49, None), (2.5, 3), (2.9, 3), (2.95, 3), (2.999, 3), (3.0, 4), (3.4, 4),
+])
+def test_08_trv_bands_are_contiguous(trv, expected):
+    """Grade 3 is [2.5, 3.0). Read literally as 2.5-2.9, a TRV of 2.95 m/s - an
+    echo reading to two decimals, or 295 cm/s converted - matched no grade."""
+    r = grade("08", {"trv": trv})
+    assert (r.grade if expected else r.status) == (expected or ABSENT)
+
+
 def test_a_definite_grade_reports_the_rubric_clause_that_fired():
     r = grade("12", dict(tcd_velocity=205))
     assert r.status == GRADED and r.grade == 3

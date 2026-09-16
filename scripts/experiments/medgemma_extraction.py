@@ -6,7 +6,8 @@ review the exported worksheets before reporting precision.
 
 Usage examples:
     python scripts/experiments/medgemma_extraction.py --check-model
-    python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 20 --repeat 2 --out results/full.json
+    python scripts/experiments/medgemma_extraction.py --cohort scd_primary --notes 20 --repeat 2 --out results/full.json
+    python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 20 --out results/stage3.json
     python scripts/experiments/medgemma_extraction.py --backend mock --notes 2
 """
 from __future__ import annotations
@@ -70,6 +71,12 @@ DEFAULT_OUTCOMES = "10,11,12,15,17,21,24,28,29,39,40,47,48,49"
 # stage the hand-check sheets have to be filled against.
 
 STAGES = ("0", "1", "2a", "2b", "3")
+
+# What a run uses when --prompt-stage is not given. 2b had the best automatic
+# numbers on the ladder (100% of quotes verified, fewest cannot_grade, fully
+# repeatable; tasks/summary.md). This is only the CLI default: stage "0" stays the
+# frozen baseline arm, and the prompt-building functions still default to it.
+DEFAULT_PROMPT_STAGE = "2b"
 
 
 @dataclass(frozen=True)
@@ -534,8 +541,12 @@ UNIT_TOKENS = {
     "mg/l":    r"mg\s*/\s*l(?![a-z/])|mg\s+l\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+lit",
     "umol/l":  r"[\u00b5u]mol\s*/\s*l|micromol",
     "mmol/l":  r"mmol\s*/\s*l|millimol",
-    "g/dl":    r"(?<![a-z])g\s*/\s*dl|grams?\s+per\s+decilit",
-    "g/l":     r"(?<![a-z])g\s*/\s*l(?![a-z/])|grams?\s+per\s+lit",
+    # Not after a letter, and not after a micro sign or Greek mu (both occur in the
+    # corpus): the `g/L` inside "µg/L" is micrograms, a millionfold from grams.
+    "g/dl":    r"(?<![a-z\u00b5\u03bc])g\s*/\s*dl|(?<![a-z])grams?\s+per\s+decilit",
+    "g/l":     r"(?<![a-z\u00b5\u03bc])g\s*/\s*l(?![a-z/])|(?<![a-z])grams?\s+per\s+lit",
+    "ug/l":    r"(?<![a-z])(?:[\u00b5\u03bcu]|mc)g\s*/\s*l(?![a-z/])|micrograms?\s+per\s+lit",
+    "ng/ml":   r"(?<![a-z])ng\s*/\s*ml\b|nanograms?\s+per\s+millilit",
     "degf":    r"\u00b0\s*f\b|\u00ba\s*f\b|\bfahrenheit",
     "degc":    r"\u00b0\s*c\b|\u00ba\s*c\b|\bcelsius|\bcentigrade",
     "cm/s":    r"(?<![a-z])cm\s*/\s*s(?:ec)?\b|centimeters?\s+per\s+sec",
@@ -566,13 +577,23 @@ UNIT_CONVERSIONS = {
               "mg/mmol": lambda v: v * 8.84},
     "cm2":   {"cm2": lambda v: v,
               "mm2": lambda v: v / 100.0},
+    # ug/L and ng/mL are the same unit for any analyte (1 ug/L = 1 ng/mL), so this
+    # factor needs no molar mass. Declared only by ferritin.
+    "ng/mL": {"ng/ml": lambda v: v,
+              "ug/l":  lambda v: v},
 }
 
 UNIT_OK, UNIT_CONVERTED, UNIT_AMBIGUOUS = "ok", "converted", "ambiguous"
 UNIT_BAD, UNIT_VALUE_MISMATCH = "bad", "value_mismatch"
 
-# Decimal point only. A comma here would read a thousands separator as a decimal.
-NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+# A decimal point is a decimal; a comma is a thousands separator only in groups of
+# three ("27,469 ng/mL", "1,200 mg/g"). "1,5" stays two numbers rather than being
+# read as a European decimal - guessing wrong there is a 10x error either way.
+NUMBER = re.compile(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![\d,])|-?\d+(?:\.\d+)?")
+
+
+def _number(text: str) -> float:
+    return float(text.replace(",", ""))
 
 
 def _number_for_unit(q: str, pat: str):
@@ -583,15 +604,131 @@ def _number_for_unit(q: str, pat: str):
         return None
     before = NUMBER.findall(q[:m.start()])
     if before:
-        return float(before[-1])
+        return _number(before[-1])
     after = NUMBER.search(q[m.end():])
-    return float(after.group()) if after else None
+    return _number(after.group()) if after else None
 
 
 def _agrees(a: float, b: float) -> bool:
     """Tight on purpose. 38.9 against 39.2 is 0.8% and straddles a grade boundary,
     so anything loose enough to call those equal defeats the check."""
     return abs(a - b) <= max(abs(b), abs(a), 1.0) * 0.005
+
+
+# ------------------------------------------------------------------ patient age
+#
+# The schema holds age in years because every rule that reads it is written in
+# years: paediatric below 18, fever's 0-59-day exclusion, the stratified tables.
+# Notes write "10-day-old", "18-month-old", "2 years 10-month-old", and the model
+# is told to copy a number as the note writes it - so an 18-month-old reached the
+# tables as 18 and was graded on the adult strata. The age is read out of the
+# quote and naturalised to years here, on the same terms as every other unit: the
+# quote is the authority, and the model's number only says which age it meant.
+
+DAYS_PER_YEAR = 365.25
+AGE_UNITS = {                        # unit -> (years per unit, order in a compound)
+    "years": (1.0, 0),
+    "months": (1 / 12, 1),
+    "weeks": (7 / DAYS_PER_YEAR, 2),
+    "days": (1 / DAYS_PER_YEAR, 3),
+}
+HYPHEN = r"[-\u2010\u2011\u2012\u2013]"
+# Longest spellings first. A bare letter ("2y 3m") counts only when written against
+# its number AND inside a compound or an explicit age: "walked 5m" is not an age.
+AGE_PART = re.compile(
+    rf"(?<![\d.,])(?P<num>\d+(?:\.\d+)?)(?P<gap>\s*{HYPHEN}?\s*)"
+    r"(?P<unit>y/o|y\.o\.?|yo|years?|yrs?|m/o|months?|mos?|weeks?|wks?|days?|(?P<letter>[ymwd]))"
+    r"(?![a-z/])", re.I)
+AGE_SELF_MARKED = {"y/o", "yo", "y.o", "y.o.", "m/o"}    # "year(s) old" in one token
+AGE_JOIN = re.compile(r"[\s,]*(?:(?:and|&|\+)\s*)?", re.I)
+AGE_AFTER = re.compile(rf"\s*{HYPHEN}?\s*(?:old\b|of\s+age\b)", re.I)
+AGE_BEFORE = re.compile(r"(?:\baged?|\bage\s+of|\bat\s+age)\s*[:=]?\s*$", re.I)
+AGE_DAY_OF_LIFE = re.compile(r"\b(?:day\s+of\s+life|postnatal\s+day|dol)\s*#?\s*(?P<num>\d+)\b", re.I)
+# Gestational, postmenstrual and corrected ages are ages of a pregnancy or of a
+# premature infant's development - not how old the patient is.
+GEST_AFTER = re.compile(r"\s*['\u2019]?\s*(?:of\s+)?(?:gestation|gestational|ga\b|pma\b|postmenstrual|corrected)", re.I)
+GEST_BEFORE = re.compile(r"(?:\bborn\s+at|\bdelivered\s+at|\bgestational\s+age|\bga|\bpma|"
+                         r"\bpostmenstrual\s+age|\bcorrected\s+age)\s*(?:of\s*)?[:=]?\s*$", re.I)
+
+
+@dataclass(frozen=True)
+class AgeReading:
+    text: str
+    years: float
+    numbers: tuple[float, ...]     # each number as written, for matching the model's
+    marked: bool                   # "-old", "of age", "aged", "day of life"
+    gestational: bool
+
+
+def age_readings(q: str) -> list[AgeReading]:
+    """Every age-shaped phrase in the quote, naturalised to years.
+
+    Adjacent parts in descending units are one age - "4 years, 2 months and 10
+    days" is 4.194 - in any combination of years, months, weeks and days.
+    """
+    parts = []
+    for m in AGE_PART.finditer(q):
+        if m.group("letter") and m.group("gap"):
+            continue                                   # "5 m" is metres, not months
+        unit = {"y": "years", "m": "months", "w": "weeks", "d": "days"}[m.group("unit")[0].lower()]
+        parts.append((m, unit))
+
+    groups: list[list] = []
+    for m, unit in parts:
+        if groups:
+            prev, prev_unit = groups[-1][-1]
+            if (AGE_UNITS[unit][1] > AGE_UNITS[prev_unit][1]
+                    and AGE_JOIN.fullmatch(q, prev.end(), m.start())):
+                groups[-1].append((m, unit))
+                continue
+        groups.append([(m, unit)])
+
+    out = []
+    for g in groups:
+        start, end = g[0][0].start(), g[-1][0].end()
+        marked = bool(AGE_AFTER.match(q, end)
+                      or AGE_BEFORE.search(q[max(0, start - 20):start])
+                      or any(m.group("unit").lower() in AGE_SELF_MARKED for m, _ in g))
+        if any(m.group("letter") for m, _ in g) and not (marked or len(g) > 1):
+            continue
+        out.append(AgeReading(
+            text=q[start:end],
+            years=sum(float(m.group("num")) * AGE_UNITS[u][0] for m, u in g),
+            numbers=tuple(float(m.group("num")) for m, _ in g),
+            marked=marked,
+            gestational=bool(GEST_AFTER.match(q, end)
+                             or GEST_BEFORE.search(q[max(0, start - 40):start]))))
+    for m in AGE_DAY_OF_LIFE.finditer(q):
+        n = float(m.group("num"))
+        out.append(AgeReading(m.group(), n / DAYS_PER_YEAR, (n,), True, False))
+    return out
+
+
+def age_guard(value: float, q: str):
+    """-> (status, value, detail), as `unit_guard`, for an age declared in years.
+
+    An age written with a marker ("-old", "of age", "aged") outranks a bare
+    duration: in "a 5-year-old with pain for 3 days", 3 is not the patient's age.
+    """
+    readings = age_readings(q)
+    ages = [r for r in readings if not r.gestational]
+    if not ages:
+        if any(_agrees(value, n) for r in readings for n in r.numbers):
+            return UNIT_VALUE_MISMATCH, None, f"value {value} is a gestational age, not the patient's"
+        return UNIT_OK, value, None                    # nothing in the quote reads as an age
+    pool = [r for r in ages if r.marked] or ages
+    hits = [r for r in pool
+            if _agrees(value, r.years) or any(_agrees(value, n) for n in r.numbers)]
+    if not hits:
+        return UNIT_VALUE_MISMATCH, None, (
+            f"value {value} is none of the quote's ages: {'; '.join(r.text for r in pool)}")
+    truths = sorted({round(r.years, 4) for r in hits})
+    if len(truths) > 1:
+        return UNIT_AMBIGUOUS, value, " / ".join(r.text for r in hits)
+    truth = truths[0]
+    if _agrees(value, truth):
+        return UNIT_OK, truth, None
+    return UNIT_CONVERTED, truth, f"{hits[0].text} -> {truth} years"
 
 
 def unit_guard(name: str, value: float, quote: str):
@@ -607,6 +744,8 @@ def unit_guard(name: str, value: float, quote: str):
     where the note itself said what unit it meant.
     """
     declared = FEATURES[name].get("unit")
+    if declared == "years":
+        return age_guard(value, normalize(quote))
     table = UNIT_CONVERSIONS.get(declared)
     if not table:
         return UNIT_OK, value, None       # no unit declared, or no family for it
@@ -1168,8 +1307,9 @@ def main() -> int:
                     help="in-flight backend requests (default 1 = sequential). Needs a "
                          "server that batches, e.g. OLLAMA_NUM_PARALLEL>=N. See the "
                          "warning printed when this is combined with --repeat")
-    ap.add_argument("--prompt-stage", choices=list(STAGES), default="0",
-                    help="cumulative ablation rung (default 0 = the prompt unchanged). "
+    ap.add_argument("--prompt-stage", choices=list(STAGES), default=DEFAULT_PROMPT_STAGE,
+                    help=f"cumulative ablation rung (default {DEFAULT_PROMPT_STAGE}). "
+                         "0 is the original prompt, kept unchanged as the baseline; "
                          "1 adds constrained decoding, field order, grouped rules and a "
                          "flat repeat penalty; 2a adds the rubric's presence definition "
                          "and a quoted `present`; 2b adds an `evidence` field; 3 adds "

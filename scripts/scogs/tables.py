@@ -99,8 +99,13 @@ T("07", "Systolic Dysfunction", [
 
 T("08", "TRV Elevation on Echocardiogram", [
     (4, "trv >= 3.0"),
-    (3, "2.5 <= trv <= 2.9"),
-])
+    (3, "2.5 <= trv < 3.0"),
+], notes=["RUBRIC GAP CLOSED (2026-09-16): the rubric writes Grade 3 as 'TRV 2.5 - 2.9 "
+          "m/second' and Grade 4 as '>= 3.0', one-decimal text for a continuous "
+          "measurement. Read literally, (2.9, 3.0) matched no grade, so a TRV of "
+          "2.95 m/s - an echo reported to two decimals, or 295 cm/s converted - "
+          "graded as absent. Grade 3 is [2.5, 3.0). Deviation from rules.md, recorded "
+          "in docs/reference/rules_vs_booklet_discrepancies.md; for clinical review."])
 
 # ------------------------------------------------------------- central nervous system
 
