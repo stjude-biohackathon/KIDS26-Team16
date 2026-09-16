@@ -730,3 +730,49 @@ def test_default_outcomes_are_the_14_focus_conditions():
     for outcome_id in parsed:
         assert outcome_id in TABLES
 
+
+# ------------------------------------------------------------ patient context
+
+def test_context_schema_and_prompt():
+    from medgemma_extraction import stage, build_context_prompt, context_schema, CONTEXT_FEATURES
+    st = stage("2b", patient_context=True)
+    schema = context_schema(st)
+    assert "present" not in schema.get("required", [])
+    assert "present" not in schema.get("properties", {})
+    assert "findings" in schema.get("properties", {})
+
+    prompt = build_context_prompt(NOTE, st)
+    for feat in CONTEXT_FEATURES:
+        assert feat in prompt
+    assert "Do not convert" in prompt
+
+
+def test_patient_context_merge_precedence():
+    ctx_feats = {"patient_age": 14.0, "patient_sex": "male"}
+    outcome_feats = {"patient_age": 15.0, "fio2_pct": 60.0}
+    # Outcome-level values win
+    merged = {**ctx_feats, **outcome_feats}
+    assert merged["patient_age"] == 15.0
+    assert merged["patient_sex"] == "male"
+    assert merged["fio2_pct"] == 60.0
+
+
+def test_patient_context_tallies_stay_separate():
+    from medgemma_extraction import stage, run
+    notes = [{"patient_uid": "test-1", "patient": NOTE, "selection": "seeded:36", "gender": "M"}]
+    t = Tally()
+    ct = Tally()
+    st = stage("2b", patient_context=True)
+    results, context_results = run(notes, ["36"], backend="mock", model="medgemma-27b-f16",
+                                   host="", tally=t, timeout=30, concurrency=1, st=st,
+                                   ctx_tally=ct)
+    assert ct.proposed > 0
+    assert t.proposed > 0
+    assert "test-1" in context_results
+    ctx_extracted, _, _ = context_results["test-1"]
+    assert "patient_age" in ctx_extracted or "patient_sex" in ctx_extracted
+    feats, present, reply, detail = results["test-1"]["36"]
+    for k, v in ctx_extracted.items():
+        assert feats.get(k) == v
+
+

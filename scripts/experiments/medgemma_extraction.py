@@ -93,17 +93,18 @@ class Stage:
     cot: bool = False           # 2b an `evidence` field, generated first
     precision: bool = False     # 3  episode scope, negation, ladders, unit wording
     note_first: bool = False    # independent of the ladder; see --note-first
+    patient_context: bool = False  # independent of the ladder; see --patient-context
 
     @property
     def rank(self) -> int:
         return STAGES.index(self.name)
 
 
-def stage(name: str, note_first: bool = False) -> Stage:
+def stage(name: str, note_first: bool = False, patient_context: bool = False) -> Stage:
     if name not in STAGES:
         raise ValueError(f"unknown prompt stage {name!r}; expected one of {', '.join(STAGES)}")
     i = STAGES.index(name)
-    return Stage(name=name, note_first=note_first,
+    return Stage(name=name, note_first=note_first, patient_context=patient_context,
                  schema=i >= 1, structure=i >= 1, flat_penalty=i >= 1, retry=i >= 1,
                  presence=i >= 2, death_both=i >= 2,
                  cot=i >= 3,
@@ -258,6 +259,30 @@ def reply_schema(needed: list[str], st: Stage) -> dict:
         # prose asks for it when `present` is true; `present_unquoted` counts
         # what comes back without one.
         props["present_quote"] = {"type": "string"}
+    return {"type": "object", "properties": props, "required": required,
+            "additionalProperties": False}
+
+
+CONTEXT_FEATURES = ("patient_age", "patient_sex")
+
+
+def context_schema(st: Stage = STAGE0) -> dict:
+    finding = [{
+        "type": "object",
+        "properties": {"feature": {"const": n},
+                       "value": value_schema(n),
+                       "quote": {"type": "string", "minLength": 1}},
+        "required": ["feature", "value", "quote"],
+        "additionalProperties": False,
+    } for n in CONTEXT_FEATURES]
+
+    props: dict[str, dict] = {}
+    required: list[str] = []
+    if st.cot:
+        props["evidence"] = {"type": "string"}
+        required.append("evidence")
+    props["findings"] = {"type": "array", "items": {"anyOf": finding}}
+    required.append("findings")
     return {"type": "object", "properties": props, "required": required,
             "additionalProperties": False}
 
@@ -475,6 +500,33 @@ def build_prompt(note: str, outcome: str, st: Stage = STAGE0) -> str:
         return _prompt_v0(note, outcome, table, needed, lines)
     return _prompt_v1(note, outcome, table, needed, lines, st)
 
+
+def build_context_prompt(note: str, st: Stage = STAGE0) -> str:
+    lines = "\n".join(f"  - {feature_brief(n, '', st)}" for n in CONTEXT_FEATURES)
+    blocks = [
+        "You are reading a clinical note and reporting the patient's baseline demographics (age and sex).\n"
+        "Observation only: report only what is explicitly supported.",
+        "## Findings to extract\nReport only these, and only what the note supports:\n" + lines,
+        _rules_v1(list(CONTEXT_FEATURES), st),
+    ]
+    fields = []
+    if st.cot:
+        fields.append(
+            '  "evidence": "<1-2 sentences. What the note says about the patient\'s age and sex.>",'
+        )
+    fields.append('  "findings": [{"feature": "<name>", "value": <value>, "quote": "<exact text from the note>"}]')
+    joined = "\n".join(fields)
+    empty = '{"evidence": "...", "findings": []}' if st.cot else '{"findings": []}'
+    blocks.append(
+        "## Output\n"
+        "Reply with JSON only, no prose.\n\n"
+        f"{{\n{joined}\n}}\n\n"
+        f"When the note supports nothing, that is a complete answer:\n{empty}"
+    )
+    body = "\n\n".join(blocks)
+    doc = f"<note>\n{note}\n</note>"
+    return f"{doc}\n\n{body}" if st.note_first else f"{body}\n\n{doc}"
+
 # -------------------------------------------------------------------- backends
 
 def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **kwargs) -> str:
@@ -490,14 +542,22 @@ def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **k
     m = (re.search(r"<note>\n(.*)\n</note>", prompt, re.S)
          or re.search(r'NOTE:\n"""(.*)"""', prompt, re.S))
     note = m.group(1) if m else ""
-    outcome = (re.search(r"Health outcome under consideration: (\S+)", prompt) or [None, "0"])[1]
-    present = zlib.crc32(f"{outcome}:{note[:120]}".encode()) % 3 != 0
     first = next((w for w in re.findall(r"[A-Za-z]{6,}", note)), "unknown")
     if stats is not None:
         stats["prompt_eval_count"] = stats.get("prompt_eval_count", 0) + 100
         stats["eval_count"] = stats.get("eval_count", 0) + 50
         stats["eval_duration_sec"] = stats.get("eval_duration_sec", 0.0) + 0.01
         stats["total_duration_sec"] = stats.get("total_duration_sec", 0.0) + 0.01
+
+    if "baseline demographics" in prompt:
+        return json.dumps({"findings": [
+            {"feature": "patient_age", "value": 14.0, "quote": first},
+            {"feature": "patient_sex", "value": "male",
+             "quote": "a sentence that is definitely not in this note"},
+        ]})
+
+    outcome = (re.search(r"Health outcome under consideration: (\S+)", prompt) or [None, "0"])[1]
+    present = zlib.crc32(f"{outcome}:{note[:120]}".encode()) % 3 != 0
     return json.dumps({"present": present, "findings": [
         {"feature": "death_attributed", "value": False, "quote": first},
         {"feature": "death_attributed", "value": True,
@@ -1244,7 +1304,7 @@ def generate(backend, prompt, model, host, stats, st: Stage, fmt, **kw) -> tuple
 
 def run(notes, outcomes, backend, model, host, tally, timeout=300,
         concurrency=1, st: Stage = STAGE0, num_predict: int | None = None,
-        num_ctx: int = 16384):
+        num_ctx: int = 16384, ctx_tally: Tally | None = None):
     """Model calls first (optionally in parallel), then verification - always serial.
 
     Verification stays on the main thread in the original note-major order, so the
@@ -1255,8 +1315,13 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
     read-modify-write on that dict, which is only safe because no two tasks share
     one. They are summed here.
     """
-    tasks = [(rec, num) for rec in notes for num in outcomes]
-    total, done = len(tasks), 0
+    if st.patient_context and ctx_tally is None:
+        ctx_tally = Tally()
+
+    ctx_tasks = list(notes) if st.patient_context else []
+    outcome_tasks = [(rec, num) for rec in notes for num in outcomes]
+    all_tasks = [(True, rec, None) for rec in ctx_tasks] + [(False, rec, num) for rec, num in outcome_tasks]
+    total, done = len(all_tasks), 0
     replies, stats_parts = [None] * total, [None] * total
     print_lock = threading.Lock()
     t0 = time.time()
@@ -1269,19 +1334,30 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
 
     def call(i):
         nonlocal done
-        rec, num = tasks[i]
+        is_ctx, rec, num = all_tasks[i]
         local = {"prompt_eval_count": 0, "eval_count": 0,
                  "eval_duration_sec": 0.0, "total_duration_sec": 0.0}
-        prompt = build_prompt(rec["patient"], num, st)
-        fmt = reply_schema(prompt_features(num, st), st) if st.schema else None
-        reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
-                                  timeout=timeout, num_predict=budget, num_ctx=num_ctx,
-                                  repeat_penalty=1.0 if st.flat_penalty else 1.1)
-        replies[i], stats_parts[i], retries[i] = reply, local, n_retry
-        with print_lock:
-            done += 1
-            print(f"  [{done}/{total}] UID {rec['patient_uid']} outcome {num} "
-                  f"({TABLES[num].name})", flush=True)
+        if is_ctx:
+            prompt = build_context_prompt(rec["patient"], st)
+            fmt = context_schema(st) if st.schema else None
+            reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
+                                      timeout=timeout, num_predict=budget, num_ctx=num_ctx,
+                                      repeat_penalty=1.0 if st.flat_penalty else 1.1)
+            replies[i], stats_parts[i], retries[i] = reply, local, n_retry
+            with print_lock:
+                done += 1
+                print(f"  [{done}/{total}] UID {rec['patient_uid']} context (age, sex)", flush=True)
+        else:
+            prompt = build_prompt(rec["patient"], num, st)
+            fmt = reply_schema(prompt_features(num, st), st) if st.schema else None
+            reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
+                                      timeout=timeout, num_predict=budget, num_ctx=num_ctx,
+                                      repeat_penalty=1.0 if st.flat_penalty else 1.1)
+            replies[i], stats_parts[i], retries[i] = reply, local, n_retry
+            with print_lock:
+                done += 1
+                print(f"  [{done}/{total}] UID {rec['patient_uid']} outcome {num} "
+                      f"({TABLES[num].name})", flush=True)
 
     if concurrency > 1:
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
@@ -1290,21 +1366,40 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
         for i in range(total):
             call(i)
 
+    context_results = {}
+    offset = len(ctx_tasks)
+    if st.patient_context and ctx_tally is not None:
+        for i, rec in enumerate(ctx_tasks):
+            reply = replies[i] or ""
+            ctx_tally.content_retries += retries[i]
+            if st.retry and not reply_is_usable(reply):
+                ctx_tally.unusable_replies += 1
+            feats, _, detail = verify(reply, rec["patient"], ctx_tally)
+            context_results[rec["patient_uid"]] = (feats, reply, detail)
+        for part in stats_parts[:offset]:
+            if part:
+                ctx_tally.prompt_tokens += part["prompt_eval_count"]
+                ctx_tally.completion_tokens += part["eval_count"]
+
     results = {}
-    for i, (rec, num) in enumerate(tasks):
+    for j, (rec, num) in enumerate(outcome_tasks):
+        i = offset + j
         reply = replies[i] or ""
         tally.content_retries += retries[i]
         if st.retry and not reply_is_usable(reply):
             tally.unusable_replies += 1
         feats, present, detail = verify(reply, rec["patient"], tally)
+        if st.patient_context:
+            ctx_feats = context_results.get(rec["patient_uid"], ({}, "", {}))[0]
+            feats = {**ctx_feats, **feats}
         results.setdefault(rec["patient_uid"], {})[num] = (feats, present, reply, detail)
 
-    for part in stats_parts:
+    for part in stats_parts[offset:]:
         if part:
             tally.prompt_tokens += part["prompt_eval_count"]
             tally.completion_tokens += part["eval_count"]
     tally.wall_clock_sec += (time.time() - t0)
-    return results
+    return results, context_results
 
 
 def main() -> int:
@@ -1354,12 +1449,14 @@ def main() -> int:
                     help="put the note above the instructions (stage >= 1). Off by "
                          "default: at a median 469 words the gain is small and it costs "
                          "the shared prefix across an outcome's four calls")
+    ap.add_argument("--patient-context", action=argparse.BooleanOptionalAction, default=False,
+                    help="extract patient-level context (age, sex) once per note and share across outcomes")
     ap.add_argument("--num-predict", type=int, default=None,
                     help="completion token budget (default 1024, or 2048 once --prompt-stage "
                          "adds the evidence field)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    st = stage(a.prompt_stage, note_first=a.note_first)
+    st = stage(a.prompt_stage, note_first=a.note_first, patient_context=bool(a.patient_context))
 
     for name in ("notes", "repeat", "concurrency", "timeout", "num_ctx", "num_predict"):
         value = getattr(a, name)
@@ -1423,21 +1520,32 @@ def main() -> int:
         print()
 
     runs, tallies = [], []
+    ctx_runs, ctx_tallies = [], []
     for i in range(a.repeat):
         t = Tally()
+        ct = Tally() if st.patient_context else None
         t_start = time.time()
         try:
-            runs.append(run(notes, outcomes, a.backend, model, a.host, t,
-                            timeout=a.timeout, concurrency=a.concurrency,
-                            st=st, num_predict=a.num_predict, num_ctx=a.num_ctx))
+            res, ctx_res = run(notes, outcomes, a.backend, model, a.host, t,
+                               timeout=a.timeout, concurrency=a.concurrency,
+                               st=st, num_predict=a.num_predict, num_ctx=a.num_ctx,
+                               ctx_tally=ct)
+            runs.append(res)
+            ctx_runs.append(ctx_res)
         except RuntimeError as exc:
             raise SystemExit(f"Extraction failed; no result file written: {exc}") from exc
         t.wall_clock_sec = time.time() - t_start
         tallies.append(t)
+        if ct is not None:
+            ctx_tallies.append(ct)
         rep = t.report()
         sec_per_note = t.wall_clock_sec / len(notes) if notes else 0
         tok_per_sec = t.completion_tokens / t.wall_clock_sec if t.wall_clock_sec > 0 else 0
         print(f"\nRun {i+1} completed in {t.wall_clock_sec:.1f}s ({sec_per_note:.2f}s/note, {tok_per_sec:.1f} tok/s):")
+        if ct is not None:
+            crep = ct.report()
+            print(f"  Patient context:      {crep['accepted']} accepted / {crep['proposed']} proposed "
+                  f"({crep['quote_verified']} verified quotes, {crep['quote_unfound']} unfound)")
         print(f"  Proposed findings:    {rep['proposed']}")
         print(f"    null placeholders:  {rep['null_placeholder']:4d}  {rep['null_placeholder_pct']:5.1f}%  (no quote -> prompt not followed)")
         print(f"    quote verified:     {t.quote_ok:4d}  {rep['quote_verified_pct_of_quoted']:5.1f}% of quoted | {rep['quote_verified_pct']:.1f}% of all")
@@ -1593,7 +1701,7 @@ def main() -> int:
                     "grade_result": grade_results_detail[uid][num],
                     "raw_reply": reply,
                 }
-            detailed_records.append({
+            rec_dict = {
                 "patient_uid": uid,
                 "selection": selection[uid],          # seeded:<outcome> | holdout | random
                 "scd_primary": is_scd_primary(rec),   # a label now, not a filter
@@ -1602,7 +1710,16 @@ def main() -> int:
                 "gender": rec.get("gender"),
                 "patient_note": rec["patient"],
                 "outcomes": per_outcome_details,
-            })
+            }
+            if st.patient_context and ctx_runs:
+                ctx_feats, ctx_reply, ctx_det = ctx_runs[0].get(uid, ({}, "", {}))
+                rec_dict["patient_context"] = {
+                    "extracted_features": ctx_feats,
+                    "accepted_findings": ctx_det.get("accepted", []),
+                    "conflicts": ctx_det.get("conflicts", []),
+                    "raw_reply": ctx_reply,
+                }
+            detailed_records.append(rec_dict)
 
         provenance = {
             "tier": "full" if a.backend == "ollama" else "mock",
@@ -1692,6 +1809,7 @@ def main() -> int:
                 "run_to_run_consistency_pct": consistency_pct,
             },
             "runs": [t.report() for t in tallies],
+            "patient_context_tally": ctx_tallies[0].report() if (st.patient_context and ctx_tallies) else None,
             "grade_status": dict(statuses),
             "grade_status_by_outcome": {k: dict(v) for k, v in by_outcome.items()},
             "grade_status_by_selection": {k: dict(v) for k, v in by_selection.items() if sum(v.values())},

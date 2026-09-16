@@ -292,3 +292,22 @@ def test_cli_outcomes_default_and_aliases(flag_args, tmp_path):
         "10", "11", "12", "15", "17", "21", "24", "28", "29", "39", "40", "47", "48", "49"
     }
 
+
+def test_mock_backend_runs_with_patient_context(tmp_path):
+    out = tmp_path / "ctx_result.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--backend", "mock", "--notes", "2",
+         "--outcomes", "36", "--patient-context", "--out", str(out)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["provenance"]["prompt_stage_flags"]["patient_context"] is True
+    assert "patient_context_tally" in data
+    assert data["patient_context_tally"]["proposed"] > 0
+    assert "patient_context" in data["detailed_records"][0]
+    ctx_rec = data["detailed_records"][0]["patient_context"]
+    assert "extracted_features" in ctx_rec
+    assert "accepted_findings" in ctx_rec
+
+
