@@ -40,6 +40,9 @@ F("patient_age", "num", "Patient age at this encounter, in years. Required befor
   "grading 06, 19, 25, 26, 42, 53; grading returns `cannot grade: age unknown` without it.",
   unit="years", outcomes=["06","19","25","26","27","36","42","53"])
 
+F("patient_sex", "cat", "Patient's sex as stated or unambiguously indicated in the note ('a 14-year-old boy', 'she').",
+  values=["female","male"])
+
 F("age_stratum", "ord", "Derived from patient_age: pediatric when age < 18, adult when >= 18.",
   values=["pediatric","adult"], outcomes=["42","53"], derived="patient_age")
 

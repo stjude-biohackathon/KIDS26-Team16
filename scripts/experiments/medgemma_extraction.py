@@ -36,10 +36,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from experiments.ollama_backend import (
     DEFAULT_HOST, DEFAULT_MODEL, GGUF_FILE_TYPES, WEIGHTS, call_ollama, preflight,
 )
+from scogs.applicability import applicability
 from scogs.definitions import presence_brief
 from scogs.evaluate import grade
 from scogs.features import FEATURES
-from scogs.predicates import parse
+from scogs.predicates import UNKNOWN, parse
 from scogs.tables import TABLES
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -1478,7 +1479,8 @@ def main() -> int:
     for uid, per in runs[0].items():
         grade_results_detail[uid] = {}
         for num, (feats, present, *_) in per.items():
-            res = grade(num, feats, present=bool(present))
+            ok = applicability(num, feats)
+            res = grade(num, feats, present=bool(present), applicable=ok is not False)
             # "the model never saw this outcome" and "the model called it and the
             # tables overruled the call" are different questions. Pooled as one
             # `absent` they send a reviewer to confirm an absence the rule engine
@@ -1493,6 +1495,7 @@ def main() -> int:
                 "grade": res.grade,
                 "features": feats,
                 "present": present,
+                "applicability": "unknown" if ok is UNKNOWN else bool(ok),
                 "reason": res.reason,
             }
 

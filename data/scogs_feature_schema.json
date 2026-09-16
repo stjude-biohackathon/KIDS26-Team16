@@ -2,7 +2,7 @@
  "version": 2,
  "source": "rules.md, verified against docs/reference/SCOGS_Booklet.pdf 2026-08-28",
  "counts": {
-  "features": 137,
+  "features": 138,
   "outcomes": 53,
   "rules": 224
  },
@@ -1315,6 +1315,16 @@
    "used_by_outcomes": [
     "19"
    ]
+  },
+  "patient_sex": {
+   "type": "cat",
+   "scope": "encounter",
+   "values": [
+    "female",
+    "male"
+   ],
+   "definition": "Patient's sex as stated or unambiguously indicated in the note ('a 14-year-old boy', 'she').",
+   "used_by_outcomes": []
   },
   "periwound_status": {
    "type": "ord",
