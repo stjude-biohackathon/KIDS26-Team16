@@ -157,6 +157,17 @@ def resolve_derived(features: dict) -> dict:
             except (ValueError, TypeError):
                 pass
 
+    if "hb_decline_pct" not in env:
+        hb_base = env.get("hb_baseline")
+        hb_nad = env.get("hb_nadir")
+        if hb_base is not None and hb_base is not UNKNOWN and hb_nad is not None and hb_nad is not UNKNOWN:
+            try:
+                base_val, nad_val = float(hb_base), float(hb_nad)
+                if base_val > 0:
+                    env["hb_decline_pct"] = round((base_val - nad_val) / base_val * 100, 1)
+            except (ValueError, TypeError):
+                pass
+
     return env
 
 # ----------------------------------------------------------------- table walking

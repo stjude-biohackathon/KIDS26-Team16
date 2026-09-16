@@ -338,7 +338,10 @@ T("30", "Alloimmunization / Delayed Hemolytic Transfusion Reaction (DHTR)", [
 ], notes=["Grades 1 and 2 overlap by construction: Grade 1 is 'no intervention' and "
           "Grade 2 is 'decline < 20% AND no intervention', so every Grade 2 patient "
           "also satisfies Grade 1. Highest-first ordering resolves it - Grade 1 is "
-          "reached only when the haemoglobin decline is not documented."])
+          "reached only when the haemoglobin decline is not documented.",
+          "BASELINE DEFINITION: Which Hb counts as baseline (pre-transfusion steady state "
+          "or post-transfusion peak) is for clinical review. Hb decline % is derived in "
+          "code as (hb_baseline - hb_nadir) / hb_baseline * 100."])
 
 T("31", "Chronic Hypersplenism", [
     (3, "cytopenia_count == 3 or splenectomy"),

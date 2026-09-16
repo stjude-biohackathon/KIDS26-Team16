@@ -519,3 +519,33 @@ def test_19_creatinine_baseline_ratio_computation():
     assert resolved["creatinine_x_baseline"] == 3.5
     assert grade("19", feats_explicit).grade == 3
 
+
+def test_30_hb_decline_pct_computation():
+    from scogs.evaluate import resolve_derived
+    # 10 -> 7.5 gives 25% -> grade 3 (with no LS/death)
+    feats = dict(hb_baseline=10.0, hb_nadir=7.5, death_attributed=False,
+                 resp_support="room_air", vasopressors=False, renal_replacement=False,
+                 life_support_other=False, hemolysis_intervention=False)
+    resolved = resolve_derived(feats)
+    assert resolved["hb_decline_pct"] == 25.0
+    r = grade("30", feats)
+    assert r.status == GRADED and r.grade == 3
+
+    # nadir above baseline gives negative decline -> < 20 branch -> grade 2 (when no intervention)
+    feats_higher = dict(hb_baseline=8.0, hb_nadir=9.0, death_attributed=False,
+                        resp_support="room_air", vasopressors=False, renal_replacement=False,
+                        life_support_other=False, hemolysis_intervention=False)
+    resolved_higher = resolve_derived(feats_higher)
+    assert resolved_higher["hb_decline_pct"] == -12.5
+    r_higher = grade("30", feats_higher)
+    assert r_higher.status == GRADED and r_higher.grade == 2
+
+    # explicit annotator value wins over derived
+    feats_explicit = dict(hb_baseline=10.0, hb_nadir=7.5, hb_decline_pct=15.0,
+                          death_attributed=False, resp_support="room_air", vasopressors=False,
+                          renal_replacement=False, life_support_other=False,
+                          hemolysis_intervention=False)
+    assert resolve_derived(feats_explicit)["hb_decline_pct"] == 15.0
+    assert grade("30", feats_explicit).grade == 2
+
+

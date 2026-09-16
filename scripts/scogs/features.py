@@ -137,10 +137,13 @@ F("intervention_level", "ord",
 
 # ============================================================ laboratory values
 
-F("hb_nadir", "num", "Lowest haemoglobin during this event.", unit="g/dL", outcomes=["35"])
+F("hb_nadir", "num", "Lowest haemoglobin during this event.", unit="g/dL", outcomes=["30","35"])
+F("hb_baseline", "num",
+  "Steady-state baseline haemoglobin before the transfusion this reaction follows.",
+  unit="g/dL", outcomes=["30"])
 F("hb_decline_pct", "num",
   "Fall in haemoglobin from the patient's steady-state baseline, as a percentage.",
-  unit="%", outcomes=["30"])
+  unit="%", outcomes=["30"], derived="hb_baseline hb_nadir")
 F("creatinine", "num", "Highest serum creatinine during this episode.", unit="mg/dL", outcomes=["19"])
 F("creatinine_baseline", "num",
   "The patient's baseline serum creatinine before this episode (steady state or last known value). "
