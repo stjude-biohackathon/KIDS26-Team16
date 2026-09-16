@@ -95,17 +95,20 @@ class Stage:
     precision: bool = False     # 3  episode scope, negation, ladders, unit wording
     note_first: bool = False    # independent of the ladder; see --note-first
     patient_context: bool = False  # independent of the ladder; see --patient-context
+    feedback_retry: bool = False   # independent of the ladder; see --feedback-retry
 
     @property
     def rank(self) -> int:
         return STAGES.index(self.name)
 
 
-def stage(name: str, note_first: bool = False, patient_context: bool = False) -> Stage:
+def stage(name: str, note_first: bool = False, patient_context: bool = False,
+          feedback_retry: bool = False) -> Stage:
     if name not in STAGES:
         raise ValueError(f"unknown prompt stage {name!r}; expected one of {', '.join(STAGES)}")
     i = STAGES.index(name)
     return Stage(name=name, note_first=note_first, patient_context=patient_context,
+                 feedback_retry=feedback_retry,
                  schema=i >= 1, structure=i >= 1, flat_penalty=i >= 1, retry=i >= 1,
                  presence=i >= 2, death_both=i >= 2,
                  cot=i >= 3,
@@ -556,6 +559,18 @@ def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **k
         stats["eval_duration_sec"] = stats.get("eval_duration_sec", 0.0) + 0.01
         stats["total_duration_sec"] = stats.get("total_duration_sec", 0.0) + 0.01
 
+    outcome = (re.search(r"Health outcome under consideration: (\S+)", prompt) or [None, "0"])[1]
+    present = zlib.crc32(f"{outcome}:{note[:120]}".encode()) % 3 != 0
+
+    if "Your previous reply had these problems:" in prompt:
+        if "baseline demographics" in prompt:
+            return json.dumps({"findings": [
+                {"feature": "patient_age", "value": 14.0, "quote": first},
+            ]})
+        return json.dumps({"present": present, "findings": [
+            {"feature": "death_attributed", "value": False, "quote": first},
+        ]})
+
     if "baseline demographics" in prompt:
         return json.dumps({"findings": [
             {"feature": "patient_age", "value": 14.0, "quote": first},
@@ -563,8 +578,6 @@ def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **k
              "quote": "a sentence that is definitely not in this note"},
         ]})
 
-    outcome = (re.search(r"Health outcome under consideration: (\S+)", prompt) or [None, "0"])[1]
-    present = zlib.crc32(f"{outcome}:{note[:120]}".encode()) % 3 != 0
     return json.dumps({"present": present, "findings": [
         {"feature": "death_attributed", "value": False, "quote": first},
         {"feature": "death_attributed", "value": True,
@@ -963,6 +976,7 @@ class Tally:
     presence_contradicted: int = 0 # criteria met but model said not present
     content_retries: int = 0       # calls redone because the reply was unusable
     unusable_replies: int = 0      # ... and still unusable when the tries ran out
+    feedback_retries: int = 0      # calls re-prompted once with specific error feedback
     per_feature: Counter = field(default_factory=Counter)
     prompt_tokens: int = 0
     completion_tokens: int = 0
@@ -1001,6 +1015,7 @@ class Tally:
             "present_quoted_pct": round(100 * self.present_quoted / (self.present_true or 1), 1),
             "content_retries": self.content_retries,
             "unusable_replies": self.unusable_replies,
+            "feedback_retries": self.feedback_retries,
             "missing_quote": self.quote_missing,
             "invalid_value": self.value_bad,
             "unknown_feature": self.unknown_feature,
@@ -1026,6 +1041,61 @@ def coerce(name: str, value):
         except (TypeError, ValueError): return False, None
     v = str(value).strip().lower()
     return (True, v) if v in (spec["values"] or []) else (False, None)
+
+
+def precheck(reply: str, note: str, allowed_features: set[str] | None = None) -> list[str]:
+    """Side-effect-free inspection of an extraction reply against the note text.
+
+    Reports specific problems: quotes not in note, values not matching quotes,
+    unknown feature names, or invalid value types. Reuses `normalize`, `coerce`,
+    and `unit_guard` without touching any Tally counters.
+    """
+    try:
+        data = json.loads(reply)
+    except Exception:
+        return []
+    if not isinstance(data, dict):
+        return []
+
+    hay = normalize(note)
+    issues: list[str] = []
+
+    for f in data.get("findings", []) or []:
+        if not isinstance(f, dict):
+            continue
+        name = f.get("feature")
+        if not name or name not in FEATURES:
+            issues.append(f"Unknown feature '{name}'. Only report features listed in the schema.")
+            continue
+        if allowed_features is not None and name not in allowed_features:
+            issues.append(f"Feature '{name}' is not in the schema for this outcome.")
+            continue
+        quote = f.get("quote")
+        if not quote or not isinstance(quote, str) or not quote.strip():
+            issues.append(f"Finding for '{name}' is missing a quote from the note.")
+            continue
+        if normalize(quote) not in hay:
+            issues.append(f"Finding for '{name}': quote {quote!r} was not found verbatim in the note.")
+            continue
+        ok, val = coerce(name, f.get("value"))
+        if not ok:
+            issues.append(f"Finding for '{name}': value {f.get('value')!r} is not a valid {FEATURES[name]['type']}.")
+            continue
+        if FEATURES[name]["type"] == "num":
+            status, converted, detail = unit_guard(name, val, quote)
+            if status == UNIT_BAD:
+                issues.append(f"Finding for '{name}': {detail or 'unit is not convertible'}.")
+            elif status == UNIT_VALUE_MISMATCH:
+                issues.append(f"Finding for '{name}': {detail or f'value {val} does not match quote {quote!r}'}.")
+            elif status == UNIT_AMBIGUOUS:
+                issues.append(f"Finding for '{name}': unit in quote {quote!r} is ambiguous ({detail}).")
+
+    if data.get("present") is True:
+        pq = data.get("present_quote")
+        if pq and isinstance(pq, str) and normalize(pq) not in hay:
+            issues.append(f"present_quote {pq!r} was not found verbatim in the note.")
+
+    return issues
 
 
 def verify(reply: str, note: str, tally: Tally) -> tuple[dict, bool | None, dict]:
@@ -1345,6 +1415,7 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
     # whole pair is lost as bad JSON.
     budget = num_predict if num_predict else (2048 if st.cot else 1024)
     retries = [0] * total
+    feedback_retries = [0] * total
 
     def call(i):
         nonlocal done
@@ -1357,6 +1428,20 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
             reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
                                       timeout=timeout, num_predict=budget, num_ctx=num_ctx,
                                       repeat_penalty=1.0 if st.flat_penalty else 1.1)
+            if st.feedback_retry and reply_is_usable(reply):
+                issues = precheck(reply, rec["patient"], set(CONTEXT_FEATURES))
+                if issues:
+                    fb_prompt = (
+                        prompt + "\n\nYour previous reply had these problems:\n"
+                        + "\n".join(f"- {issue}" for issue in issues)
+                        + "\n\nReply again with the full JSON."
+                    )
+                    fb_reply, _ = generate(backend, fb_prompt, model, host, local, st, fmt,
+                                           timeout=timeout, num_predict=budget, num_ctx=num_ctx,
+                                           repeat_penalty=1.0 if st.flat_penalty else 1.1)
+                    if reply_is_usable(fb_reply):
+                        reply = fb_reply
+                    feedback_retries[i] = 1
             replies[i], stats_parts[i], retries[i] = reply, local, n_retry
             with print_lock:
                 done += 1
@@ -1367,6 +1452,21 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
             reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
                                       timeout=timeout, num_predict=budget, num_ctx=num_ctx,
                                       repeat_penalty=1.0 if st.flat_penalty else 1.1)
+            if st.feedback_retry and reply_is_usable(reply):
+                allowed = set(prompt_features(num, st))
+                issues = precheck(reply, rec["patient"], allowed)
+                if issues:
+                    fb_prompt = (
+                        prompt + "\n\nYour previous reply had these problems:\n"
+                        + "\n".join(f"- {issue}" for issue in issues)
+                        + "\n\nReply again with the full JSON."
+                    )
+                    fb_reply, _ = generate(backend, fb_prompt, model, host, local, st, fmt,
+                                           timeout=timeout, num_predict=budget, num_ctx=num_ctx,
+                                           repeat_penalty=1.0 if st.flat_penalty else 1.1)
+                    if reply_is_usable(fb_reply):
+                        reply = fb_reply
+                    feedback_retries[i] = 1
             replies[i], stats_parts[i], retries[i] = reply, local, n_retry
             with print_lock:
                 done += 1
@@ -1386,6 +1486,7 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
         for i, rec in enumerate(ctx_tasks):
             reply = replies[i] or ""
             ctx_tally.content_retries += retries[i]
+            ctx_tally.feedback_retries += feedback_retries[i]
             if st.retry and not reply_is_usable(reply):
                 ctx_tally.unusable_replies += 1
             feats, _, detail = verify(reply, rec["patient"], ctx_tally)
@@ -1400,6 +1501,7 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
         i = offset + j
         reply = replies[i] or ""
         tally.content_retries += retries[i]
+        tally.feedback_retries += feedback_retries[i]
         if st.retry and not reply_is_usable(reply):
             tally.unusable_replies += 1
         feats, present, detail = verify(reply, rec["patient"], tally)
@@ -1465,12 +1567,16 @@ def main() -> int:
                          "the shared prefix across an outcome's four calls")
     ap.add_argument("--patient-context", action=argparse.BooleanOptionalAction, default=False,
                     help="extract patient-level context (age, sex) once per note and share across outcomes")
+    ap.add_argument("--feedback-retry", action=argparse.BooleanOptionalAction, default=False,
+                    help="re-prompt once with specific error feedback if extracted quotes or values fail verification")
     ap.add_argument("--num-predict", type=int, default=None,
                     help="completion token budget (default 1024, or 2048 once --prompt-stage "
                          "adds the evidence field)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    st = stage(a.prompt_stage, note_first=a.note_first, patient_context=bool(a.patient_context))
+    st = stage(a.prompt_stage, note_first=a.note_first,
+               patient_context=bool(a.patient_context),
+               feedback_retry=bool(a.feedback_retry))
 
     for name in ("notes", "repeat", "concurrency", "timeout", "num_ctx", "num_predict"):
         value = getattr(a, name)
@@ -1582,6 +1688,9 @@ def main() -> int:
         if rep['content_retries'] or rep['unusable_replies']:
             print(f"    content retries:    {rep['content_retries']:4d}  "
                   f"still unusable after retrying: {rep['unusable_replies']}")
+        if rep.get('feedback_retries'):
+            print(f"    feedback retries:   {rep['feedback_retries']:4d}  "
+                  f"re-prompts with error feedback")
         if rep['value_conflicts']:
             print(f"  !! VALUE CONFLICTS:   {rep['value_conflicts']} feature(s) had several "
                   f"verified values and no aggregation rule.")
@@ -1825,6 +1934,7 @@ def main() -> int:
                 "present_quoted_pct": rep0["present_quoted_pct"],
                 "content_retries": rep0["content_retries"],
                 "unusable_replies": rep0["unusable_replies"],
+                "feedback_retries": rep0.get("feedback_retries", 0),
                 # Quote verification is a grounding check: it asks whether the quoted
                 # words are in the note, never whether they support the value. There is
                 # no automated precision number here, and there should not appear to be.

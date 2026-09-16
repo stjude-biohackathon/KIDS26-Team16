@@ -106,6 +106,8 @@ public Ollama registry tags. No weights are stored in this repository.
 | `--prompt-stage` | `2b` | Prompt stage: `0`, `1`, `2a`, `2b` or `3`. `2b` scored best on the prompt comparison; `0` is the original prompt, kept as the baseline |
 | `--repeat` | `1` | Repeated extraction with temperature-zero decoding |
 | `--concurrency` | `1` | In-flight requests; keep at one for repeatability comparisons |
+| `--patient-context` / `--no-patient-context` | disabled | Extract patient-level context (age, sex) once per note and share across outcomes |
+| `--feedback-retry` / `--no-feedback-retry` | disabled | Re-prompt once with specific error feedback if extracted quotes or values fail verification |
 | `--num-ctx` | `16384` | Context tokens; increase for long notes, allowing extra memory |
 | `--num-predict` | `1024` / `2048` | Completion budget; stages `2b`/`3` need space for evidence |
 | `--timeout` | `300` seconds | Request timeout; increase for slow loading or CPU offload |

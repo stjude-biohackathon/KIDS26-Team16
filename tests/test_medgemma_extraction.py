@@ -804,4 +804,111 @@ def test_expand_derived_with_computed_from(monkeypatch):
     assert expanded == {"mock_computed", "mock_base_a", "mock_base_b"}
 
 
+# ---------------------------------------------------------------- Phase E: Feedback Retry
+
+def test_precheck_clean_reply_has_no_issues():
+    from medgemma_extraction import precheck
+    reply = json.dumps({
+        "present": True,
+        "present_quote": "chest pain",
+        "findings": [
+            {"feature": "fio2_pct", "value": 60.0, "quote": "FiO2 was escalated to 60%"},
+            {"feature": "resp_support", "value": "low_flow_o2", "quote": "presented with chest pain"},
+        ]
+    })
+    issues = precheck(reply, NOTE, allowed_features={"fio2_pct", "resp_support"})
+    assert issues == []
+
+
+def test_precheck_flags_unfound_quotes():
+    from medgemma_extraction import precheck
+    reply = json.dumps({
+        "present": True,
+        "findings": [
+            {"feature": "fio2_pct", "value": 60.0, "quote": "this quote is completely made up"},
+        ]
+    })
+    issues = precheck(reply, NOTE)
+    assert len(issues) == 1
+    assert "was not found verbatim in the note" in issues[0]
+
+
+def test_precheck_flags_missing_quote():
+    from medgemma_extraction import precheck
+    reply = json.dumps({
+        "present": True,
+        "findings": [
+            {"feature": "fio2_pct", "value": 60.0, "quote": ""},
+        ]
+    })
+    issues = precheck(reply, NOTE)
+    assert len(issues) == 1
+    assert "missing a quote" in issues[0]
+
+
+def test_precheck_flags_unknown_and_disallowed_features():
+    from medgemma_extraction import precheck
+    reply = json.dumps({
+        "findings": [
+            {"feature": "non_existent_feature_123", "value": 5, "quote": "chest pain"},
+            {"feature": "fio2_pct", "value": 60.0, "quote": "FiO2 was escalated to 60%"},
+        ]
+    })
+    # non_existent_feature_123 is unknown
+    issues = precheck(reply, NOTE)
+    assert any("Unknown feature" in iss for iss in issues)
+
+    # fio2_pct is not allowed if allowed_features is {"resp_support"}
+    issues2 = precheck(reply, NOTE, allowed_features={"resp_support"})
+    assert any("not in the schema for this outcome" in iss for iss in issues2)
+
+
+def test_precheck_flags_quote_value_mismatch():
+    from medgemma_extraction import precheck
+    temp_note = "Patient had a temperature of 38.0 °C on admission."
+    reply = json.dumps({
+        "findings": [
+            {"feature": "temperature", "value": 40.5, "quote": "temperature of 38.0 °C"},
+        ]
+    })
+    issues = precheck(reply, temp_note)
+    assert len(issues) == 1
+    assert "does not match quote" in issues[0] or "neither the quote" in issues[0]
+
+
+def test_precheck_flags_unfound_present_quote():
+    from medgemma_extraction import precheck
+    reply = json.dumps({
+        "present": True,
+        "present_quote": "hallucinated diagnosis statement",
+        "findings": []
+    })
+    issues = precheck(reply, NOTE)
+    assert len(issues) == 1
+    assert "present_quote 'hallucinated diagnosis statement' was not found verbatim in the note" in issues[0]
+
+
+def test_feedback_retry_end_to_end_mock():
+    from medgemma_extraction import stage, run
+    notes = [{"patient_uid": "uid-100", "patient": NOTE, "selection": "seeded:28", "gender": "M"}]
+    
+    # Without feedback retry: mock backend produces 1 unfound quote and 0 feedback retries
+    t_no_fb = Tally()
+    st_no_fb = stage("2b", feedback_retry=False)
+    run(notes, ["28"], backend="mock", model="medgemma-27b-f16", host="",
+        tally=t_no_fb, timeout=30, concurrency=1, st=st_no_fb)
+    assert t_no_fb.feedback_retries == 0
+    assert t_no_fb.quote_unfound == 1
+
+    # With feedback retry: mock backend gets re-prompted, drops the hallucinated quote
+    t_fb = Tally()
+    st_fb = stage("2b", feedback_retry=True)
+    run(notes, ["28"], backend="mock", model="medgemma-27b-f16", host="",
+        tally=t_fb, timeout=30, concurrency=1, st=st_fb)
+    assert t_fb.feedback_retries == 1
+    assert t_fb.quote_unfound == 0
+    assert t_fb.accepted == 1
+
+
+
 
