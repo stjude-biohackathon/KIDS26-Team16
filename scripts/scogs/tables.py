@@ -226,7 +226,10 @@ T("19", "Acute Kidney Injury (AKI)", [
           "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 "
           "trigger is UNKNOWN rather than false.",
           "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '1.5-1.9x' and "
-          "'2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review."])
+          "'2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review.",
+          "BASELINE COMPUTATION: creatinine_x_baseline is derived in code as "
+          "creatinine / creatinine_baseline. A note saying 'creatinine tripled' "
+          "without numbers is no longer captured."])
 
 T("20", "Acute Papillary Necrosis", [
     (5, "death_attributed"),

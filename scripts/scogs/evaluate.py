@@ -146,6 +146,17 @@ def resolve_derived(features: dict) -> dict:
         if UNKNOWN not in checks:
             env["pro_severe_count"] = sum(1 for c in checks if c)
 
+    if "creatinine_x_baseline" not in env:
+        c = env.get("creatinine")
+        cb = env.get("creatinine_baseline")
+        if c is not None and c is not UNKNOWN and cb is not None and cb is not UNKNOWN:
+            try:
+                c_val, cb_val = float(c), float(cb)
+                if cb_val > 0:
+                    env["creatinine_x_baseline"] = round(c_val / cb_val, 2)
+            except (ValueError, TypeError):
+                pass
+
     return env
 
 # ----------------------------------------------------------------- table walking

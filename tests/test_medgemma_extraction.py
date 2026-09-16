@@ -595,10 +595,14 @@ def test_a_numeric_feature_that_declares_an_extreme_collapses_to_it():
 
 
 def test_a_feature_with_no_aggregation_rule_reports_a_conflict_instead_of_guessing():
-    """Five creatinines across twelve years, one of them the transplant donor's.
-    There is no rule that says which is 'the' creatinine, so none is invented."""
-    value, clash = reconcile("creatinine", [0.9, 1.0, 1.6, 1.8])
-    assert value is None and clash == [0.9, 1.0, 1.6, 1.8]
+    """Several eGFR values across years.
+    There is no rule that says which is 'the' eGFR, so none is invented."""
+    value, clash = reconcile("egfr", [30.0, 45.0, 60.0])
+    assert value is None and clash == [30.0, 45.0, 60.0]
+
+
+def test_creatinine_reconciles_to_maximum():
+    assert reconcile("creatinine", [0.9, 1.0, 1.6, 1.8]) == (1.8, None)
 
 
 def test_repeated_identical_values_are_not_a_conflict():
@@ -607,15 +611,15 @@ def test_repeated_identical_values_are_not_a_conflict():
 
 
 def test_a_conflicted_feature_is_withheld_from_grading_and_reported():
-    note = ("Creatinine at the time of explant was 0.9 mg/dl. "
-            "Her kidney function was stable, with creatinine values of 1.6 mg/dl.")
+    note = ("eGFR at the time of admission was 45. "
+            "Her kidney function was stable, with eGFR values of 60.")
     feats, _, t = run_verify([
-        {"feature": "creatinine", "value": 0.9,
-         "quote": "Creatinine at the time of explant was 0.9 mg/dl"},
-        {"feature": "creatinine", "value": 1.6,
-         "quote": "creatinine values of 1.6 mg/dl"},
+        {"feature": "egfr", "value": 45,
+         "quote": "eGFR at the time of admission was 45"},
+        {"feature": "egfr", "value": 60,
+         "quote": "eGFR values of 60"},
     ], note=note)
-    assert feats == {}                      # never silently 1.6
+    assert feats == {}                      # never silently 60
     assert t.value_conflicts == 1
     assert t.accepted == 2                  # both cleared §2; the disagreement is downstream
 
@@ -637,7 +641,8 @@ def test_reduce_policy_is_read_off_the_schema_not_hardcoded():
     assert reduce_policy("resp_support") == "max"       # "Maximum respiratory support..."
     assert reduce_policy("transfusion_type") == "max"   # "Most intensive..."
     assert reduce_policy("temperature") == "max"        # "Highest documented..."
-    assert reduce_policy("creatinine") is None          # "Serum creatinine." - no rule
+    assert reduce_policy("creatinine") == "max"         # "Highest serum creatinine..."
+    assert reduce_policy("egfr") is None                # "Estimated glomerular..." - no rule
     assert reduce_policy("patient_age") is None
 
 

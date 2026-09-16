@@ -491,3 +491,31 @@ def test_absent_and_not_applicable_carry_different_reasons():
     n = grade("45", {}, applicable=False)
     assert (a.status, n.status) == (ABSENT, "not_applicable")
     assert a.reason != n.reason
+
+
+def test_19_creatinine_baseline_ratio_computation():
+    from scogs.evaluate import resolve_derived
+    # 2.0 / 1.0 -> ratio 2.0 -> grade 2
+    feats = dict(creatinine=2.0, creatinine_baseline=1.0, death_attributed=False,
+                 renal_replacement=False, patient_age=30, egfr=90, esrd_progression=False,
+                 creatinine_increase_mg_dl=0.0)
+    r = grade("19", feats)
+    assert r.status == GRADED and r.grade == 2
+
+    # baseline missing -> creatinine_x_baseline in missing / cannot_grade
+    feats_no_base = dict(creatinine=2.0, death_attributed=False, renal_replacement=False,
+                         patient_age=30, egfr=90, esrd_progression=False,
+                         creatinine_increase_mg_dl=0.0)
+    r_no_base = grade("19", feats_no_base)
+    assert r_no_base.status == CANNOT_GRADE
+    assert "creatinine_x_baseline" in r_no_base.missing
+
+    # explicit annotator value wins over derived
+    feats_explicit = dict(creatinine=2.0, creatinine_baseline=1.0, creatinine_x_baseline=3.5,
+                          death_attributed=False, renal_replacement=False,
+                          patient_age=30, egfr=90, esrd_progression=False,
+                          creatinine_increase_mg_dl=0.0)
+    resolved = resolve_derived(feats_explicit)
+    assert resolved["creatinine_x_baseline"] == 3.5
+    assert grade("19", feats_explicit).grade == 3
+

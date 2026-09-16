@@ -141,10 +141,14 @@ F("hb_nadir", "num", "Lowest haemoglobin during this event.", unit="g/dL", outco
 F("hb_decline_pct", "num",
   "Fall in haemoglobin from the patient's steady-state baseline, as a percentage.",
   unit="%", outcomes=["30"])
-F("creatinine", "num", "Serum creatinine.", unit="mg/dL", outcomes=["19"])
+F("creatinine", "num", "Highest serum creatinine during this episode.", unit="mg/dL", outcomes=["19"])
+F("creatinine_baseline", "num",
+  "The patient's baseline serum creatinine before this episode (steady state or last known value). "
+  "Report it even though it predates the episode.",
+  unit="mg/dL", outcomes=["19"])
 F("creatinine_x_baseline", "num",
   "Serum creatinine as a multiple of the patient's baseline (1.5 means 1.5x baseline).",
-  unit="ratio", outcomes=["19"])
+  unit="ratio", outcomes=["19"], derived="creatinine / creatinine_baseline")
 F("creatinine_increase_mg_dl", "num",
   "Absolute rise in serum creatinine within 48 hours.", unit="mg/dL", outcomes=["19"])
 F("egfr", "num", "Estimated glomerular filtration rate.", unit="mL/min/1.73m2", outcomes=["19","21"])
