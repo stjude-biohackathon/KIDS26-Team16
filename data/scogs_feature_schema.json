@@ -2,7 +2,7 @@
  "version": 2,
  "source": "rules.md, verified against docs/reference/SCOGS_Booklet.pdf 2026-08-28",
  "counts": {
-  "features": 138,
+  "features": 143,
   "outcomes": 53,
   "rules": 224
  },
@@ -203,6 +203,16 @@
     "42"
    ]
   },
+  "bp_percentile": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "BP percentile for age/sex/height as stated in the note.",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": []
+  },
   "bp_stage": {
    "type": "ord",
    "scope": "encounter",
@@ -212,9 +222,15 @@
     "1",
     "2"
    ],
-   "definition": "ACC/AHA blood-pressure stage for the patient's age band, per the rubric's tables. `elevated` is above normal but below Stage 1.",
+   "definition": "Blood-pressure stage ONLY as the note states it in words (e.g. 'stage 1 hypertension', 'elevated BP'). Do not compute it.",
    "outcomes": [
     "06"
+   ],
+   "computed_from": [
+    "sbp",
+    "dbp",
+    "bp_percentile",
+    "patient_age"
    ],
    "used_by_outcomes": [
     "06"
@@ -321,13 +337,23 @@
    "type": "num",
    "scope": "encounter",
    "unit": "mg/dL",
-   "definition": "Serum creatinine.",
+   "definition": "Highest serum creatinine during this episode.",
    "outcomes": [
     "19"
    ],
    "used_by_outcomes": [
     "19"
    ]
+  },
+  "creatinine_baseline": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mg/dL",
+   "definition": "The patient's baseline serum creatinine before this episode (steady state or last known value). Report it even though it predates the episode.",
+   "outcomes": [
+    "19"
+   ],
+   "used_by_outcomes": []
   },
   "creatinine_increase_mg_dl": {
    "type": "num",
@@ -349,6 +375,7 @@
    "outcomes": [
     "19"
    ],
+   "derived": "creatinine / creatinine_baseline",
    "used_by_outcomes": [
     "19"
    ]
@@ -369,6 +396,16 @@
    "used_by_outcomes": [
     "31"
    ]
+  },
+  "dbp": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mmHg",
+   "definition": "Baseline blood pressure, not measured during an acute pain episode (rules.md \u00a706).",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": []
   },
   "death_attributed": {
    "type": "bool",
@@ -650,6 +687,16 @@
     "26"
    ]
   },
+  "hb_baseline": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "g/dL",
+   "definition": "Steady-state baseline haemoglobin before the transfusion this reaction follows.",
+   "outcomes": [
+    "30"
+   ],
+   "used_by_outcomes": []
+  },
   "hb_decline_pct": {
    "type": "num",
    "scope": "encounter",
@@ -658,6 +705,7 @@
    "outcomes": [
     "30"
    ],
+   "derived": "hb_baseline hb_nadir",
    "used_by_outcomes": [
     "30"
    ]
@@ -668,6 +716,7 @@
    "unit": "g/dL",
    "definition": "Lowest haemoglobin during this event.",
    "outcomes": [
+    "30",
     "35"
    ],
    "used_by_outcomes": [
@@ -945,7 +994,7 @@
   "liver_iron_conc": {
    "type": "num",
    "scope": "encounter",
-   "unit": "mg Fe/100g dry weight",
+   "unit": "mg Fe/g dry weight",
    "definition": "Liver iron concentration.",
    "outcomes": [
     "34"
@@ -1470,6 +1519,16 @@
    "used_by_outcomes": [
     "49"
    ]
+  },
+  "sbp": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mmHg",
+   "definition": "Baseline blood pressure, not measured during an acute pain episode (rules.md \u00a706).",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": []
   },
   "semen_category": {
    "type": "ord",
@@ -2086,7 +2145,8 @@
     }
    ],
    "notes": [
-    "bp_stage is resolved against the age-appropriate ACC/AHA table (ages 1-13 use percentiles, > 13 use absolute mmHg), so patient_age is required."
+    "bp_stage is resolved against the age-appropriate ACC/AHA table (ages 1-13 use percentiles, > 13 use absolute mmHg), so patient_age is required.",
+    "RAW BP RESOLUTION: bp_stage is computed from sbp, dbp, bp_percentile, and patient_age when not explicitly stated in words. The 13-year boundary ('1\u201313' vs '> 13') and the 'whichever is lower' reading are for clinical review."
    ]
   },
   "07": {
@@ -2534,7 +2594,8 @@
    "notes": [
     "ORDER IS LOAD-BEARING: Grades 3 and 4 share an identical trigger set and differ only by progression to ESRD. Evaluating upward would return 3 for every Grade 4 patient.",
     "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 trigger is UNKNOWN rather than false.",
-    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '1.5-1.9x' and '2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review."
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '1.5-1.9x' and '2.0-2.9x'; half-open reading [1.5, 2.0) and [2.0, 3.0), for clinical review.",
+    "BASELINE COMPUTATION: creatinine_x_baseline is derived in code as creatinine / creatinine_baseline. A note saying 'creatinine tripled' without numbers is no longer captured."
    ]
   },
   "20": {
@@ -2930,7 +2991,8 @@
     }
    ],
    "notes": [
-    "Grades 1 and 2 overlap by construction: Grade 1 is 'no intervention' and Grade 2 is 'decline < 20% AND no intervention', so every Grade 2 patient also satisfies Grade 1. Highest-first ordering resolves it - Grade 1 is reached only when the haemoglobin decline is not documented."
+    "Grades 1 and 2 overlap by construction: Grade 1 is 'no intervention' and Grade 2 is 'decline < 20% AND no intervention', so every Grade 2 patient also satisfies Grade 1. Highest-first ordering resolves it - Grade 1 is reached only when the haemoglobin decline is not documented.",
+    "BASELINE DEFINITION: Which Hb counts as baseline (pre-transfusion steady state or post-transfusion peak) is for clinical review. Hb decline % is derived in code as (hb_baseline - hb_nadir) / hb_baseline * 100."
    ]
   },
   "31": {
@@ -3085,7 +3147,8 @@
    ],
    "notes": [
     "ORDER IS LOAD-BEARING: Grades 3 and 4 both trigger on LIC >= 15. Grade 4 additionally requires ferritin > 10,000, a T2* under 20 msec, or iron-attributable organ dysfunction, so it must be tested first.",
-    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '2.5-6.9', '7-14.9' for LIC and '1000-1999', '2000-4999' for ferritin; half-open reading [2.5, 7), [7, 15) and [1000, 2000), [2000, 5000), for clinical review."
+    "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '2.5-6.9', '7-14.9' for LIC and '1000-1999', '2000-4999' for ferritin; half-open reading [2.5, 7), [7, 15) and [1000, 2000), [2000, 5000), for clinical review.",
+    "LIVER IRON UNIT (2026-09-16): Schema unit changed to mg Fe/g dry weight matching rules.md \u00a734 diagnostic criteria and clinical practice; thresholds unchanged. Deviation from booklet p.83, recorded in docs/reference/rules_vs_booklet_discrepancies.md; for clinical review."
    ]
   },
   "35": {

@@ -125,6 +125,15 @@ Three fixes based on manually reviewing 34 hand-check rows (precision = 88.2%) a
 
 **These fixes have not yet been validated with a rerun.** See `tasks/post_rerun_tests.md`.
 
+### 14. Stage-0 control re-pin (Phase C, 2026-09-16)
+
+The stage-0 prompt digest was re-pinned to `8dc8adea06e16f728a8abdeb0ae44eecf015365880b69c591234434e4a614c88` following Phase C improvements:
+- AKI (outcome 19): raw `creatinine_baseline` added; `creatinine_x_baseline` is now code-derived and no longer asked of the model; `creatinine` definition updated to "Highest serum creatinine during this episode."
+- DHTR (outcome 30): raw `hb_baseline` and `hb_nadir` added; `hb_decline_pct` is now code-derived.
+- Hypertension (outcome 06): raw `sbp`, `dbp`, `bp_percentile` added; `bp_stage` definition clarified ("ONLY as the note states it in words. Do not compute it.") and augmented with code computation via `computed_from`.
+- Transfusional Iron Overload (outcome 34): `liver_iron_conc` unit corrected to `mg Fe/g dry weight` (matching rules.md §34 diagnostic criteria).
+Earlier ablation experiments (Sections 9-13 above) evaluated against the pre-2026-09-16 stage-0 control (`db00daf...`).
+
 ---
 
 ## Current accuracy numbers (Stage 3, pre-fix rerun)

@@ -384,7 +384,11 @@ T("34", "Transfusional Iron Overload (Hemochromatosis or Hemosiderosis)", [
           "attributable organ dysfunction, so it must be tested first.",
           "ROUNDING GAP CLOSED (2026-09-16): rubric bands written as '2.5-6.9', '7-14.9' "
           "for LIC and '1000-1999', '2000-4999' for ferritin; half-open reading [2.5, 7), "
-          "[7, 15) and [1000, 2000), [2000, 5000), for clinical review."])
+          "[7, 15) and [1000, 2000), [2000, 5000), for clinical review.",
+          "LIVER IRON UNIT (2026-09-16): Schema unit changed to mg Fe/g dry weight matching "
+          "rules.md §34 diagnostic criteria and clinical practice; thresholds unchanged. "
+          "Deviation from booklet p.83, recorded in docs/reference/rules_vs_booklet_discrepancies.md; "
+          "for clinical review."])
 
 T("35", "Transient Aplastic Crisis Secondary to Parvovirus B19 Infection", [
     (5, "death_attributed"),

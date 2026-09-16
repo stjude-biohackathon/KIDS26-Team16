@@ -157,7 +157,7 @@ F("creatinine_increase_mg_dl", "num",
 F("egfr", "num", "Estimated glomerular filtration rate.", unit="mL/min/1.73m2", outcomes=["19","21"])
 F("albuminuria", "num", "Urine albumin-to-creatinine ratio.", unit="mg/g", outcomes=["21"])
 F("ferritin", "num", "Serum ferritin at steady state.", unit="ng/mL", outcomes=["34"])
-F("liver_iron_conc", "num", "Liver iron concentration.", unit="mg Fe/100g dry weight", outcomes=["34"])
+F("liver_iron_conc", "num", "Liver iron concentration.", unit="mg Fe/g dry weight", outcomes=["34"])
 F("mri_t2star", "num", "Cardiac MRI T2* relaxation time.", unit="msec", outcomes=["34"])
 F("meld", "num", "Model for End-stage Liver Disease score.", unit="score", outcomes=["32"])
 F("fsh", "num", "Follicle-stimulating hormone.", unit="mIU/mL", outcomes=["23"])
