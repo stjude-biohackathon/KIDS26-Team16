@@ -168,7 +168,75 @@ def resolve_derived(features: dict) -> dict:
             except (ValueError, TypeError):
                 pass
 
+    if "bp_stage" not in env:
+        st = _bp_stage(env)
+        if st is not None:
+            env["bp_stage"] = st
+
     return env
+
+
+def _bp_stage(env: dict) -> str | None:
+    age = env.get("patient_age")
+    if age is None or age is UNKNOWN:
+        return None
+    try:
+        age_f = float(age)
+    except (ValueError, TypeError):
+        return None
+    if age_f < 1.0:
+        return None
+
+    def _to_float(v):
+        if v is None or v is UNKNOWN:
+            return None
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return None
+
+    s = _to_float(env.get("sbp"))
+    d = _to_float(env.get("dbp"))
+    p = _to_float(env.get("bp_percentile"))
+
+    def _adult(s, d):
+        if (s is not None and s >= 140) or (d is not None and d >= 90):
+            return "2"
+        if s is None or d is None:
+            return None
+        if s >= 130 or d >= 80:
+            return "1"
+        if s >= 120:
+            return "elevated"
+        return "normal"
+
+    def _paediatric(s, d, p):
+        if (s is not None and s >= 140) or (d is not None and d >= 90):
+            return "2"
+        if s is None or d is None:
+            return None
+        if p is None:
+            return None
+        if p >= 95:
+            return None
+        if s >= 130 or d >= 80:
+            return "1"
+        if p >= 90 or s >= 120:
+            return "elevated"
+        if p < 90 and s < 120 and d < 80:
+            return "normal"
+        return None
+
+    if age_f >= 14.0:
+        return _adult(s, d)
+    elif 1.0 <= age_f < 13.0:
+        return _paediatric(s, d, p)
+    else:  # 13 <= age < 14
+        a_val = _adult(s, d)
+        ped_val = _paediatric(s, d, p)
+        if a_val is not None and a_val == ped_val:
+            return a_val
+        return None
 
 # ----------------------------------------------------------------- table walking
 

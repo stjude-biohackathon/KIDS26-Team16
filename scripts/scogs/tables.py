@@ -88,7 +88,10 @@ T("06", "Systemic Arterial Hypertension", [
     (2, "bp_stage == 1 or antihypertensive_count == 1"),
     (1, "antihypertensive_count == 0 and bp_stage == elevated"),
 ], notes=["bp_stage is resolved against the age-appropriate ACC/AHA table (ages 1-13 "
-          "use percentiles, > 13 use absolute mmHg), so patient_age is required."])
+          "use percentiles, > 13 use absolute mmHg), so patient_age is required.",
+          "RAW BP RESOLUTION: bp_stage is computed from sbp, dbp, bp_percentile, and "
+          "patient_age when not explicitly stated in words. The 13-year boundary "
+          "('1–13' vs '> 13') and the 'whichever is lower' reading are for clinical review."])
 
 T("07", "Systolic Dysfunction", [
     (4, "lvef < 30"),

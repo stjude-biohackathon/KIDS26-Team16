@@ -549,3 +549,34 @@ def test_30_hb_decline_pct_computation():
     assert grade("30", feats_explicit).grade == 2
 
 
+def test_06_bp_stage_computation():
+    from scogs.evaluate import resolve_derived
+    # adult 135/85 -> "1" -> grade 2 (with death=False, end_organ=False, antihypertensive_count=0)
+    adult_feats = dict(patient_age=30, sbp=135, dbp=85, death_attributed=False,
+                       end_organ_damage=False, antihypertensive_count=0)
+    assert resolve_derived(adult_feats)["bp_stage"] == "1"
+    assert grade("06", adult_feats).grade == 2
+
+    # age 8 at 145/70 -> "2" -> grade 3
+    ped_s2 = dict(patient_age=8, sbp=145, dbp=70, death_attributed=False,
+                  end_organ_damage=False, antihypertensive_count=0)
+    assert resolve_derived(ped_s2)["bp_stage"] == "2"
+    assert grade("06", ped_s2).grade == 3
+
+    # age 8 at 125/70 with no percentile -> absent -> cannot_grade includes bp_stage
+    ped_no_pct = dict(patient_age=8, sbp=125, dbp=70, death_attributed=False,
+                      end_organ_damage=False, antihypertensive_count=0)
+    assert "bp_stage" not in resolve_derived(ped_no_pct)
+    r_no_pct = grade("06", ped_no_pct)
+    assert r_no_pct.status == CANNOT_GRADE
+    assert "bp_stage" in r_no_pct.missing
+
+    # an explicitly stated bp_stage wins over the computed one
+    explicit_feats = dict(patient_age=30, sbp=135, dbp=85, bp_stage="2",
+                          death_attributed=False, end_organ_damage=False,
+                          antihypertensive_count=0)
+    assert resolve_derived(explicit_feats)["bp_stage"] == "2"
+    assert grade("06", explicit_feats).grade == 3
+
+
+

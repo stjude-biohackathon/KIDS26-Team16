@@ -214,10 +214,17 @@ F("cardiovascular_compromise", "bool",
 F("cardiac_compromise", "bool",
   "Cardiac function compromise from the PE, including right heart strain on echo or "
   "ECG, or BNP elevated from baseline.", outcomes=["51"])
+F("sbp", "num", "Baseline blood pressure, not measured during an acute pain episode (rules.md §06).",
+  unit="mmHg", outcomes=["06"])
+F("dbp", "num", "Baseline blood pressure, not measured during an acute pain episode (rules.md §06).",
+  unit="mmHg", outcomes=["06"])
+F("bp_percentile", "num", "BP percentile for age/sex/height as stated in the note.",
+  unit="%", outcomes=["06"])
 F("bp_stage", "ord",
-  "ACC/AHA blood-pressure stage for the patient's age band, per the rubric's tables. "
-  "`elevated` is above normal but below Stage 1.",
-  values=["normal","elevated","1","2"], outcomes=["06"])
+  "Blood-pressure stage ONLY as the note states it in words (e.g. 'stage 1 hypertension', 'elevated BP'). "
+  "Do not compute it.",
+  values=["normal","elevated","1","2"], outcomes=["06"],
+  computed_from=["sbp","dbp","bp_percentile","patient_age"])
 F("antihypertensive_count", "num", "Number of antihypertensive drugs the patient is on.",
   unit="count", outcomes=["06"])
 F("end_organ_damage", "bool",
