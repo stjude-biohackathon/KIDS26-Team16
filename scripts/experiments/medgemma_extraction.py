@@ -1564,7 +1564,7 @@ def main() -> int:
     ap.add_argument("--note-first", action="store_true",
                     help="put the note above the instructions (stage >= 1). Off by "
                          "default: at a median 469 words the gain is small and it costs "
-                         "the shared prefix across an outcome's four calls")
+                         "the shared prefix across calls")
     ap.add_argument("--patient-context", action=argparse.BooleanOptionalAction, default=False,
                     help="extract patient-level context (age, sex) once per note and share across outcomes")
     ap.add_argument("--feedback-retry", action=argparse.BooleanOptionalAction, default=False,

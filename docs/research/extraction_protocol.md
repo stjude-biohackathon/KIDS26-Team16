@@ -76,7 +76,7 @@ Deduplicate related corpora by article PMID.
 ## Limits on conclusions
 
 - Published case reports are edited summaries, not representative clinical notes.
-- Four common outcomes do not validate all 53 SCOGS outcomes.
+- The 14 focus outcomes do not validate all 53 SCOGS outcomes.
 - Neither deterministic tables nor quote matching validate clinical correctness.
 - Missing evidence is not a documented negative. Keep `absent`, `refuted`,
   `grade_set`, `cannot_grade`, and `not_applicable` distinct.
