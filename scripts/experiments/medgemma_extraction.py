@@ -37,6 +37,7 @@ from experiments.ollama_backend import (
     DEFAULT_HOST, DEFAULT_MODEL, GGUF_FILE_TYPES, WEIGHTS, call_ollama, preflight,
 )
 from scogs.applicability import applicability
+from scogs.criteria import criteria_met
 from scogs.definitions import presence_brief
 from scogs.evaluate import grade
 from scogs.features import FEATURES
@@ -897,14 +898,19 @@ def _rank(name: str, v):
     return v
 
 
-def harness_status(rule_status: str, present) -> str:
+def harness_status(rule_status: str, present, criteria=None) -> str:
     """-> the status the harness reports, which splits one of the engine's.
 
     `absent` pools two different findings: the model never evidenced the outcome,
     and the model DID evidence it but the tables overruled the call (a 36.5 degC
     "fever"). Pooled, the second kind lands in the absence audit, where it asks a
     reviewer to confirm an absence that the rule engine, not the model, produced.
+
+    `missed_presence` flags when objective criteria are met (criteria is True)
+    but the model said present was not True (present is not True).
     """
+    if present is not True and criteria is True:
+        return "missed_presence"
     return "refuted" if rule_status == "absent" and present else rule_status
 
 
@@ -954,6 +960,7 @@ class Tally:
     present_quoted: int = 0        # ... of those, with a quote that is in the note
     present_quote_unfound: int = 0 # ... with a quote that is not
     present_unquoted: int = 0      # ... with no quote offered
+    presence_contradicted: int = 0 # criteria met but model said not present
     content_retries: int = 0       # calls redone because the reply was unusable
     unusable_replies: int = 0      # ... and still unusable when the tries ran out
     per_feature: Counter = field(default_factory=Counter)
@@ -990,6 +997,7 @@ class Tally:
             "present_quoted": self.present_quoted,
             "present_quote_unfound": self.present_quote_unfound,
             "present_unquoted": self.present_unquoted,
+            "presence_contradicted": self.presence_contradicted,
             "present_quoted_pct": round(100 * self.present_quoted / (self.present_true or 1), 1),
             "content_retries": self.content_retries,
             "unusable_replies": self.unusable_replies,
@@ -1594,15 +1602,22 @@ def main() -> int:
         grade_results_detail[uid] = {}
         for num, (feats, present, *_) in per.items():
             ok = applicability(num, feats)
+            crit = criteria_met(num, feats)
             res = grade(num, feats, present=bool(present), applicable=ok is not False)
             # "the model never saw this outcome" and "the model called it and the
             # tables overruled the call" are different questions. Pooled as one
             # `absent` they send a reviewer to confirm an absence the rule engine
             # produced, on a note where the model actually said present.
-            status = harness_status(res.status, present)
+            status = harness_status(res.status, present, criteria=crit is True)
+            if status == "missed_presence":
+                tallies[0].presence_contradicted += 1
             statuses[status] += 1
             by_outcome[num][status] += 1
             by_selection[selection[uid].split(":")[0]][status] += 1
+            grade_if_present = (
+                grade(num, feats, present=True, applicable=ok is not False).grade
+                if status == "missed_presence" else None
+            )
             grade_results_detail[uid][num] = {
                 "status": status,
                 "rule_status": res.status,
@@ -1610,14 +1625,16 @@ def main() -> int:
                 "features": feats,
                 "present": present,
                 "applicability": "unknown" if ok is UNKNOWN else bool(ok),
+                "criteria_met": "unknown" if crit is UNKNOWN else bool(crit),
+                "grade_if_present": grade_if_present,
                 "reason": res.reason,
             }
 
     print(f"\nGrade status over {len(notes)}x{len(outcomes)} note-outcome pairs:")
     for k, v in statuses.most_common():
-        print(f"   {k:14s} {v:3d} ({100*v/(len(notes)*len(outcomes)):.1f}%)")
+        print(f"   {k:15s} {v:3d} ({100*v/(len(notes)*len(outcomes)):.1f}%)")
 
-    cols = ["graded", "grade_set", "cannot_grade", "absent", "refuted", "not_applicable"]
+    cols = ["graded", "grade_set", "cannot_grade", "absent", "refuted", "missed_presence", "not_applicable"]
     print(f"\nPer outcome (n={len(notes)} each) - a pooled number hides this shape:")
     print(f"   {'':>3s} {'outcome':30s} " + " ".join(f"{c[:12]:>12s}" for c in cols))
     for num in outcomes:
@@ -1804,6 +1821,7 @@ def main() -> int:
                 "present_quoted": rep0["present_quoted"],
                 "present_quote_unfound": rep0["present_quote_unfound"],
                 "present_unquoted": rep0["present_unquoted"],
+                "presence_contradicted": rep0["presence_contradicted"],
                 "present_quoted_pct": rep0["present_quoted_pct"],
                 "content_retries": rep0["content_retries"],
                 "unusable_replies": rep0["unusable_replies"],

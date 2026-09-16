@@ -6,6 +6,7 @@ import pathlib
 import pytest
 
 from scogs.applicability import APPLICABILITY
+from scogs.criteria import PRESENCE_CRITERIA
 from scogs.features import FEATURES
 from scogs.predicates import parse
 from scogs.tables import TABLES
@@ -28,6 +29,13 @@ def applicability_identifiers():
     return used
 
 
+def criteria_identifiers():
+    used = set()
+    for pred in PRESENCE_CRITERIA.values():
+        used |= parse(pred).names()
+    return used
+
+
 def derived_inputs():
     used = set()
     for spec in FEATURES.values():
@@ -43,12 +51,13 @@ def derived_inputs():
 def test_every_table_identifier_is_a_declared_feature():
     assert sorted(table_identifiers() - set(FEATURES)) == []
     assert sorted(applicability_identifiers() - set(FEATURES)) == []
+    assert sorted(criteria_identifiers() - set(FEATURES)) == []
 
 
 def test_no_orphan_features():
     """A feature nobody grades on is schema drift; extraction-only vocabulary
     belongs to the Layer 1/2 lexicon, not to the grading contract."""
-    assert sorted(set(FEATURES) - table_identifiers() - derived_inputs() - applicability_identifiers()) == []
+    assert sorted(set(FEATURES) - table_identifiers() - derived_inputs() - applicability_identifiers() - criteria_identifiers()) == []
 
 
 def test_every_feature_has_a_definition_and_a_type():

@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from scogs.applicability import APPLICABILITY
+from scogs.criteria import PRESENCE_CRITERIA
 from scogs.features import FEATURES
 from scogs.predicates import parse
 from scogs.tables import TABLES
@@ -36,6 +37,10 @@ def main() -> int:
     for pred in APPLICABILITY.values():
         applicability_in |= parse(pred).names()
 
+    criteria_in = set()
+    for pred in PRESENCE_CRITERIA.values():
+        criteria_in |= parse(pred).names()
+
     derived_in = set()
     for spec in FEATURES.values():
         if spec["derived"]:
@@ -44,8 +49,8 @@ def main() -> int:
         if spec.get("computed_from"):
             derived_in |= {w for w in spec["computed_from"] if w in FEATURES}
 
-    undeclared = sorted((used | applicability_in) - set(FEATURES))
-    orphans = sorted(set(FEATURES) - used - derived_in - applicability_in)
+    undeclared = sorted((used | applicability_in | criteria_in) - set(FEATURES))
+    orphans = sorted(set(FEATURES) - used - derived_in - applicability_in - criteria_in)
     if undeclared or orphans:
         for u in undeclared: print(f"ERROR undeclared feature referenced by a table or rule: {u}")
         for o in orphans:    print(f"ERROR feature declared but graded on by nothing: {o}")

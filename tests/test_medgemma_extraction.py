@@ -661,6 +661,15 @@ def test_every_other_status_passes_through_untouched():
         assert harness_status(st, True) == st and harness_status(st, False) == st
 
 
+def test_harness_status_flags_missed_presence_when_criteria_met():
+    assert harness_status("absent", False, criteria=True) == "missed_presence"
+    assert harness_status("cannot_grade", None, criteria=True) == "missed_presence"
+    assert harness_status("graded", True, criteria=True) == "graded"
+    assert harness_status("absent", False, criteria=False) == "absent"
+    assert harness_status("absent", True, criteria=False) == "refuted"
+
+
+
 # ------------------------------------------------------- provenance labelling
 
 def test_bf16_is_file_type_32_not_30():

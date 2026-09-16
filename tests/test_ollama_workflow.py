@@ -226,6 +226,37 @@ def test_review_conflicts_and_absences_are_separate(tmp_path):
     assert len(rows("refuted_audit")) == 1
 
 
+def test_review_missed_presence_routes_to_absence_audit(tmp_path):
+    review = importlib.import_module("experiments.review_results")
+    outcome = {
+        "outcome_name": "TRV Elevation", "present": False,
+        "extracted_features": {"trv": 3.1},
+        "accepted_findings": [
+            {"feature": "trv", "value": 3.1, "quote": "TRV was 3.1 m/s", "unit": None},
+        ],
+        "conflicts": {},
+        "grade_result": {
+            "status": "missed_presence", "grade": None, "grade_if_present": 4,
+            "reason": "absent",
+        },
+    }
+    source = tmp_path / "results_missed.json"
+    source.write_text(json.dumps({
+        "provenance": {"model_digest": "abc", "prompt_stage": "3"},
+        "detailed_records": [{
+            "patient_uid": "test-trv", "patient_note": "TRV was 3.1 m/s",
+            "outcomes": {"08": outcome},
+        }],
+    }), encoding="utf-8")
+    paths = review.export_reviews(source)
+    with paths["absence_audit"].open(encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert len(rows) == 1
+    assert rows[0]["model_said_present"] == "False"
+    assert rows[0]["outcome"] == "08"
+
+
+
 def test_consistency_includes_presence_and_every_repeat(tmp_path, monkeypatch):
     calls = 0
 

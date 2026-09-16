@@ -81,7 +81,7 @@ def export_reviews(source: pathlib.Path | str, output_dir: pathlib.Path | str | 
                     "reviewer_note": "",
                 })
             status = grade_result["status"]
-            if status in {"absent", "refuted"}:
+            if status in {"absent", "refuted", "missed_presence"}:
                 row = {
                     **common, "model_said_present": outcome["present"], "truly_absent": "",
                     "reviewer_note": "",
@@ -92,7 +92,8 @@ def export_reviews(source: pathlib.Path | str, output_dir: pathlib.Path | str | 
                 if status == "refuted":
                     row.update(extracted_features=json.dumps(outcome["extracted_features"]),
                                rule_reason=grade_result.get("reason"))
-                rows[f"{'absence' if status == 'absent' else 'refuted'}_audit"].append(row)
+                audit_key = "refuted_audit" if status == "refuted" else "absence_audit"
+                rows[audit_key].append(row)
     rng = random.Random(0)
     for name, limit in (("handcheck", 100), ("absence_audit", 50)):
         rows[name] = rng.sample(rows[name], min(limit, len(rows[name])))
