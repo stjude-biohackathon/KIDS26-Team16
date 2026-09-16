@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCOGS &amp; MedGemma Clinical Extraction Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Application Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-title-group">
+        <div class="header-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <h1 class="header-title">SCOGS &amp; MedGemma Extraction Evaluation</h1>
+        <span class="header-subtitle">Sickle Cell Outcome Grading System</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          Load Run JSON / CSV
+        </button>
+        <input type="file" id="file-input" accept=".json,.csv" style="display: none;">
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="app-tabs-nav">
+    <div class="tabs-container">
+      <button class="tab-trigger active" data-tab="tab-overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        Overview &amp; Telemetry
+      </button>
+      <button class="tab-trigger" data-tab="tab-explorer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        Case Explorer &amp; Notes
+      </button>
+      <button class="tab-trigger" data-tab="tab-audit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Audit &amp; Discrepancies
+      </button>
+      <button class="tab-trigger" data-tab="tab-files">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        Runs &amp; Artifacts
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="app-main">
+
+    <!-- Tab 1: Overview & Telemetry -->
+    <section id="tab-overview" class="tab-pane active">
+      
+      <!-- KPI Telemetry Grid -->
+      <div class="telemetry-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Model Weights</div>
+          <div class="kpi-val" id="kpi-model" style="font-size: 1.15rem;">MedGemma 27B</div>
+          <div class="kpi-sub">Ollama (bfloat16)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Notes Evaluated</div>
+          <div class="kpi-val" id="kpi-notes">20</div>
+          <div class="kpi-sub">Stratified (Holdout 25%)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Quote Verification</div>
+          <div class="kpi-val" id="kpi-quote-verified" style="color: var(--status-graded);">100%</div>
+          <div class="kpi-sub">44/44 quotes verified</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Inference Throughput</div>
+          <div class="kpi-val" id="kpi-throughput">10.0 tok/s</div>
+          <div class="kpi-sub" id="kpi-sec-per-note">13.35s / note</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Run Consistency</div>
+          <div class="kpi-val" id="kpi-consistency" style="color: var(--status-gradeset);">100%</div>
+          <div class="kpi-sub">2 Repeat passes evaluated</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Hallucinated Quotes</div>
+          <div class="kpi-val" id="kpi-hallucinations">0.0%</div>
+          <div class="kpi-sub"><span id="kpi-invalid-vals">2</span> invalid value formats</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid-2col">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Outcome Status Distribution</span>
+          </div>
+          <div class="chart-viewport">
+            <canvas id="chart-outcome-status"></canvas>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Extracted Clinical Features Frequency</span>
+          </div>
+          <div class="chart-viewport">
+            <canvas id="chart-features"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid-2col">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Verification &amp; Extraction Funnel</span>
+          </div>
+          <div class="chart-viewport">
+            <canvas id="chart-funnel"></canvas>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Execution Provenance</span>
+          </div>
+          <div class="spec-grid" id="provenance-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Tab 2: Case Explorer & Clinical Notes -->
+    <section id="tab-explorer" class="tab-pane">
+      <div class="explorer-split">
+        
+        <!-- Left Sidebar: Patient Case Index & Filters -->
+        <div class="explorer-sidebar">
+          <div class="sidebar-controls">
+            <input type="text" id="case-search" class="input-text" placeholder="Search UID, note words... (Press /)">
+            <select id="filter-selection" class="input-select">
+              <option value="all">All Cohorts &amp; Seeds</option>
+            </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;">
+              <select id="filter-outcome" class="input-select">
+                <option value="all">All Outcomes</option>
+                <option value="28">28: Pain Crisis</option>
+                <option value="48">48: ACS</option>
+                <option value="36">36: Fever</option>
+                <option value="19">19: AKI</option>
+              </select>
+              <select id="filter-status" class="input-select">
+                <option value="all">All Statuses</option>
+                <option value="graded">Graded</option>
+                <option value="grade_set">Grade Set</option>
+                <option value="cannot_grade">Cannot Grade</option>
+                <option value="refuted">Refuted</option>
+                <option value="absent">Absent</option>
+              </select>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-dim);">
+              <span>Cases:</span>
+              <span id="cases-count-badge" class="status-badge badge-seeded">0 Cases</span>
+            </div>
+          </div>
+
+          <div class="cases-scroll-list" id="cases-list">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Right Pane: Case Detail Workspace -->
+        <div class="explorer-workspace">
+          
+          <div class="workspace-header">
+            <div class="workspace-title-row">
+              <div>
+                <span id="detail-uid" class="status-badge badge-seeded" style="margin-bottom: 0.25rem;">Patient #</span>
+                <h2 id="detail-title" class="workspace-title">Select a patient case</h2>
+              </div>
+            </div>
+            <div id="detail-meta" class="workspace-meta">
+              <!-- Meta items -->
+            </div>
+          </div>
+
+          <div class="workspace-body">
+            
+            <!-- Left Subpane: Clinical Note -->
+            <div class="subpane">
+              <div class="subpane-title">
+                <span>Clinical Case Report Note</span>
+                <span style="font-size: 0.725rem; color: var(--text-muted); font-weight: normal;">
+                  Verbatim quotes highlighted
+                </span>
+              </div>
+              <div class="clinical-note-box" id="note-text-display">
+                Select a patient note on the left.
+              </div>
+            </div>
+
+            <!-- Right Subpane: Evaluated Outcomes & Extracted Features -->
+            <div class="subpane">
+              <div class="subpane-title">
+                <span>Evaluated SCOGS Outcomes &amp; Extracted Features</span>
+              </div>
+              <div id="outcomes-eval-container">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 3: Audit & Discrepancies -->
+    <section id="tab-audit" class="tab-pane">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <span class="panel-title">Audit Review Sheet</span>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">
+              Review refuted cases and verify model extraction against clinical rubric ground truth.
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="exportAuditCSV()">
+            Export Reviewed CSV
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Patient UID</th>
+                <th>Outcome</th>
+                <th>Extracted Features</th>
+                <th>Rubric Decision / Look For</th>
+                <th>Truly Absent</th>
+                <th>Reviewer Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Runs & Artifacts -->
+    <section id="tab-files" class="tab-pane">
+      <div class="grid-2col">
+        
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Load External Run Results</span>
+          </div>
+          <div class="file-dropzone" id="dropzone">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3 style="font-size: 0.95rem; margin-bottom: 0.25rem; font-weight: 600;">Drag and drop results file</h3>
+            <p style="color: var(--text-muted); font-size: 0.775rem; margin-bottom: 0.75rem;">
+              Accepts <code>.json</code> run outputs or <code>refuted_audit.csv</code>
+            </p>
+            <button class="btn btn-primary btn-sm">Browse Files</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Detected Repository Runs</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div class="spec-cell" style="cursor: pointer;" onclick="loadRunData(window.DEFAULT_RUN_DATA)">
+              <div>
+                <strong style="color: var(--text-main);">a100_27b_ollama.json</strong>
+                <div style="font-size: 0.725rem; color: var(--text-dim);">MedGemma 27B BF16 (20 Notes, 4 Outcomes)</div>
+              </div>
+              <span class="status-badge badge-graded">Active</span>
+            </div>
+            <div class="spec-cell">
+              <div>
+                <strong style="color: var(--text-main);">refuted_audit.csv</strong>
+                <div style="font-size: 0.725rem; color: var(--text-dim);">Audit records for refuted extractions</div>
+              </div>
+              <span class="status-badge badge-seeded">Ready</span>
+            </div>
+            <div class="spec-cell">
+              <div>
+                <strong style="color: var(--text-main);">old/absence_audit.csv</strong>
+                <div style="font-size: 0.725rem; color: var(--text-dim);">Historical absence audit table (214 KB)</div>
+              </div>
+              <span class="status-badge badge-absent">Archive</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal for Raw JSON Responses -->
+  <div class="modal-overlay" id="raw-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 style="font-size: 0.9rem; font-weight: 600;">Model Raw JSON Output</h3>
+        <button class="btn btn-sm modal-close-btn">✕</button>
+      </div>
+      <div class="modal-content">
+        <pre class="code-viewer" id="raw-json-content"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-bar" class="toast-bar"></div>
+
+  <!-- Scripts -->
+  <script src="data_bundle.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

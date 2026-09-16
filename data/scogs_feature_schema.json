@@ -1,0 +1,3835 @@
+{
+ "version": 2,
+ "source": "rules.md, verified against SCOGS_Booklet.pdf 2026-08-28",
+ "counts": {
+  "features": 137,
+  "outcomes": 53,
+  "rules": 224
+ },
+ "features": {
+  "acs_other_support": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Erythropoietin or any other supportive treatment for the ACS, other than antibiotics.",
+   "outcomes": [
+    "48"
+   ],
+   "used_by_outcomes": [
+    "48"
+   ]
+  },
+  "adl_limitation": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "instrumental_adl",
+    "self_care_adl"
+   ],
+   "definition": "Highest level of activity limitation documented. `instrumental_adl` = limits cooking, shopping, managing money, telephone; `self_care_adl` = limits bathing, dressing, feeding, toileting.",
+   "outcomes": [
+    "38",
+    "39",
+    "42",
+    "47",
+    "49"
+   ],
+   "used_by_outcomes": [
+    "38",
+    "39",
+    "42",
+    "47",
+    "49"
+   ]
+  },
+  "age_stratum": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "pediatric",
+    "adult"
+   ],
+   "definition": "Derived from patient_age: pediatric when age < 18, adult when >= 18.",
+   "outcomes": [
+    "42",
+    "53"
+   ],
+   "derived": "patient_age",
+   "used_by_outcomes": [
+    "42",
+    "53"
+   ]
+  },
+  "ahi": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "events/hr",
+   "definition": "Apnoea-hypopnoea index on polysomnography.",
+   "outcomes": [
+    "53"
+   ],
+   "used_by_outcomes": [
+    "53"
+   ]
+  },
+  "albuminuria": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mg/g",
+   "definition": "Urine albumin-to-creatinine ratio.",
+   "outcomes": [
+    "21"
+   ],
+   "used_by_outcomes": [
+    "21"
+   ]
+  },
+  "anticoagulation": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Therapeutic anticoagulation started or continued for this event.",
+   "outcomes": [
+    "02"
+   ],
+   "used_by_outcomes": [
+    "02"
+   ]
+  },
+  "antihypertensive_count": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "count",
+   "definition": "Number of antihypertensive drugs the patient is on.",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": [
+    "06"
+   ]
+  },
+  "asthma_medical_intervention": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Medical intervention sought for the asthma exacerbation.",
+   "outcomes": [
+    "49"
+   ],
+   "used_by_outcomes": [
+    "49"
+   ]
+  },
+  "asthma_mild_symptoms": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Mild asthma symptoms with no medical intervention indicated.",
+   "outcomes": [
+    "49"
+   ],
+   "used_by_outcomes": [
+    "49"
+   ]
+  },
+  "avn_intervention": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "conservative",
+    "invasive_local",
+    "joint_replacement"
+   ],
+   "definition": "Highest intervention for the AVN. `conservative` = physical therapy, analgesics, or bone-remodeling agents; `invasive_local` = steroid injection or core decompression; `joint_replacement` = total joint replacement.",
+   "outcomes": [
+    "39"
+   ],
+   "used_by_outcomes": [
+    "39"
+   ]
+  },
+  "avn_on_imaging": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Radiological findings of avascular necrosis.",
+   "outcomes": [
+    "39"
+   ],
+   "used_by_outcomes": [
+    "39"
+   ]
+  },
+  "blood_culture_positive": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Blood culture grew an organism (bacteraemia).",
+   "outcomes": [
+    "37"
+   ],
+   "used_by_outcomes": [
+    "37"
+   ]
+  },
+  "bmd_t_score": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "T",
+   "definition": "Bone mineral density T-score on DEXA (adults).",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "bmd_therapy_indicated": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Therapy to improve bone mineral density indicated.",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "bmd_z_score": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "z",
+   "definition": "Bone mineral density Z-score on DEXA (paediatric).",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "bp_stage": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "normal",
+    "elevated",
+    "1",
+    "2"
+   ],
+   "definition": "ACC/AHA blood-pressure stage for the patient's age band, per the rubric's tables. `elevated` is above normal but below Stage 1.",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": [
+    "06"
+   ]
+  },
+  "cardiac_biomarker_abnormal": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Cardiac enzymes above the reference range (troponin, CK-MB).",
+   "outcomes": [
+    "05"
+   ],
+   "used_by_outcomes": [
+    "05"
+   ]
+  },
+  "cardiac_compromise": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Cardiac function compromise from the PE, including right heart strain on echo or ECG, or BNP elevated from baseline.",
+   "outcomes": [
+    "51"
+   ],
+   "used_by_outcomes": [
+    "51"
+   ]
+  },
+  "cardiovascular_compromise": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The infarction caused significant cardiovascular compromise.",
+   "outcomes": [
+    "05"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "05"
+   ]
+  },
+  "cardioversion": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Cardioversion performed for the arrhythmia.",
+   "outcomes": [
+    "01"
+   ],
+   "used_by_outcomes": [
+    "01"
+   ]
+  },
+  "care_setting": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "home",
+    "clinic_or_day_hospital",
+    "ed_treat_release",
+    "inpatient",
+    "icu"
+   ],
+   "definition": "Highest level of care this event actually reached. `home` = managed without a facility visit; `ed_treat_release` = seen and discharged; `inpatient` = admitted; `icu` = critical care.",
+   "outcomes": [
+    "20",
+    "24",
+    "28",
+    "33",
+    "38",
+    "42",
+    "51"
+   ],
+   "used_by_outcomes": [
+    "20",
+    "28",
+    "33",
+    "38",
+    "42",
+    "51"
+   ]
+  },
+  "chemo_agent_count": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "count",
+   "definition": "Number of chemotherapy agents used.",
+   "outcomes": [
+    "38"
+   ],
+   "used_by_outcomes": [
+    "38"
+   ]
+  },
+  "cognitive_deficit": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Cognitive deficits documented.",
+   "outcomes": [
+    "14"
+   ],
+   "used_by_outcomes": [
+    "14"
+   ]
+  },
+  "creatinine": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mg/dL",
+   "definition": "Serum creatinine.",
+   "outcomes": [
+    "19"
+   ],
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "creatinine_increase_mg_dl": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mg/dL",
+   "definition": "Absolute rise in serum creatinine within 48 hours.",
+   "outcomes": [
+    "19"
+   ],
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "creatinine_x_baseline": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "ratio",
+   "definition": "Serum creatinine as a multiple of the patient's baseline (1.5 means 1.5x baseline).",
+   "outcomes": [
+    "19"
+   ],
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "cytopenia_count": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "definition": "How many of the three cell lines are depressed (anaemia, leucopenia, thrombocytopenia).",
+   "outcomes": [
+    "31"
+   ],
+   "used_by_outcomes": [
+    "31"
+   ]
+  },
+  "death_attributed": {
+   "type": "bool",
+   "scope": "outcome",
+   "definition": "The patient died and the note attributes the death to THIS outcome.",
+   "outcomes": [
+    "01",
+    "02",
+    "04",
+    "05",
+    "06",
+    "13",
+    "15",
+    "18",
+    "19",
+    "20",
+    "21",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "32",
+    "33",
+    "34",
+    "35",
+    "37",
+    "38",
+    "41",
+    "43",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52"
+   ],
+   "used_by_outcomes": [
+    "01",
+    "02",
+    "04",
+    "05",
+    "06",
+    "13",
+    "15",
+    "18",
+    "19",
+    "20",
+    "21",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "32",
+    "33",
+    "34",
+    "35",
+    "37",
+    "38",
+    "41",
+    "43",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52"
+   ]
+  },
+  "depression_severity": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "mild",
+    "moderate",
+    "severe"
+   ],
+   "definition": "Documented depressive symptom severity, when no PHQ-9 score is recorded.",
+   "outcomes": [
+    "47"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "47"
+   ]
+  },
+  "diastolic_dysfunction_present": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Diastolic dysfunction present on echocardiogram per ASE criteria.",
+   "outcomes": [
+    "03"
+   ],
+   "used_by_outcomes": [
+    "03"
+   ]
+  },
+  "efw_percentile": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Estimated fetal weight percentile for gestational age.",
+   "outcomes": [
+    "44"
+   ],
+   "used_by_outcomes": [
+    "44"
+   ]
+  },
+  "egfr": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mL/min/1.73m2",
+   "definition": "Estimated glomerular filtration rate.",
+   "outcomes": [
+    "19",
+    "21"
+   ],
+   "used_by_outcomes": [
+    "19",
+    "21"
+   ]
+  },
+  "end_organ_damage": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Elevated BP caused end-organ damage: acute kidney injury, sudden vision loss, stroke, myocardial infarction, or pulmonary oedema.",
+   "outcomes": [
+    "06"
+   ],
+   "used_by_outcomes": [
+    "06"
+   ]
+  },
+  "esrd_progression": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The AKI progressed to permanent end-stage renal disease.",
+   "outcomes": [
+    "19"
+   ],
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "exudate": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "minimal",
+    "moderate",
+    "heavy"
+   ],
+   "definition": "Leg ulcer exudate volume.",
+   "outcomes": [
+    "40"
+   ],
+   "used_by_outcomes": [
+    "40"
+   ]
+  },
+  "ferritin": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "ng/mL",
+   "definition": "Serum ferritin at steady state.",
+   "outcomes": [
+    "34"
+   ],
+   "used_by_outcomes": [
+    "34"
+   ]
+  },
+  "fertility_intervention_indicated": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Intervention for fertility indicated (e.g., IUI, IVF, ICSI).",
+   "outcomes": [
+    "23"
+   ],
+   "used_by_outcomes": [
+    "23"
+   ]
+  },
+  "fetal_loss": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Fetal loss at any gestational age.",
+   "outcomes": [
+    "45"
+   ],
+   "used_by_outcomes": [
+    "45"
+   ]
+  },
+  "fio2_pct": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Highest documented FiO2 as a percentage. Room air is 21.",
+   "outcomes": [
+    "48"
+   ],
+   "used_by_outcomes": [
+    "48"
+   ]
+  },
+  "fsh": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mIU/mL",
+   "definition": "Follicle-stimulating hormone.",
+   "outcomes": [
+    "23"
+   ],
+   "used_by_outcomes": [
+    "23"
+   ]
+  },
+  "gallstone_intervention": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "medical",
+    "surgical"
+   ],
+   "definition": "Highest intervention for the gallstone disease. `medical` = oral or IV pain medication; `surgical` = stone retrieval or removal, stent placement, cholecystectomy.",
+   "outcomes": [
+    "18"
+   ],
+   "used_by_outcomes": [
+    "18"
+   ]
+  },
+  "gestational_age_weeks": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "weeks",
+   "definition": "Gestational age at delivery of a liveborn infant.",
+   "outcomes": [
+    "46"
+   ],
+   "used_by_outcomes": [
+    "46"
+   ]
+  },
+  "goldberg_stage": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "definition": "Goldberg stage of proliferative sickle retinopathy.",
+   "outcomes": [
+    "17"
+   ],
+   "used_by_outcomes": [
+    "17"
+   ]
+  },
+  "has_serial_height": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "At least two height measurements are available, so the serial-decline table applies rather than the single-timepoint table.",
+   "outcomes": [
+    "26"
+   ],
+   "used_by_outcomes": [
+    "26"
+   ]
+  },
+  "hb_decline_pct": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Fall in haemoglobin from the patient's steady-state baseline, as a percentage.",
+   "outcomes": [
+    "30"
+   ],
+   "used_by_outcomes": [
+    "30"
+   ]
+  },
+  "hb_nadir": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "g/dL",
+   "definition": "Lowest haemoglobin during this event.",
+   "outcomes": [
+    "35"
+   ],
+   "used_by_outcomes": [
+    "35"
+   ]
+  },
+  "hearing_loss_db": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "dB",
+   "definition": "Hearing loss in decibels at 2 kHz and higher frequencies.",
+   "outcomes": [
+    "16"
+   ],
+   "used_by_outcomes": [
+    "16"
+   ]
+  },
+  "hearing_lowest_affected_khz": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "kHz",
+   "definition": "Lowest frequency, in kHz, at which loss exceeds 20 dB. Per the rubric's notes: use 8 kHz, or 6 kHz if 8 kHz was not recorded; if 2 kHz is recorded use 2 kHz, else 3 kHz.",
+   "outcomes": [
+    "16"
+   ],
+   "used_by_outcomes": [
+    "16"
+   ]
+  },
+  "height_for_age_z": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "z",
+   "definition": "Height-for-age z-score at a single timepoint.",
+   "outcomes": [
+    "26"
+   ],
+   "used_by_outcomes": [
+    "26"
+   ]
+  },
+  "height_loss_cm": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "cm",
+   "definition": "Loss of height, in centimetres.",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "height_z_decline": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "z",
+   "definition": "Decline in height-for-age z-score across at least two measurements.",
+   "outcomes": [
+    "26"
+   ],
+   "used_by_outcomes": [
+    "26"
+   ]
+  },
+  "hemodynamic_instability": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Hypotension, shock, or circulatory collapse documented during the event.",
+   "outcomes": [
+    "02",
+    "05",
+    "29",
+    "51"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "02",
+    "05",
+    "29",
+    "51"
+   ]
+  },
+  "hemolysis_intervention": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Intervention given for immune-mediated haemolysis: erythrocyte transfusion, steroids, IVIG, or immunosuppressors.",
+   "outcomes": [
+    "30"
+   ],
+   "used_by_outcomes": [
+    "30"
+   ]
+  },
+  "hf_intervention": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Heart failure exacerbation treated with diuretics, nitric-oxide-containing compounds, and/or non-invasive ventilation.",
+   "outcomes": [
+    "04"
+   ],
+   "used_by_outcomes": [
+    "04"
+   ]
+  },
+  "hormone_replacement_indicated": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Hormone replacement indicated for delayed puberty, either sex.",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "incidental_finding": {
+   "type": "bool",
+   "scope": "outcome",
+   "definition": "This outcome was found incidentally - on imaging or testing done for another reason - rather than being sought for symptoms.",
+   "outcomes": [
+    "18",
+    "33",
+    "38",
+    "51"
+   ],
+   "used_by_outcomes": [
+    "33",
+    "51"
+   ]
+  },
+  "incidental_radiographic_only": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Incidental radiographic findings only - ischaemia, haemorrhage, encephalomalacia, haemosiderosis - with no history of neurologic stroke symptoms. Excludes silent cerebral infarct, which is outcome 14.",
+   "outcomes": [
+    "15"
+   ],
+   "used_by_outcomes": [
+    "15"
+   ]
+  },
+  "infertility": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Infertility documented despite normal semen parameters (male).",
+   "outcomes": [
+    "23"
+   ],
+   "used_by_outcomes": [
+    "23"
+   ]
+  },
+  "intervention_level": {
+   "type": "ord",
+   "scope": "outcome",
+   "values": [
+    "none",
+    "non_urgent_medical",
+    "urgent_medical",
+    "urgent_invasive"
+   ],
+   "definition": "Highest level of intervention indicated for THIS outcome.",
+   "outcomes": [
+    "01"
+   ],
+   "per_outcome": {
+    "01": "`urgent_invasive` = ablation or equivalent urgent procedure."
+   },
+   "used_by_outcomes": [
+    "01"
+   ]
+  },
+  "iq_sd_below_mean": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "SD",
+   "definition": "How many standard deviations below the mean the IQ evaluation fell.",
+   "outcomes": [
+    "11"
+   ],
+   "used_by_outcomes": [
+    "11"
+   ]
+  },
+  "lesion_count": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "one",
+    "more_than_one"
+   ],
+   "definition": "Number of silent infarct lesions on brain MRI.",
+   "outcomes": [
+    "14"
+   ],
+   "used_by_outcomes": [
+    "14"
+   ]
+  },
+  "life_support": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The rubric's recurring clause: 'a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments'. True when any of invasive ventilation, vasopressors, renal replacement, or other life support was indicated.",
+   "outcomes": [
+    "01",
+    "04",
+    "05",
+    "13",
+    "18",
+    "20",
+    "28",
+    "30",
+    "32",
+    "33",
+    "35",
+    "37",
+    "43",
+    "48",
+    "49",
+    "51"
+   ],
+   "derived": "resp_support == invasive_ventilation or vasopressors or renal_replacement or life_support_other",
+   "used_by_outcomes": [
+    "01",
+    "04",
+    "05",
+    "13",
+    "18",
+    "20",
+    "28",
+    "30",
+    "32",
+    "33",
+    "35",
+    "37",
+    "43",
+    "48",
+    "49",
+    "51"
+   ]
+  },
+  "life_support_other": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Any other life-supporting treatment not covered by mechanical ventilation, vasopressors or renal replacement (e.g. ECMO).",
+   "used_by_outcomes": []
+  },
+  "life_threatening_sepsis": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Life-threatening consequences of sepsis, e.g. haemodynamic instability or respiratory failure.",
+   "outcomes": [
+    "37"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "37"
+   ]
+  },
+  "limb_or_life_threatening": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The DVT had limb- or life-threatening consequences.",
+   "outcomes": [
+    "02"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "02"
+   ]
+  },
+  "liver_iron_conc": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mg Fe/100g dry weight",
+   "definition": "Liver iron concentration.",
+   "outcomes": [
+    "34"
+   ],
+   "used_by_outcomes": [
+    "34"
+   ]
+  },
+  "low_bmd_on_imaging": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Radiologic evidence of osteoporosis (adult) or low BMD (paediatric).",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "low_cardiac_output": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Severely reduced cardiac output or cardiac index.",
+   "outcomes": [
+    "52"
+   ],
+   "used_by_outcomes": [
+    "52"
+   ]
+  },
+  "lvef": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Left ventricular ejection fraction.",
+   "outcomes": [
+    "07"
+   ],
+   "used_by_outcomes": [
+    "07"
+   ]
+  },
+  "meld": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "score",
+   "definition": "Model for End-stage Liver Disease score.",
+   "outcomes": [
+    "32"
+   ],
+   "used_by_outcomes": [
+    "32"
+   ]
+  },
+  "mi_severity_criteria": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Any of the myocardial-infarction severity criteria listed in the rubric's diagnostic criteria were met (i.e. more than abnormal enzymes alone).",
+   "outcomes": [
+    "05"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "05"
+   ]
+  },
+  "moyamoya": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Moyamoya syndrome present.",
+   "outcomes": [
+    "09"
+   ],
+   "used_by_outcomes": [
+    "09"
+   ]
+  },
+  "mpap": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "mmHg",
+   "definition": "Mean pulmonary artery pressure by right heart catheterisation.",
+   "outcomes": [
+    "52"
+   ],
+   "used_by_outcomes": [
+    "52"
+   ]
+  },
+  "mri_t2star": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "msec",
+   "definition": "Cardiac MRI T2* relaxation time.",
+   "outcomes": [
+    "34"
+   ],
+   "used_by_outcomes": [
+    "34"
+   ]
+  },
+  "mrs": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "score",
+   "definition": "Modified Rankin Scale at discharge (0-6).",
+   "outcomes": [
+    "15"
+   ],
+   "used_by_outcomes": [
+    "15"
+   ]
+  },
+  "multifocal": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Multifocal osteomyelitis.",
+   "outcomes": [
+    "41"
+   ],
+   "used_by_outcomes": [
+    "41"
+   ]
+  },
+  "multiorgan_failure": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Acute multiorgan failure present.",
+   "outcomes": [
+    "43"
+   ],
+   "used_by_outcomes": [
+    "43"
+   ]
+  },
+  "necrotic_pct": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Percentage of the wound bed that is necrotic.",
+   "outcomes": [
+    "40"
+   ],
+   "used_by_outcomes": [
+    "40"
+   ]
+  },
+  "neoplasm_grade": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "low_no_intervention",
+    "low_nonmetastatic",
+    "high_single_modality",
+    "high_multimodal"
+   ],
+   "definition": "Neoplasm category per the rubric's worked examples. `low_no_intervention` = e.g. CIN, incidental teratoma; `low_nonmetastatic` = e.g. carcinoma in situ, basal cell; `high_single_modality` = e.g. prostate, thyroid, glioma; `high_multimodal` = e.g. AML, lymphoma, osteosarcoma.",
+   "outcomes": [
+    "38"
+   ],
+   "used_by_outcomes": [
+    "38"
+   ]
+  },
+  "neoplasm_intervention": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "noninvasive",
+    "single_modality",
+    "urgent_or_multimodal"
+   ],
+   "definition": "Highest intervention for the neoplasm.",
+   "outcomes": [
+    "38"
+   ],
+   "used_by_outcomes": [
+    "38"
+   ]
+  },
+  "neurologic_instability": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Neurologic instability in the setting of the DVT.",
+   "outcomes": [
+    "02"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "02"
+   ]
+  },
+  "no_breast_dev_by_13": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "No breast development by age 13 (female).",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "no_breast_dev_by_14": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "No breast development by age 14 (female).",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "no_menses_by_16": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "No menses by age 16, or within 4 years of breast development (female).",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "no_testes_increase_by_16": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "No increase in testes volume by age 16 (male).",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "nyha_class": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "definition": "New York Heart Association dyspnoea class.",
+   "outcomes": [
+    "52"
+   ],
+   "used_by_outcomes": [
+    "52"
+   ]
+  },
+  "organ_dysfunction": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Signs or symptoms of organ dysfunction in the setting of the infection.",
+   "outcomes": [
+    "37"
+   ],
+   "review": true,
+   "used_by_outcomes": [
+    "37"
+   ]
+  },
+  "organ_dysfunction_iron": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Organ dysfunction due to iron overload.",
+   "outcomes": [
+    "34"
+   ],
+   "used_by_outcomes": [
+    "34"
+   ]
+  },
+  "osteomyelitis_invasive_treatment": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Invasive treatment for the osteomyelitis: surgery to drain an abscess or address bone complications.",
+   "outcomes": [
+    "41"
+   ],
+   "used_by_outcomes": [
+    "41"
+   ]
+  },
+  "ovarian_reserve_state": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "normal",
+    "diminished",
+    "premature_insufficiency",
+    "infertility"
+   ],
+   "definition": "Most severe documented state of ovarian function.",
+   "outcomes": [
+    "22"
+   ],
+   "used_by_outcomes": [
+    "22"
+   ]
+  },
+  "pain_co_complication": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The pain episode was complicated by organ failure, acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis.",
+   "outcomes": [
+    "28"
+   ],
+   "used_by_outcomes": [
+    "28"
+   ]
+  },
+  "pain_hurt_score": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "score",
+   "definition": "PedsQL Sickle Cell Disease Module 'Pain and Hurt' score in the past 3 months.",
+   "outcomes": [
+    "10"
+   ],
+   "used_by_outcomes": [
+    "10"
+   ]
+  },
+  "pancreatitis": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "The gallstone disease was complicated by pancreatitis.",
+   "outcomes": [
+    "18"
+   ],
+   "used_by_outcomes": [
+    "18"
+   ]
+  },
+  "parenteral_antibiotics": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Antibiotics given by IV or IM route (not oral).",
+   "outcomes": [
+    "41"
+   ],
+   "used_by_outcomes": [
+    "41"
+   ]
+  },
+  "patient_age": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "years",
+   "definition": "Patient age at this encounter, in years. Required before grading 06, 19, 25, 26, 42, 53; grading returns `cannot grade: age unknown` without it.",
+   "outcomes": [
+    "06",
+    "19",
+    "25",
+    "26",
+    "27",
+    "36",
+    "42",
+    "53"
+   ],
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "periwound_status": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "intact",
+    "compromised"
+   ],
+   "definition": "Periwound skin. `compromised` = erythema, maceration, and clinical signs of infection.",
+   "outcomes": [
+    "40"
+   ],
+   "used_by_outcomes": [
+    "40"
+   ]
+  },
+  "phq9": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "score",
+   "definition": "PHQ-9 score.",
+   "outcomes": [
+    "47"
+   ],
+   "used_by_outcomes": [
+    "47"
+   ]
+  },
+  "pres_confirmed": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "PRES confirmed on MRI (gold standard) or head CT.",
+   "outcomes": [
+    "13"
+   ],
+   "used_by_outcomes": [
+    "13"
+   ]
+  },
+  "priapism_intervention": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "medication_home",
+    "medication_facility",
+    "aspiration_irrigation",
+    "shunt_surgery"
+   ],
+   "definition": "Highest intervention for the priapism episode.",
+   "outcomes": [
+    "24"
+   ],
+   "used_by_outcomes": [
+    "24"
+   ]
+  },
+  "pro_severe_count": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "count",
+   "definition": "How many of the three severe patient-reported criteria are met: Pain and Hurt score < 60, PROMIS interference > 64, PROMIS behavior > 57. The rubric's Grade 4 needs at least two.",
+   "outcomes": [
+    "10"
+   ],
+   "derived": "count of (pain_hurt_score < 60, promis_interference_t > 64, promis_behavior_t > 57)",
+   "used_by_outcomes": [
+    "10"
+   ]
+  },
+  "promis_behavior_t": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "T",
+   "definition": "PROMIS T-score, pain behavior domain, past 3 months.",
+   "outcomes": [
+    "10"
+   ],
+   "used_by_outcomes": [
+    "10"
+   ]
+  },
+  "promis_interference_t": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "T",
+   "definition": "PROMIS T-score, pain interference domain, past 3 months.",
+   "outcomes": [
+    "10"
+   ],
+   "used_by_outcomes": [
+    "10"
+   ]
+  },
+  "renal_replacement": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Renal replacement therapy given: haemodialysis, CRRT, haemofiltration, peritoneal dialysis.",
+   "used_by_outcomes": [
+    "19"
+   ]
+  },
+  "resp_support": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "room_air",
+    "low_flow_o2",
+    "high_flow",
+    "niv_bipap_cpap",
+    "invasive_ventilation"
+   ],
+   "definition": "Maximum respiratory support given during the event.",
+   "outcomes": [
+    "48",
+    "49",
+    "52"
+   ],
+   "used_by_outcomes": [
+    "48",
+    "49",
+    "52"
+   ]
+  },
+  "right_heart_failure": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Right-sided congestive heart failure on physical exam.",
+   "outcomes": [
+    "52"
+   ],
+   "used_by_outcomes": [
+    "52"
+   ]
+  },
+  "saba_prn": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Intermittent asthma requiring short-acting beta-agonists as needed.",
+   "outcomes": [
+    "49"
+   ],
+   "used_by_outcomes": [
+    "49"
+   ]
+  },
+  "semen_category": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "normal",
+    "oligospermia",
+    "azoospermia"
+   ],
+   "definition": "Semen analysis category. `oligospermia` includes severe oligospermia and cryptozoospermia - the rubric groups all impaired spermatogenesis short of azoospermia into its Grade 2.",
+   "outcomes": [
+    "23"
+   ],
+   "used_by_outcomes": [
+    "23"
+   ]
+  },
+  "significant_fracture_history": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "History of significant fractures: a long bone fracture of the lower extremity, vertebral compression, or 2 or more long bone fractures of the upper extremities.",
+   "outcomes": [
+    "42"
+   ],
+   "used_by_outcomes": [
+    "42"
+   ]
+  },
+  "sleep_apnea_treatment_indicated": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Treatment indicated for the sleep apnoea, e.g. CPAP or tonsillectomy.",
+   "outcomes": [
+    "53"
+   ],
+   "used_by_outcomes": [
+    "53"
+   ]
+  },
+  "splenectomy": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Splenectomy performed or required.",
+   "outcomes": [
+    "29",
+    "31",
+    "33"
+   ],
+   "used_by_outcomes": [
+    "29",
+    "31",
+    "33"
+   ]
+  },
+  "spo2_desat_over_3min": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "HbO2 saturation below 90% for more than 3 minutes overnight.",
+   "outcomes": [
+    "53"
+   ],
+   "used_by_outcomes": [
+    "53"
+   ]
+  },
+  "status_asthmaticus": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Status asthmaticus.",
+   "outcomes": [
+    "49"
+   ],
+   "used_by_outcomes": [
+    "49"
+   ]
+  },
+  "stenosis_pct": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Maximum arterial stenosis on MRA.",
+   "outcomes": [
+    "09"
+   ],
+   "used_by_outcomes": [
+    "09"
+   ]
+  },
+  "stroke_history": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Prior history of neurologic symptoms of stroke.",
+   "outcomes": [
+    "15"
+   ],
+   "used_by_outcomes": [
+    "15"
+   ]
+  },
+  "stroke_symptoms": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Neurological symptoms during an acute stroke, per NIHSS.",
+   "outcomes": [
+    "15"
+   ],
+   "used_by_outcomes": [
+    "15"
+   ]
+  },
+  "stroke_symptoms_resolved": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Stroke symptoms resolved completely (TIA).",
+   "outcomes": [
+    "15"
+   ],
+   "used_by_outcomes": [
+    "15"
+   ]
+  },
+  "suicide_attempt": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Attempted suicide.",
+   "outcomes": [
+    "47"
+   ],
+   "used_by_outcomes": [
+    "47"
+   ]
+  },
+  "surgical_thrombectomy": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Surgical thrombectomy performed.",
+   "outcomes": [
+    "02"
+   ],
+   "used_by_outcomes": [
+    "02"
+   ]
+  },
+  "symptomatic": {
+   "type": "bool",
+   "scope": "outcome",
+   "definition": "The patient had symptoms attributable to this outcome.",
+   "outcomes": [
+    "01",
+    "38",
+    "39",
+    "49",
+    "51"
+   ],
+   "per_outcome": {
+    "39": "Symptomatic from the AVN, as opposed to a radiological finding alone.",
+    "51": "Symptomatic from the PE, as opposed to an incidental finding."
+   },
+   "used_by_outcomes": [
+    "01",
+    "38",
+    "39",
+    "49",
+    "51"
+   ]
+  },
+  "tcd_velocity": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "cm/s",
+   "definition": "Time-averaged mean velocity on non-imaging transcranial Doppler.",
+   "outcomes": [
+    "12"
+   ],
+   "used_by_outcomes": [
+    "12"
+   ]
+  },
+  "temperature": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "degC",
+   "definition": "Highest documented body temperature.",
+   "outcomes": [
+    "36"
+   ],
+   "used_by_outcomes": [
+    "36"
+   ]
+  },
+  "testes_vol_under_3cc_by_14": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Testes volume below 3 cc at age 14 (male).",
+   "outcomes": [
+    "25"
+   ],
+   "used_by_outcomes": [
+    "25"
+   ]
+  },
+  "threat_of_harm": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Threats of harm to self or others.",
+   "outcomes": [
+    "47"
+   ],
+   "used_by_outcomes": [
+    "47"
+   ]
+  },
+  "thrombocytopenia": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Platelets are a depressed cell line. Grade 1 requires the single depressed line to be platelets ('isolated thrombocytopenia'), not just any one cytopenia.",
+   "outcomes": [
+    "31"
+   ],
+   "used_by_outcomes": [
+    "31"
+   ]
+  },
+  "thrombolysis": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Site-directed thrombolysis (tPA) given.",
+   "outcomes": [
+    "02"
+   ],
+   "used_by_outcomes": [
+    "02"
+   ]
+  },
+  "tlc_pct_pred": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "%",
+   "definition": "Total lung capacity as a percentage of predicted.",
+   "outcomes": [
+    "50"
+   ],
+   "used_by_outcomes": [
+    "50"
+   ]
+  },
+  "transfusion_type": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "simple",
+    "exchange"
+   ],
+   "definition": "Most intensive erythrocyte transfusion given for this event.",
+   "outcomes": [
+    "48"
+   ],
+   "used_by_outcomes": [
+    "48"
+   ]
+  },
+  "treated": {
+   "type": "bool",
+   "scope": "outcome",
+   "definition": "Any treatment was given for THIS outcome during the event. What counts is outcome-specific - read the per-outcome wording.",
+   "outcomes": [
+    "20",
+    "24",
+    "29",
+    "32",
+    "33",
+    "35",
+    "37",
+    "53"
+   ],
+   "per_outcome": {
+    "20": "Any treatment for papillary necrosis: erythrocyte transfusion, IV fluids, etc.",
+    "24": "Medication given for the priapism episode.",
+    "29": "Erythrocyte transfusion, IV fluids, or equivalent for the sequestration. NOTE: the rubric's Grade 3 both requires treatment 'i.e. erythrocyte transfusion, IV fluids, etc.' and excludes 'requiring splenectomy, fluids, etc.' - IV fluids appear on both sides. Implemented as: treatment counts, only splenectomy excludes. See tables.py note for 29.",
+    "32": "Simple or exchange erythrocyte transfusion, or cholestatic agents.",
+    "33": "Any treatment for the splenic infarction.",
+    "35": "Erythrocyte transfusion or erythropoietin.",
+    "37": "Treatment indicated for the sepsis."
+   },
+   "review": true,
+   "used_by_outcomes": [
+    "20",
+    "29",
+    "32",
+    "33",
+    "35",
+    "37"
+   ]
+  },
+  "treatment_recommended": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Treatment recommended for the depression: pharmacologic intervention or behavioral therapy.",
+   "outcomes": [
+    "47"
+   ],
+   "used_by_outcomes": [
+    "47"
+   ]
+  },
+  "trv": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "m/s",
+   "definition": "Tricuspid regurgitant jet velocity on echocardiogram.",
+   "outcomes": [
+    "08"
+   ],
+   "used_by_outcomes": [
+    "08"
+   ]
+  },
+  "unplanned_visits_12mo": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "count",
+   "definition": "Unplanned visits to medical facilities for pain treatment in the past 12 months.",
+   "outcomes": [
+    "10"
+   ],
+   "used_by_outcomes": [
+    "10"
+   ]
+  },
+  "vasopressors": {
+   "type": "bool",
+   "scope": "encounter",
+   "definition": "Vasoactive or vasopressor infusion given (norepinephrine, epinephrine, dopamine, dobutamine, milrinone).",
+   "used_by_outcomes": []
+  },
+  "vessel_segments": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "count",
+   "definition": "Number of arterial segments showing stenosis on MRA.",
+   "outcomes": [
+    "09"
+   ],
+   "used_by_outcomes": [
+    "09"
+   ]
+  },
+  "vision_loss": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "none",
+    "present",
+    "legal_blindness"
+   ],
+   "definition": "Vision loss attributable to the retinopathy.",
+   "outcomes": [
+    "17"
+   ],
+   "used_by_outcomes": [
+    "17"
+   ]
+  },
+  "weight_bmi_z": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "z",
+   "definition": "Weight-for-length z-score, or BMI z-score for age per the rubric's diagnostic criteria.",
+   "outcomes": [
+    "27"
+   ],
+   "used_by_outcomes": [
+    "27"
+   ]
+  },
+  "wound_area_cm2": {
+   "type": "num",
+   "scope": "encounter",
+   "unit": "cm2",
+   "definition": "Leg ulcer wound area.",
+   "outcomes": [
+    "40"
+   ],
+   "used_by_outcomes": [
+    "40"
+   ]
+  },
+  "wound_depth": {
+   "type": "ord",
+   "scope": "encounter",
+   "values": [
+    "intact_indurated",
+    "partial_thickness",
+    "full_thickness_subcutaneous",
+    "full_thickness_fascia"
+   ],
+   "definition": "Leg ulcer depth.",
+   "outcomes": [
+    "40"
+   ],
+   "used_by_outcomes": [
+    "40"
+   ]
+  }
+ },
+ "outcomes": {
+  "01": {
+   "name": "Arrhythmia",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "cardioversion",
+    "death_attributed",
+    "intervention_level",
+    "life_support",
+    "symptomatic"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "cardioversion and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "symptomatic and intervention_level == urgent_invasive"
+    },
+    {
+     "grade": 2,
+     "when": "symptomatic and intervention_level == non_urgent_medical"
+    },
+    {
+     "grade": 1,
+     "when": "not symptomatic and intervention_level == none"
+    }
+   ]
+  },
+  "02": {
+   "name": "Deep Vein Thrombosis (DVT)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "anticoagulation",
+    "death_attributed",
+    "hemodynamic_instability",
+    "limb_or_life_threatening",
+    "neurologic_instability",
+    "surgical_thrombectomy",
+    "thrombolysis"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "limb_or_life_threatening or hemodynamic_instability or neurologic_instability"
+    },
+    {
+     "grade": 3,
+     "when": "thrombolysis and not surgical_thrombectomy"
+    },
+    {
+     "grade": 2,
+     "when": "anticoagulation and not thrombolysis and not surgical_thrombectomy"
+    },
+    {
+     "grade": 1,
+     "when": "not anticoagulation and not thrombolysis and not surgical_thrombectomy"
+    }
+   ]
+  },
+  "03": {
+   "name": "Diastolic Dysfunction",
+   "eval": "first_match",
+   "grades": [
+    2
+   ],
+   "features_required": [
+    "diastolic_dysfunction_present"
+   ],
+   "rules": [
+    {
+     "grade": 2,
+     "when": "diastolic_dysfunction_present"
+    }
+   ],
+   "notes": [
+    "Grade 2 is the only reachable grade. The rubric marks 1, 3, 4 and 5 N/A because SCD diastolic dysfunction has no agreed severity gradation; the outcome is flagged exploratory and did not complete all Delphi rounds."
+   ]
+  },
+  "04": {
+   "name": "Heart Failure Exacerbation",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "hf_intervention",
+    "life_support"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "hf_intervention and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "hf_intervention and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "not hf_intervention"
+    }
+   ]
+  },
+  "05": {
+   "name": "Myocardial Infarction",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "cardiac_biomarker_abnormal",
+    "cardiovascular_compromise",
+    "death_attributed",
+    "hemodynamic_instability",
+    "life_support",
+    "mi_severity_criteria"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "cardiovascular_compromise and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "mi_severity_criteria and not hemodynamic_instability"
+    },
+    {
+     "grade": 2,
+     "when": "cardiac_biomarker_abnormal and not mi_severity_criteria"
+    }
+   ]
+  },
+  "06": {
+   "name": "Systemic Arterial Hypertension",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "antihypertensive_count",
+    "bp_stage",
+    "death_attributed",
+    "end_organ_damage"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "end_organ_damage"
+    },
+    {
+     "grade": 3,
+     "when": "bp_stage == 2 or antihypertensive_count >= 2"
+    },
+    {
+     "grade": 2,
+     "when": "bp_stage == 1 or antihypertensive_count == 1"
+    },
+    {
+     "grade": 1,
+     "when": "antihypertensive_count == 0 and bp_stage == elevated"
+    }
+   ],
+   "notes": [
+    "bp_stage is resolved against the age-appropriate ACC/AHA table (ages 1-13 use percentiles, > 13 use absolute mmHg), so patient_age is required."
+   ]
+  },
+  "07": {
+   "name": "Systolic Dysfunction",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "lvef"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "lvef < 30"
+    },
+    {
+     "grade": 3,
+     "when": "30 <= lvef <= 39"
+    },
+    {
+     "grade": 2,
+     "when": "40 <= lvef <= 49"
+    }
+   ],
+   "notes": [
+    "The rubric says 'with or without the need for medical or surgical intervention' at every grade - intervention is explicitly irrelevant here."
+   ]
+  },
+  "08": {
+   "name": "TRV Elevation on Echocardiogram",
+   "eval": "first_match",
+   "grades": [
+    3,
+    4
+   ],
+   "features_required": [
+    "trv"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "trv >= 3.0"
+    },
+    {
+     "grade": 3,
+     "when": "2.5 <= trv <= 2.9"
+    }
+   ]
+  },
+  "09": {
+   "name": "Cerebral Vasculopathy",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "moyamoya",
+    "stenosis_pct",
+    "vessel_segments"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "(stenosis_pct >= 75 and vessel_segments >= 3) or moyamoya"
+    },
+    {
+     "grade": 4,
+     "when": "(50 <= stenosis_pct <= 74 and vessel_segments > 2) or (stenosis_pct >= 75 and vessel_segments <= 2)"
+    },
+    {
+     "grade": 3,
+     "when": "50 <= stenosis_pct <= 74 and vessel_segments <= 2"
+    },
+    {
+     "grade": 2,
+     "when": "25 <= stenosis_pct <= 49 and vessel_segments > 2"
+    },
+    {
+     "grade": 1,
+     "when": "25 <= stenosis_pct <= 49 and vessel_segments <= 2"
+    }
+   ],
+   "notes": [
+    "The segment count qualifies arterial segments, not the number of stenoses (booklet p.29; corrected in the 2026-08-27 rules.md audit)."
+   ]
+  },
+  "10": {
+   "name": "Chronic Pain",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "pain_hurt_score",
+    "pro_severe_count",
+    "promis_behavior_t",
+    "promis_interference_t",
+    "unplanned_visits_12mo"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "unplanned_visits_12mo > 10 or pro_severe_count >= 2"
+    },
+    {
+     "grade": 3,
+     "when": "4 <= unplanned_visits_12mo <= 10 or pain_hurt_score < 60 or promis_interference_t > 64 or promis_behavior_t > 57"
+    },
+    {
+     "grade": 2,
+     "when": "1 <= unplanned_visits_12mo <= 3 or 61 <= pain_hurt_score <= 80 or (48 < promis_interference_t and promis_interference_t <= 64) or (41 < promis_behavior_t and promis_behavior_t <= 57)"
+    },
+    {
+     "grade": 1,
+     "when": "unplanned_visits_12mo == 0 or pain_hurt_score >= 81 or promis_interference_t <= 48 or promis_behavior_t <= 41"
+    }
+   ],
+   "notes": [
+    "RUBRIC GAP: Pain and Hurt score of exactly 60 matches no grade - Grade 3 is '< 60' and Grade 2 is '61-80'. Left as a gap rather than silently widening a band. A score of 60 returns cannot-determine on that axis.",
+    "The two PROMIS domains have different thresholds (interference 48/64, behavior 41/57) and are separate features; collapsing them into one PROMIS score mis-grades every patient scored on behavior alone."
+   ]
+  },
+  "11": {
+   "name": "Cognitive Dysfunction",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "iq_sd_below_mean"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "iq_sd_below_mean >= 3"
+    },
+    {
+     "grade": 2,
+     "when": "2 <= iq_sd_below_mean and iq_sd_below_mean < 3"
+    },
+    {
+     "grade": 1,
+     "when": "1 <= iq_sd_below_mean and iq_sd_below_mean < 2"
+    }
+   ]
+  },
+  "12": {
+   "name": "Elevated TCD Ultrasonography Velocity",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "tcd_velocity"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "tcd_velocity >= 200"
+    },
+    {
+     "grade": 2,
+     "when": "185 <= tcd_velocity <= 199"
+    },
+    {
+     "grade": 1,
+     "when": "170 <= tcd_velocity <= 184"
+    }
+   ],
+   "notes": [
+    "Non-imaging TCD only. The rubric deliberately excludes TCDi because reference ranges for imaging TCD were never established in STOP."
+   ]
+  },
+  "13": {
+   "name": "Posterior Reversible Encephalopathy Syndrome (PRES)",
+   "eval": "first_match",
+   "grades": [
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "life_support",
+    "pres_confirmed"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "pres_confirmed and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "pres_confirmed and not life_support"
+    }
+   ]
+  },
+  "14": {
+   "name": "Silent Cerebral Infarct",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "cognitive_deficit",
+    "lesion_count"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "lesion_count != none and cognitive_deficit"
+    },
+    {
+     "grade": 2,
+     "when": "lesion_count == more_than_one and not cognitive_deficit"
+    },
+    {
+     "grade": 1,
+     "when": "lesion_count == one and not cognitive_deficit"
+    }
+   ]
+  },
+  "15": {
+   "name": "Stroke (hemorrhagic or ischemic)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "incidental_radiographic_only",
+    "mrs",
+    "stroke_history",
+    "stroke_symptoms",
+    "stroke_symptoms_resolved"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "stroke_symptoms and not stroke_symptoms_resolved and 4 <= mrs <= 5"
+    },
+    {
+     "grade": 3,
+     "when": "stroke_symptoms and not stroke_symptoms_resolved and 1 <= mrs <= 3"
+    },
+    {
+     "grade": 2,
+     "when": "stroke_symptoms and (stroke_symptoms_resolved or mrs == 0)"
+    },
+    {
+     "grade": 1,
+     "when": "incidental_radiographic_only and not stroke_history"
+    }
+   ]
+  },
+  "16": {
+   "name": "Hearing Loss (in at least one ear)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "hearing_loss_db",
+    "hearing_lowest_affected_khz"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "hearing_loss_db >= 70 and hearing_lowest_affected_khz <= 2"
+    },
+    {
+     "grade": 4,
+     "when": "hearing_loss_db > 40 and hearing_loss_db < 70 and hearing_lowest_affected_khz <= 2"
+    },
+    {
+     "grade": 3,
+     "when": "hearing_loss_db > 20 and 2 <= hearing_lowest_affected_khz <= 3"
+    },
+    {
+     "grade": 2,
+     "when": "hearing_loss_db > 20 and hearing_lowest_affected_khz == 4"
+    },
+    {
+     "grade": 1,
+     "when": "hearing_loss_db > 20 and hearing_lowest_affected_khz > 4"
+    }
+   ],
+   "notes": [
+    "Grades are read off the rubric's Note lines, which are the operative definition: the grade is set by the LOWEST frequency at which loss exceeds 20 dB (8 kHz -> G1, 4 kHz -> G2, 2-3 kHz -> G3), then by severity in dB at 2 kHz and above (41-69 -> G4, >= 70 -> G5)."
+   ]
+  },
+  "17": {
+   "name": "Sickle Cell Retinopathy (SCR)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "goldberg_stage",
+    "vision_loss"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "goldberg_stage in (4,5) or vision_loss == legal_blindness"
+    },
+    {
+     "grade": 2,
+     "when": "goldberg_stage == 3 or (goldberg_stage in (1,2) and vision_loss == present)"
+    },
+    {
+     "grade": 1,
+     "when": "goldberg_stage in (1,2) and vision_loss == none"
+    }
+   ],
+   "notes": [
+    "This outcome has no Grade 5; the rubric notes it does not result in death and is a deliberate departure from the framework.",
+    "Grade 2 reads 'Stage 3 SCR WITHOUT vision loss'; stage 3 with vision loss short of legal blindness matches no rubric cell. Compiled liberally: stage 3 grades 2 regardless, since Grade 3 (legal blindness) is tested first. A rubric gap resolved rather than left open - for clinical review."
+   ]
+  },
+  "18": {
+   "name": "Cholecystitis/Cholelithiasis (gallstones)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "gallstone_intervention",
+    "life_support",
+    "pancreatitis"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "pancreatitis or life_support"
+    },
+    {
+     "grade": 3,
+     "when": "gallstone_intervention == surgical"
+    },
+    {
+     "grade": 2,
+     "when": "gallstone_intervention == medical"
+    },
+    {
+     "grade": 1,
+     "when": "gallstone_intervention == none"
+    }
+   ],
+   "notes": [
+    "'incidental finding' in Grade 1 is the rubric's example of requiring no intervention, not an additional conjunct."
+   ]
+  },
+  "19": {
+   "name": "Acute Kidney Injury (AKI)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "creatinine",
+    "creatinine_increase_mg_dl",
+    "creatinine_x_baseline",
+    "death_attributed",
+    "egfr",
+    "esrd_progression",
+    "patient_age",
+    "renal_replacement"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "(creatinine_x_baseline >= 3.0 or creatinine >= 4 or renal_replacement or (patient_age < 18 and egfr < 35)) and esrd_progression"
+    },
+    {
+     "grade": 3,
+     "when": "(creatinine_x_baseline >= 3.0 or creatinine >= 4 or renal_replacement or (patient_age < 18 and egfr < 35)) and not esrd_progression"
+    },
+    {
+     "grade": 2,
+     "when": "2.0 <= creatinine_x_baseline <= 2.9"
+    },
+    {
+     "grade": 1,
+     "when": "1.5 <= creatinine_x_baseline <= 1.9 or creatinine_increase_mg_dl >= 0.3"
+    }
+   ],
+   "notes": [
+    "ORDER IS LOAD-BEARING: Grades 3 and 4 share an identical trigger set and differ only by progression to ESRD. Evaluating upward would return 3 for every Grade 4 patient.",
+    "The paediatric eGFR branch needs patient_age; without it the Grade 3/4 trigger is UNKNOWN rather than false."
+   ]
+  },
+  "20": {
+   "name": "Acute Papillary Necrosis",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "care_setting",
+    "death_attributed",
+    "life_support",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "life_support"
+    },
+    {
+     "grade": 3,
+     "when": "care_setting >= inpatient and treated and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "care_setting >= clinic_or_day_hospital and care_setting < inpatient and treated"
+    },
+    {
+     "grade": 1,
+     "when": "care_setting >= clinic_or_day_hospital and care_setting < inpatient and not treated"
+    }
+   ]
+  },
+  "21": {
+   "name": "Chronic Kidney Disease (CKD)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "albuminuria",
+    "death_attributed",
+    "egfr"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "egfr < 15 or death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "(45 <= egfr <= 59 and albuminuria > 300) or (30 <= egfr <= 44 and albuminuria > 30) or (15 <= egfr <= 29)"
+    },
+    {
+     "grade": 3,
+     "when": "(30 <= egfr <= 44 and albuminuria < 30) or (45 <= egfr <= 59 and 30 <= albuminuria <= 300) or (60 <= egfr <= 89 and albuminuria > 300)"
+    },
+    {
+     "grade": 2,
+     "when": "(45 <= egfr <= 59 and albuminuria < 30) or (egfr >= 60 and 30 <= albuminuria <= 300)"
+    },
+    {
+     "grade": 1,
+     "when": "60 <= egfr <= 89 and albuminuria < 30"
+    }
+   ],
+   "notes": [
+    "A 2-D grid over eGFR x albuminuria, not a ladder - both axes are required."
+   ]
+  },
+  "22": {
+   "name": "Female Ovarian Dysfunction",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "ovarian_reserve_state"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "ovarian_reserve_state == infertility"
+    },
+    {
+     "grade": 2,
+     "when": "ovarian_reserve_state == premature_insufficiency"
+    },
+    {
+     "grade": 1,
+     "when": "ovarian_reserve_state == diminished"
+    }
+   ]
+  },
+  "23": {
+   "name": "Male Impairments",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "fertility_intervention_indicated",
+    "fsh",
+    "infertility",
+    "semen_category"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "semen_category == azoospermia and fsh >= 7.6"
+    },
+    {
+     "grade": 2,
+     "when": "semen_category == oligospermia and fsh >= 7.6"
+    },
+    {
+     "grade": 1,
+     "when": "infertility and semen_category == normal and fsh < 7.6 and not fertility_intervention_indicated"
+    }
+   ],
+   "notes": [
+    "Grade 1 is the rubric's full conjunction - intervention not indicated AND infertility despite normal semen parameters AND FSH < 7.6 - not merely normal labs. An earlier compile dropped the infertility and no-intervention conjuncts."
+   ]
+  },
+  "24": {
+   "name": "Priapism",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "priapism_intervention"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "priapism_intervention == shunt_surgery"
+    },
+    {
+     "grade": 3,
+     "when": "priapism_intervention == aspiration_irrigation"
+    },
+    {
+     "grade": 2,
+     "when": "priapism_intervention == medication_facility"
+    },
+    {
+     "grade": 1,
+     "when": "priapism_intervention <= medication_home"
+    }
+   ]
+  },
+  "25": {
+   "name": "Delayed puberty",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3
+   ],
+   "features_required": [
+    "hormone_replacement_indicated",
+    "no_breast_dev_by_13",
+    "no_breast_dev_by_14",
+    "no_menses_by_16",
+    "no_testes_increase_by_16",
+    "testes_vol_under_3cc_by_14"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "no_breast_dev_by_14 or no_menses_by_16 or no_testes_increase_by_16 or hormone_replacement_indicated"
+    },
+    {
+     "grade": 2,
+     "when": "no_breast_dev_by_13 or testes_vol_under_3cc_by_14"
+    }
+   ]
+  },
+  "26": {
+   "name": "Malnutrition Leading to Stunting (Decreased Height Velocity)",
+   "eval": "stratified",
+   "stratified_on": "has_serial_height",
+   "grades": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "has_serial_height",
+    "height_for_age_z",
+    "height_z_decline"
+   ],
+   "rules": {
+    "false": [
+     {
+      "grade": 5,
+      "when": "death_attributed"
+     },
+     {
+      "grade": 4,
+      "when": "height_for_age_z < -3"
+     }
+    ],
+    "true": [
+     {
+      "grade": 5,
+      "when": "death_attributed"
+     },
+     {
+      "grade": 4,
+      "when": "height_z_decline >= 3"
+     },
+     {
+      "grade": 3,
+      "when": "height_z_decline >= 2"
+     },
+     {
+      "grade": 2,
+      "when": "height_z_decline >= 1"
+     }
+    ]
+   },
+   "notes": [
+    "The stratum is data availability, not age: one height measurement grades on absolute z-score, two or more grade on the decline between them."
+   ]
+  },
+  "27": {
+   "name": "Underweight",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "weight_bmi_z"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "weight_bmi_z <= -3"
+    },
+    {
+     "grade": 3,
+     "when": "-3 < weight_bmi_z and weight_bmi_z <= -2"
+    },
+    {
+     "grade": 2,
+     "when": "-2 < weight_bmi_z and weight_bmi_z <= -1"
+    }
+   ]
+  },
+  "28": {
+   "name": "Acute Sickle Cell Pain Episode",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "care_setting",
+    "death_attributed",
+    "life_support",
+    "pain_co_complication"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "pain_co_complication or life_support"
+    },
+    {
+     "grade": 3,
+     "when": "care_setting >= inpatient and not pain_co_complication"
+    },
+    {
+     "grade": 2,
+     "when": "care_setting >= clinic_or_day_hospital and care_setting < inpatient"
+    },
+    {
+     "grade": 1,
+     "when": "care_setting == home"
+    }
+   ]
+  },
+  "29": {
+   "name": "Acute Splenic Sequestration",
+   "eval": "first_match",
+   "grades": [
+    1,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "hemodynamic_instability",
+    "splenectomy",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "hemodynamic_instability or splenectomy"
+    },
+    {
+     "grade": 3,
+     "when": "treated and not hemodynamic_instability and not splenectomy"
+    },
+    {
+     "grade": 1,
+     "when": "not treated"
+    }
+   ],
+   "notes": [
+    "RUBRIC CONTRADICTION: Grade 3 requires 'treatment (i.e. erythrocyte transfusion, IV fluids, etc.)' and simultaneously excludes 'requiring splenectomy, fluids, etc.' - IV fluids appear as both a qualifying and a disqualifying treatment. Confirmed present in the booklet (p.73), so it is not a transcription error. Implemented as: any treatment qualifies, only splenectomy disqualifies, which is the only reading under which Grade 3 is reachable. Needs a clinical ruling."
+   ]
+  },
+  "30": {
+   "name": "Alloimmunization / Delayed Hemolytic Transfusion Reaction (DHTR)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "hb_decline_pct",
+    "hemolysis_intervention",
+    "life_support"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "hb_decline_pct >= 20 and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "hb_decline_pct >= 20 or hemolysis_intervention"
+    },
+    {
+     "grade": 2,
+     "when": "hb_decline_pct < 20 and not hemolysis_intervention"
+    },
+    {
+     "grade": 1,
+     "when": "not hemolysis_intervention"
+    }
+   ],
+   "notes": [
+    "Grades 1 and 2 overlap by construction: Grade 1 is 'no intervention' and Grade 2 is 'decline < 20% AND no intervention', so every Grade 2 patient also satisfies Grade 1. Highest-first ordering resolves it - Grade 1 is reached only when the haemoglobin decline is not documented."
+   ]
+  },
+  "31": {
+   "name": "Chronic Hypersplenism",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "cytopenia_count",
+    "splenectomy",
+    "thrombocytopenia"
+   ],
+   "rules": [
+    {
+     "grade": 3,
+     "when": "cytopenia_count == 3 or splenectomy"
+    },
+    {
+     "grade": 2,
+     "when": "cytopenia_count == 2 and not splenectomy"
+    },
+    {
+     "grade": 1,
+     "when": "cytopenia_count == 1 and thrombocytopenia and not splenectomy"
+    }
+   ],
+   "notes": [
+    "Grade 1 is 'isolated THROMBOCYTOPENIA' specifically, not any single cytopenia. An isolated anaemia or leucopenia matches no cell and returns absent - a rubric gap, left as a gap rather than silently graded 1."
+   ]
+  },
+  "32": {
+   "name": "Hepatopathy",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "life_support",
+    "meld",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "meld >= 40 or life_support"
+    },
+    {
+     "grade": 3,
+     "when": "30 <= meld <= 39 and treated and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "meld <= 29 and treated and not life_support"
+    },
+    {
+     "grade": 1,
+     "when": "meld <= 29 and not treated"
+    }
+   ]
+  },
+  "33": {
+   "name": "Splenic Infarction",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "care_setting",
+    "death_attributed",
+    "incidental_finding",
+    "life_support",
+    "splenectomy",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "life_support or splenectomy"
+    },
+    {
+     "grade": 3,
+     "when": "care_setting >= inpatient and treated and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "care_setting >= clinic_or_day_hospital and care_setting < inpatient and not life_support"
+    },
+    {
+     "grade": 1,
+     "when": "incidental_finding and not treated"
+    }
+   ]
+  },
+  "34": {
+   "name": "Transfusional Iron Overload (Hemochromatosis or Hemosiderosis)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "ferritin",
+    "liver_iron_conc",
+    "mri_t2star",
+    "organ_dysfunction_iron"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "(liver_iron_conc >= 15 and ferritin > 10000) or mri_t2star < 20 or organ_dysfunction_iron"
+    },
+    {
+     "grade": 3,
+     "when": "(liver_iron_conc >= 15 or 5000 <= ferritin <= 10000) and mri_t2star >= 20 and not organ_dysfunction_iron"
+    },
+    {
+     "grade": 2,
+     "when": "(7 <= liver_iron_conc <= 14.9 or 2000 <= ferritin <= 4999) and mri_t2star >= 20 and not organ_dysfunction_iron"
+    },
+    {
+     "grade": 1,
+     "when": "(2.5 <= liver_iron_conc <= 6.9 or 1000 <= ferritin <= 1999) and mri_t2star >= 20 and not organ_dysfunction_iron"
+    }
+   ],
+   "notes": [
+    "ORDER IS LOAD-BEARING: Grades 3 and 4 both trigger on LIC >= 15. Grade 4 additionally requires ferritin > 10,000, a T2* under 20 msec, or iron-attributable organ dysfunction, so it must be tested first."
+   ]
+  },
+  "35": {
+   "name": "Transient Aplastic Crisis Secondary to Parvovirus B19 Infection",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "hb_nadir",
+    "life_support",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "hb_nadir < 5 and treated and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "hb_nadir < 5 and treated and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "hb_nadir >= 5 and treated"
+    },
+    {
+     "grade": 1,
+     "when": "not treated"
+    }
+   ]
+  },
+  "36": {
+   "name": "Fever",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2
+   ],
+   "features_required": [
+    "temperature"
+   ],
+   "rules": [
+    {
+     "grade": 2,
+     "when": "temperature >= 38.5"
+    },
+    {
+     "grade": 1,
+     "when": "38.0 <= temperature < 38.5"
+    }
+   ],
+   "notes": [
+    "RUBRIC GAP CLOSED (2026-08-31): the rubric's Celsius text - Grade 1 '38.0-38.4', Grade 2 '> 38.5' - leaves (38.4, 38.5] matching no grade, so a temperature of exactly 38.5 degC graded as absent. The rubric's own Fahrenheit annotations resolve it: Grade 1 is '(100.4 - 101.2 degrees Fahrenheit)' = 38.0000-38.4444 degC, and Grade 2 is '(101.3 degrees Fahrenheit)' = exactly 38.5000 degC. The bands are contiguous in Fahrenheit and the Celsius text is a one-decimal rounding of 38.4444. So the intent is [38.0, 38.5) and [38.5, inf), which is what these rows now say. Under the rubric's literal '<= 38.4' a note reporting 101.2 F - the rubric's OWN Grade 1 endpoint - converts to 38.4444 and grades absent. Deviation from rules.md, recorded in rules_vs_booklet_discrepancies.md. The neighbouring gap at outcome 10 (Pain and Hurt score of exactly 60) carries no such evidence and stays open."
+   ]
+  },
+  "37": {
+   "name": "Sepsis",
+   "eval": "first_match",
+   "grades": [
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "blood_culture_positive",
+    "death_attributed",
+    "life_support",
+    "life_threatening_sepsis",
+    "organ_dysfunction",
+    "treated"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "life_threatening_sepsis and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "blood_culture_positive and (organ_dysfunction or treated)"
+    }
+   ]
+  },
+  "38": {
+   "name": "Malignant Neoplasms",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "adl_limitation",
+    "care_setting",
+    "chemo_agent_count",
+    "death_attributed",
+    "neoplasm_grade",
+    "neoplasm_intervention",
+    "symptomatic"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "neoplasm_intervention == urgent_or_multimodal or neoplasm_grade == high_multimodal or chemo_agent_count > 1"
+    },
+    {
+     "grade": 3,
+     "when": "care_setting >= inpatient or adl_limitation == self_care_adl or neoplasm_grade == high_single_modality"
+    },
+    {
+     "grade": 2,
+     "when": "neoplasm_intervention == noninvasive or adl_limitation == instrumental_adl or neoplasm_grade == low_nonmetastatic"
+    },
+    {
+     "grade": 1,
+     "when": "not symptomatic or neoplasm_grade == low_no_intervention"
+    }
+   ]
+  },
+  "39": {
+   "name": "Avascular Necrosis of Joints (AVN)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "adl_limitation",
+    "avn_intervention",
+    "avn_on_imaging",
+    "symptomatic"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "avn_on_imaging and adl_limitation >= instrumental_adl and avn_intervention == joint_replacement"
+    },
+    {
+     "grade": 3,
+     "when": "avn_on_imaging and adl_limitation >= instrumental_adl and avn_intervention >= conservative and avn_intervention < joint_replacement"
+    },
+    {
+     "grade": 2,
+     "when": "avn_on_imaging and adl_limitation >= instrumental_adl and avn_intervention == none"
+    },
+    {
+     "grade": 1,
+     "when": "avn_on_imaging and not symptomatic"
+    }
+   ],
+   "notes": [
+    "The rubric's 'AND/OR limiting instrumental ADL' clause is read as AND in Grades 2-4 alike (an earlier compile conjoined it in Grade 2 but dropped it from Grade 3). Read as OR, every asymptomatic incidental finding would out-rank Grade 1's own cell.",
+    "'Limiting instrumental ADL' is compiled as >= instrumental_adl: a self-care limitation implies the instrumental one, and == would leave a joint-replacement patient with a self-care limitation matching no cell."
+   ]
+  },
+  "40": {
+   "name": "Leg Ulcer",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "exudate",
+    "necrotic_pct",
+    "periwound_status",
+    "wound_area_cm2",
+    "wound_depth"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "wound_depth == full_thickness_fascia and wound_area_cm2 > 8 and necrotic_pct >= 50 and exudate == heavy and periwound_status == compromised"
+    },
+    {
+     "grade": 3,
+     "when": "wound_depth == full_thickness_subcutaneous and wound_area_cm2 > 8 and necrotic_pct < 50 and exudate == moderate and periwound_status == intact"
+    },
+    {
+     "grade": 2,
+     "when": "wound_depth == partial_thickness and wound_area_cm2 < 8 and exudate == minimal and periwound_status == intact"
+    },
+    {
+     "grade": 1,
+     "when": "wound_depth == intact_indurated"
+    }
+   ],
+   "notes": [
+    "'Greater than 8 cm2 < 50% wound bed with necrotic tissue' is one clause - area AND necrotic fraction - not two (booklet p.99; the spurious extra AND was corrected in the 2026-08-27 rules.md audit).",
+    "RUBRIC GAP: a wound of exactly 8 cm2 matches no cell - Grade 2 is '< 8' and Grades 3-4 are '> 8'. Same gap class as outcomes 10 and 36; left as a gap rather than widening a band."
+   ]
+  },
+  "41": {
+   "name": "Osteomyelitis",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "multifocal",
+    "osteomyelitis_invasive_treatment",
+    "parenteral_antibiotics"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "osteomyelitis_invasive_treatment and multifocal"
+    },
+    {
+     "grade": 3,
+     "when": "osteomyelitis_invasive_treatment and not multifocal"
+    },
+    {
+     "grade": 2,
+     "when": "parenteral_antibiotics and not osteomyelitis_invasive_treatment and not multifocal"
+    },
+    {
+     "grade": 1,
+     "when": "not parenteral_antibiotics and not osteomyelitis_invasive_treatment and not multifocal"
+    }
+   ]
+  },
+  "42": {
+   "name": "Osteoporosis",
+   "eval": "stratified",
+   "stratified_on": "age_stratum",
+   "grades": [
+    1,
+    2,
+    3
+   ],
+   "features_required": [
+    "adl_limitation",
+    "age_stratum",
+    "bmd_t_score",
+    "bmd_therapy_indicated",
+    "bmd_z_score",
+    "care_setting",
+    "height_loss_cm",
+    "low_bmd_on_imaging",
+    "significant_fracture_history"
+   ],
+   "rules": {
+    "adult": [
+     {
+      "grade": 3,
+      "when": "height_loss_cm >= 2 or care_setting >= inpatient or adl_limitation == self_care_adl"
+     },
+     {
+      "grade": 2,
+      "when": "((bmd_t_score < -2.5 or height_loss_cm < 2 or adl_limitation == instrumental_adl) and significant_fracture_history) or bmd_therapy_indicated"
+     },
+     {
+      "grade": 1,
+      "when": "(low_bmd_on_imaging or (-2.5 <= bmd_t_score and bmd_t_score <= -1)) and not significant_fracture_history"
+     }
+    ],
+    "pediatric": [
+     {
+      "grade": 3,
+      "when": "adl_limitation == self_care_adl"
+     },
+     {
+      "grade": 2,
+      "when": "(bmd_z_score <= -2.0 and significant_fracture_history) or bmd_therapy_indicated"
+     },
+     {
+      "grade": 1,
+      "when": "low_bmd_on_imaging and bmd_z_score <= -2.0 and not significant_fracture_history"
+     }
+    ]
+   },
+   "notes": [
+    "The booklet prints ONE table with 'Adult:' and 'Pediatric:' clauses inside each cell, not two tables. It is split here because the two readings never interact and patient_age selects between them.",
+    "The fracture-history and BMD-therapy clauses are marked 'for both pediatrics and adults' and are applied to both strata: Grade 1 requires NO significant fracture history and Grade 2 requires it (or BMD therapy indicated). That conjunct was missing from the earlier draft tables, which made Grade 1 and Grade 2 indistinguishable on BMD alone.",
+    "Pediatric Grade 1's 'radiologic evidence of low BMD WITH z-score <= -2.0' is one criterion - both conjuncts - not two alternatives; an earlier compile read the 'with' as OR."
+   ]
+  },
+  "43": {
+   "name": "Acute Multiorgan Failure",
+   "eval": "first_match",
+   "grades": [
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "life_support",
+    "multiorgan_failure"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "multiorgan_failure and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "multiorgan_failure and not life_support"
+    }
+   ]
+  },
+  "44": {
+   "name": "Fetal Growth Restriction",
+   "eval": "first_match",
+   "grades": [
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "efw_percentile"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "efw_percentile < 1"
+    },
+    {
+     "grade": 3,
+     "when": "efw_percentile < 5"
+    },
+    {
+     "grade": 2,
+     "when": "efw_percentile < 10"
+    }
+   ]
+  },
+  "45": {
+   "name": "Pregnancy Loss",
+   "eval": "first_match",
+   "grades": [
+    4
+   ],
+   "features_required": [
+    "fetal_loss"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "fetal_loss"
+    }
+   ],
+   "notes": [
+    "Grade 4 is the only reachable grade: fetal loss at any gestational age."
+   ]
+  },
+  "46": {
+   "name": "Premature Delivery",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "gestational_age_weeks"
+   ],
+   "rules": [
+    {
+     "grade": 4,
+     "when": "gestational_age_weeks <= 24"
+    },
+    {
+     "grade": 3,
+     "when": "24 < gestational_age_weeks and gestational_age_weeks <= 28"
+    },
+    {
+     "grade": 2,
+     "when": "28 < gestational_age_weeks and gestational_age_weeks <= 34"
+    },
+    {
+     "grade": 1,
+     "when": "34 < gestational_age_weeks and gestational_age_weeks <= 37"
+    }
+   ]
+  },
+  "47": {
+   "name": "Depression",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "adl_limitation",
+    "death_attributed",
+    "depression_severity",
+    "phq9",
+    "suicide_attempt",
+    "threat_of_harm",
+    "treatment_recommended"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "20 <= phq9 <= 27 or suicide_attempt or threat_of_harm"
+    },
+    {
+     "grade": 3,
+     "when": "(15 <= phq9 <= 19 or depression_severity == severe) and adl_limitation != none and treatment_recommended"
+    },
+    {
+     "grade": 2,
+     "when": "(10 <= phq9 <= 14 or depression_severity == moderate) and adl_limitation == instrumental_adl and treatment_recommended"
+    },
+    {
+     "grade": 1,
+     "when": "(5 <= phq9 <= 9 or depression_severity == mild) and not treatment_recommended"
+    }
+   ],
+   "notes": [
+    "Each grade offers a symptom-severity route OR a PHQ-9 route; both are carried so a note without a PHQ-9 score is still gradeable.",
+    "Grade 4's trailing 'AND treatment recommended' is not applied: read distributively it would make an attempted suicide ungradeable whenever treatment was not documented. Needs a clinical ruling."
+   ]
+  },
+  "48": {
+   "name": "Acute Chest Syndrome (ACS)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "acs_other_support",
+    "death_attributed",
+    "fio2_pct",
+    "life_support",
+    "resp_support",
+    "transfusion_type"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "(fio2_pct >= 50 or resp_support >= high_flow or transfusion_type == exchange) and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "fio2_pct >= 50 or resp_support >= high_flow or transfusion_type == exchange"
+    },
+    {
+     "grade": 2,
+     "when": "(21 < fio2_pct and fio2_pct < 50 or transfusion_type == simple) and resp_support < high_flow and transfusion_type != exchange"
+    },
+    {
+     "grade": 1,
+     "when": "resp_support == room_air and transfusion_type == none and not acs_other_support"
+    }
+   ],
+   "notes": [
+    "ORDER IS LOAD-BEARING: Grades 3 and 4 share an identical trigger set and differ only by the added critical-support conjunct.",
+    "'BiPAP OR high flow O2' is one step on the resp_support ladder: resp_support >= high_flow covers both."
+   ]
+  },
+  "49": {
+   "name": "Asthma Exacerbation",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "adl_limitation",
+    "asthma_medical_intervention",
+    "asthma_mild_symptoms",
+    "death_attributed",
+    "life_support",
+    "resp_support",
+    "saba_prn",
+    "status_asthmaticus",
+    "symptomatic"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "life_support or resp_support >= niv_bipap_cpap"
+    },
+    {
+     "grade": 3,
+     "when": "adl_limitation == self_care_adl or resp_support >= low_flow_o2 or status_asthmaticus"
+    },
+    {
+     "grade": 2,
+     "when": "((symptomatic and asthma_medical_intervention and resp_support == room_air) or adl_limitation == instrumental_adl or saba_prn) and not status_asthmaticus"
+    },
+    {
+     "grade": 1,
+     "when": "asthma_mild_symptoms and not asthma_medical_intervention"
+    }
+   ]
+  },
+  "50": {
+   "name": "Chronic Restrictive Lung Physiology",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "tlc_pct_pred"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "tlc_pct_pred < 50"
+    },
+    {
+     "grade": 3,
+     "when": "50 <= tlc_pct_pred <= 60"
+    },
+    {
+     "grade": 2,
+     "when": "60 < tlc_pct_pred and tlc_pct_pred <= 70"
+    },
+    {
+     "grade": 1,
+     "when": "70 < tlc_pct_pred and tlc_pct_pred <= 80"
+    }
+   ]
+  },
+  "51": {
+   "name": "Pulmonary Embolism (PE)",
+   "eval": "first_match",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "cardiac_compromise",
+    "care_setting",
+    "death_attributed",
+    "hemodynamic_instability",
+    "incidental_finding",
+    "life_support",
+    "symptomatic"
+   ],
+   "rules": [
+    {
+     "grade": 5,
+     "when": "death_attributed"
+    },
+    {
+     "grade": 4,
+     "when": "care_setting == icu and symptomatic and (cardiac_compromise or hemodynamic_instability) and life_support"
+    },
+    {
+     "grade": 3,
+     "when": "care_setting >= inpatient and symptomatic and cardiac_compromise and not hemodynamic_instability and not life_support"
+    },
+    {
+     "grade": 2,
+     "when": "symptomatic and not cardiac_compromise and not hemodynamic_instability"
+    },
+    {
+     "grade": 1,
+     "when": "incidental_finding and not symptomatic"
+    }
+   ]
+  },
+  "52": {
+   "name": "Pulmonary Hypertension",
+   "eval": "max_of",
+   "grades": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "features_required": [
+    "death_attributed",
+    "low_cardiac_output",
+    "mpap",
+    "nyha_class",
+    "resp_support",
+    "right_heart_failure"
+   ],
+   "rules": {
+    "death": [
+     {
+      "grade": 5,
+      "when": "death_attributed"
+     }
+    ],
+    "mpap": [
+     {
+      "grade": 3,
+      "when": "mpap > 35"
+     },
+     {
+      "grade": 2,
+      "when": "25 <= mpap <= 35"
+     },
+     {
+      "grade": 1,
+      "when": "20 <= mpap and mpap < 25"
+     }
+    ],
+    "nyha": [
+     {
+      "grade": 4,
+      "when": "nyha_class == 4"
+     },
+     {
+      "grade": 3,
+      "when": "nyha_class == 3"
+     },
+     {
+      "grade": 2,
+      "when": "nyha_class in (2,3)"
+     },
+     {
+      "grade": 1,
+      "when": "nyha_class in (1,2)"
+     }
+    ],
+    "echo": [
+     {
+      "grade": 4,
+      "when": "right_heart_failure and (low_cardiac_output or resp_support >= niv_bipap_cpap)"
+     }
+    ]
+   },
+   "notes": [
+    "max_of, per the rubric's own worked example: 'if patient fits Grade 2 criteria based on mPAP, but Grade 3 based on NYHA and echocardiogram criteria, this patient will be classified as Grade 3'. First-match across conjoined axes returns nothing for a patient whose axes disagree, which is indistinguishable from absent - that note was truncated out of rules.md and restored by the 2026-08-27 audit.",
+    "Grades 1-3 all carry 'NO evidence of right heart failure'; that negative is not encoded, so a patient with right heart failure who does not meet Grade 4's second conjunct still grades from the mPAP/NYHA axes. Liberal reading - for clinical review."
+   ]
+  },
+  "53": {
+   "name": "Sleep Apnea (obstructive or central)",
+   "eval": "stratified",
+   "stratified_on": "age_stratum",
+   "grades": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "features_required": [
+    "age_stratum",
+    "ahi",
+    "sleep_apnea_treatment_indicated",
+    "spo2_desat_over_3min"
+   ],
+   "rules": {
+    "adult": [
+     {
+      "grade": 4,
+      "when": "ahi > 30"
+     },
+     {
+      "grade": 3,
+      "when": "15 < ahi and ahi <= 30"
+     },
+     {
+      "grade": 2,
+      "when": "5 <= ahi <= 15 and sleep_apnea_treatment_indicated"
+     },
+     {
+      "grade": 1,
+      "when": "5 <= ahi <= 15 and not sleep_apnea_treatment_indicated"
+     }
+    ],
+    "pediatric": [
+     {
+      "grade": 4,
+      "when": "(15.1 <= ahi <= 24.9 and spo2_desat_over_3min) or ahi >= 25"
+     },
+     {
+      "grade": 3,
+      "when": "(8.0 <= ahi <= 15.0 and spo2_desat_over_3min) or (15.1 <= ahi <= 24.9 and not spo2_desat_over_3min)"
+     },
+     {
+      "grade": 2,
+      "when": "(3.1 <= ahi <= 7.9 and spo2_desat_over_3min) or (8.0 <= ahi <= 15.0 and not spo2_desat_over_3min)"
+     },
+     {
+      "grade": 1,
+      "when": "(ahi <= 3 and spo2_desat_over_3min) or (3.1 <= ahi <= 7.9 and not spo2_desat_over_3min)"
+     }
+    ]
+   },
+   "notes": [
+    "Adult >= 18 / paediatric < 18, per the booklet's table sub-headings.",
+    "The paediatric grades pair an AHI band with the overnight desaturation criterion; clause order was inverted in all four cells and corrected in the 2026-08-27 rules.md audit."
+   ]
+  }
+ },
+ "review_queue": [
+  "cardiovascular_compromise",
+  "depression_severity",
+  "hemodynamic_instability",
+  "life_threatening_sepsis",
+  "limb_or_life_threatening",
+  "mi_severity_criteria",
+  "neurologic_instability",
+  "organ_dysfunction",
+  "treated"
+ ]
+}

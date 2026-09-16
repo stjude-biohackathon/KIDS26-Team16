@@ -1,1028 +1,387 @@
-# SCOGS-Scribe
+# SCOGS: Sickle Cell Outcome Grading System & MedGemma Extraction
 
-### Automated Severity Grading for Sickle Cell Disease from Clinical Notes
-
-**SCOGS-Scribe** is a St. Jude KIDS26 BioHackathon project exploring whether large language models can transform unstructured sickle cell disease clinical notes into standardized **Sickle Cell Outcome Grading System (SCOGS)** severity grades.
-
-The project combines structured SCOGS criteria, synthetic clinical notes, local large language models, automated evaluation, and an interactive dashboard to create an initial computable framework for SCOGS.
-
-> **Team Lead:** Joe Wardell
-> **Project:** St. Jude KIDS26 BioHackathon
-> **BioHackathon Dates:** September 16–18, 2026
+This repository contains the deterministic rule engine for the **Sickle Cell Outcome Grading System (SCOGS)**, the schema definition for clinical features, and the test harness for evaluating **MedGemma** (4B and 27B) standalone clinical feature extraction against the §2 verbatim quote verification contract.
 
 ---
 
-## Project Profile
+## 📦 Datasets & Data Acquisition
 
-### Project Name
+### 1. Pre-Packaged Data (Included in Git Repository)
 
-**SCOGS-Scribe**
+The repository comes pre-packaged with all data required to run the test suite and feature extraction experiments immediately upon cloning:
 
-### Question, Problem, or Opportunity
-
-Can a large language model automatically identify sickle cell disease complications from clinical notes and assign standardized **SCOGS severity grades**?
-
-Sickle cell disease can cause complications across nearly every organ system. The **Sickle Cell Outcome Grading System (SCOGS)** provides a standardized framework for describing the severity of these outcomes using grades from **1–5**, along with diagnostic criteria and frequency patterns.
-
-Currently, applying SCOGS requires reviewers to manually examine clinical information and assign grades outcome by outcome.
-
-This creates several challenges:
-
-* Manual grading is time-intensive.
-* Large patient cohorts require substantial abstraction effort.
-* Clinical information is primarily stored as unstructured text.
-* Grading may vary between reviewers.
-* Manual abstraction is difficult to scale.
-* SCOGS currently lacks a fully computable implementation.
-* There is no established labeled benchmark for automated SCOGS grading.
-
-**SCOGS-Scribe** explores whether large language models can help convert unstructured clinical information into reproducible and standardized SCOGS grades.
+- **[`PMC-Patients/scd_cache.json`](PMC-Patients/scd_cache.json) (3.6 MB):** 978 curated Sickle Cell Disease (SCD) patient case reports filtered from the PubMed Central patient dataset. This is the primary dataset read by `scripts/experiments/medgemma_extraction.py`.
+- **[`data/clincal_notes.csv`](data/clincal_notes.csv) & [`data/clincal_notes_org.csv`](data/clincal_notes_org.csv):** Clinical note datasets with multi-outcome labels.
+- **[`data/scogs_feature_schema.json`](data/scogs_feature_schema.json):** The 137 clinical feature schema definitions for the 53 SCOGS health outcomes.
 
 ---
 
-## Project Goal
+### 2. Downloading Full Raw Datasets (~1.3 GB)
 
-The goal of SCOGS-Scribe is to build a working end-to-end prototype:
+If you need the entire raw 250,000-patient case report corpus from PubMed Central (e.g. for broader cohort exploration or training):
 
-```text
-Synthetic SCD Clinical Note
-            ↓
-     Clinical Information
-            ↓
-         LLM Grader
-            ↓
-      SCOGS Outcome
-            ↓
-    SCOGS Severity Grade
-            ↓
- Evidence + Grading Rationale
-            ↓
- Compare With Ground Truth
-            ↓
-       Model Evaluation
-            ↓
-   Interactive Dashboard
+#### Automated Download Script (Cross-Platform: Windows, Mac, Linux)
+Run the built-in downloader script:
+
+```bash
+# Downloads full PMC-Patients-V2.json (~800MB) & PMC-Patients.csv (~520MB) from Hugging Face
+python scripts/download_data.py
 ```
 
-The goal is **not** to replace clinical judgment.
-
-Instead, the project asks whether an LLM can reliably extract the information needed to apply standardized SCOGS criteria and identify cases where human review may still be necessary.
-
----
-
-## Initial Outcome Scope
-
-The BioHackathon prototype will focus on **14 SCOGS outcomes**.
-
-|  # | Outcome                              |
-| -: | ------------------------------------ |
-|  1 | Acute Pain                           |
-|  2 | Stroke                               |
-|  3 | Splenic Sequestration (SS)           |
-|  4 | Acute Chest Syndrome                 |
-|  5 | Priapism                             |
-|  6 | Chronic Pain                         |
-|  7 | Chronic Kidney Disease (CKD)         |
-|  8 | Retinopathy                          |
-|  9 | CD                                   |
-| 10 | Depression                           |
-| 11 | Transcranial Doppler (TCD) Elevation |
-| 12 | Asthma                               |
-| 13 | Avascular Necrosis (AVN)             |
-| 14 | Leg Ulcer                            |
-
-These outcomes provide a diverse initial test set covering acute and chronic complications across multiple organ systems.
-
-The BioHackathon goal is to establish a **working and reproducible grading pipeline across these selected outcomes** before expanding toward the complete SCOGS framework.
-
----
-
-## What We Are Building
-
-SCOGS-Scribe consists of five major components.
-
-### 1. Machine-Readable SCOGS Criteria
-
-SCOGS criteria for the selected outcomes will be converted from human-readable grading definitions into a structured format such as:
-
-* JSON
-* YAML
-* Structured R objects
-
-The structured criteria may include:
-
-```json
-{
-  "outcome": "Acute Chest Syndrome",
-  "grades": {
-    "1": {
-      "criteria": []
-    },
-    "2": {
-      "criteria": []
-    },
-    "3": {
-      "criteria": []
-    },
-    "4": {
-      "criteria": []
-    },
-    "5": {
-      "criteria": []
-    }
-  }
-}
+Options:
+```bash
+python scripts/download_data.py --files v2    # Download only PMC-Patients-V2.json
+python scripts/download_data.py --files csv   # Download only PMC-Patients.csv
+python scripts/download_data.py --force       # Re-download even if already present
 ```
 
-This machine-readable representation will serve as the grading reference for the LLM.
+#### Manual Download Links (Hugging Face)
+You can also download the files directly from the official [Hugging Face dataset repo (`zhengyun21/PMC-Patients`)](https://huggingface.co/datasets/zhengyun21/PMC-Patients):
+
+- **PMC-Patients-V2.json (250,294 patients):**
+  [`https://huggingface.co/datasets/zhengyun21/PMC-Patients/resolve/main/PMC-Patients-V2.json`](https://huggingface.co/datasets/zhengyun21/PMC-Patients/resolve/main/PMC-Patients-V2.json)
+- **PMC-Patients.csv (167k patient summaries):**
+  [`https://huggingface.co/datasets/zhengyun21/PMC-Patients/resolve/main/PMC-Patients.csv`](https://huggingface.co/datasets/zhengyun21/PMC-Patients/resolve/main/PMC-Patients.csv)
+
+Place the downloaded files inside the `PMC-Patients/` directory at the project root.
 
 ---
 
-### 2. Synthetic Clinical Note Generator
+## Quick Start & Installation
 
-Because access to real clinical notes involves privacy, governance, and data-access requirements, the BioHackathon prototype will begin with **synthetic clinical notes**.
+### 1. Clone & Set Up Python Environment
 
-Each synthetic case will be created with a known ground-truth SCOGS outcome and severity grade.
+```bash
+# Clone repository
+git clone https://github.com/Edward-Bae-00/st_jude.git
+cd st_jude
 
-Synthetic notes may contain:
+# Set up Python virtual environment (Python 3.10+)
+python3 -m venv .venv
+source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 
-* Patient demographics
-* Symptoms
-* Clinical history
-* Physical examination findings
-* Laboratory results
-* Imaging findings
-* Treatments
-* Medications
-* Procedures
-* Respiratory support
-* Transfusions
-* Level of care
-* Hospital course
-* Discharge information
-* Longitudinal disease information
+# Install testing dependencies
+pip install pytest
+```
 
-Where appropriate, cases may include multiple encounters representing progression from presentation through hospitalization, discharge, or death.
+### 2. Verify Rule Engine & Unit Tests
 
-Each synthetic case will contain known labels that can be used to evaluate the grader.
+Run the full test suite (313 unit tests covering table evaluation, schema logic, predicates, and extraction verification):
 
-Example structure:
-
-```text
-Patient ID
-Outcome
-Ground-Truth SCOGS Grade
-Clinical Note
-Relevant Clinical Evidence
-Expected Grading Criteria
+```bash
+pytest
 ```
 
 ---
 
-### 3. LLM-Based SCOGS Grader
+## Running MedGemma Feature Extraction
 
-The grader will ingest a clinical note and determine:
+The test harness evaluates whether MedGemma can extract clinical findings from patient notes and pass the verbatim quote verification gate.
 
-* Which SCOGS outcome is present
-* Which SCOGS grade is supported
-* What clinical evidence supports that grade
-* Which SCOGS criteria were used
-* Whether the evidence is sufficient
-* Whether human review may be necessary
+### Tier Overview
 
-The model should produce **structured output** rather than only free-text responses.
+| Tier | Model ID | Recommended Hardware | Purpose |
+| :--- | :--- | :--- | :--- |
+| **`mock`** | N/A (Deterministic dummy) | Any CPU | Validates the harness and verifier pipeline end-to-end |
+| **`local`** | `google/medgemma-1.5-4b-it` | Apple Silicon / CPU / GPU | Fast dev iteration loop |
+| **`full`** | `google/medgemma-27b-text-it` | NVIDIA GPU (e.g. RTX 4080 16GB + 32GB RAM, RTX 3090/4090 24GB, A100) | Full reporting tier for high-capacity extraction |
 
-Example:
-
-```json
-{
-  "patient_id": "SYN-001",
-  "outcome": "Acute Chest Syndrome",
-  "predicted_grade": 3,
-  "evidence": [
-    "New pulmonary infiltrate",
-    "Required supplemental oxygen",
-    "Escalation of respiratory support"
-  ],
-  "rationale": "The documented clinical findings meet the encoded SCOGS Grade 3 criteria.",
-  "confidence": "high",
-  "human_review": false
-}
-```
-
-The final schema may evolve during the BioHackathon.
+> [!NOTE]
+> In Google's MedGemma family, the large text model is **MedGemma 27B** (`google/medgemma-27b-text-it`, ~24B–27B parameter class), while the lightweight iteration model is **MedGemma 4B** (`google/medgemma-1.5-4b-it`).
 
 ---
 
-### 4. Model Evaluation
+### Cohort & Note Selection
 
-Because synthetic cases have known ground-truth grades, model predictions can be evaluated directly.
+The unit of evaluation is the **(note, outcome) pair**, not the note. `absent` is a
+first-class answer, so the eval set needs outcomes that are genuinely present *and*
+outcomes that are genuinely not.
 
-Evaluation will focus on both overall performance and outcome-specific failure patterns.
+| Flag | Default | What it controls |
+| :--- | :--- | :--- |
+| `--cohort` | `loose` | `loose` keeps any note mentioning sickle cell. `scd_primary` keeps only notes *about* the disease — dropping the carrier/trait state, denials ("denied a family history of SCD"), a relative's diagnosis, and cardiology notes where "SCD" means sudden cardiac death. Pool **978 → 362**. |
+| `--outcomes` | `28,48,36,19` | Comma-separated SCOGS outcome ids to grade each note against. |
+| `--notes` | `20` | Notes drawn from the pool. Pairs = notes × outcomes. |
+| `--stratify` / `--no-stratify` | on | Pick notes that hit every target outcome, then add a random holdout. |
+| `--holdout-frac` | `0.25` | Fraction drawn at random rather than by seed regex — this is what makes the seeds' bias *measurable* instead of merely disclosed. |
+| `--repeat` | `1` | Run N times and report run-to-run consistency at temperature 0. |
+| `--concurrency` | `1` | In-flight backend requests. Needs a batching server (`OLLAMA_NUM_PARALLEL>=N`). |
 
-#### Exact-Match Accuracy
+> [!WARNING]
+> **`--concurrency > 1` confounds run-to-run consistency.** Batched reductions are not
+> bit-identical, so a token can flip at temperature 0 for reasons that have nothing to do
+> with the model. Measure consistency at `--concurrency 1`; raise it only for throughput.
+> The harness prints this warning and records `consistency_confounded_by_batching` in the
+> result file's provenance.
 
-The percentage of cases where:
+**Which cohort to use depends on what you are measuring.** `loose` is the CLI default
+because the absence audit needs notes where an outcome is genuinely absent. Reporting runs
+use `scd_primary` — mention-only notes can *only* ever score `absent`, so leaving them in
+dilutes every rate with absences the model never had a chance to avoid, which is a
+measurement artifact indistinguishable from a model that extracts nothing.
 
-```text
-Predicted Grade = Ground-Truth Grade
-```
-
-#### Within-One-Grade Accuracy
-
-The percentage of cases where:
-
-```text
-| Predicted Grade - Ground-Truth Grade | ≤ 1
-```
-
-#### Confusion Matrix
-
-Confusion matrices will identify grades that are commonly confused with one another.
-
-#### Per-Outcome Accuracy
-
-Performance will be evaluated separately for each SCOGS outcome.
-
-#### Cohen's Kappa
-
-Agreement between model predictions and ground truth can also be measured using Cohen's kappa.
-
-#### Error Analysis
-
-Incorrect predictions will be reviewed to identify patterns such as:
-
-* Missing clinical evidence
-* Incorrect interpretation of thresholds
-* Outcome misclassification
-* Confusion between neighboring grades
-* Insufficient information
-* Hallucinated evidence
-* Failure to recognize important clinical details
-
-A transparent understanding of **why the grader fails** is as important as overall accuracy.
+> [!NOTE]
+> `scripts/run_windows_27b.ps1` and `.bat` do not expose `--cohort`, so they run the
+> `loose` default. Pass `--cohort scd_primary` via the direct Python command for a run
+> whose rates are comparable to the Colab reporting runs.
 
 ---
 
-### 5. Interactive Dashboard
+## 🖥️ Running on an NVIDIA Windows PC (MedGemma 27B / RTX 4080 & 3090/4090)
 
-The final prototype will display grading results through an interactive dashboard.
+This section details how to run the full reporting tier on Windows with NVIDIA GPUs, specifically tuned for configurations like the **RTX 4080 (16 GB VRAM) + 32 GB DDR5 RAM**, as well as 24 GB cards (RTX 3090 / 4090) and multi-GPU setups.
 
-Potential dashboard components include:
+### Hardware & VRAM / RAM Guide
 
-#### Patient-Level View
-
-* Patient identifier
-* Clinical note
-* Identified SCOGS outcome
-* Ground-truth grade
-* Predicted grade
-* Supporting evidence
-* Model rationale
-* Confidence
-* Human-review flag
-
-#### Patient Severity Profile
-
-A patient-level profile may display severity across multiple SCOGS outcomes.
-
-#### Severity Trajectory
-
-For patients with multiple encounters:
-
-```text
-Presentation → Admission → Hospital Course → Discharge
-```
-
-The dashboard may visualize how disease severity changes across the episode.
-
-#### Cohort-Level Views
-
-Potential visualizations include:
-
-* Grade distributions
-* Outcome distributions
-* Organ-system heatmaps
-* Severity profiles
-* Ground-truth vs. predicted grades
-* Model accuracy by outcome
-* Confusion matrices
-* Cases flagged for human review
+| Hardware Profile | Model Format / Quantization | VRAM & RAM Behavior | Recommended Backend |
+| :--- | :--- | :--- | :--- |
+| **RTX 4080 (16 GB VRAM) + 32.0 GB DDR5 RAM** *(Target Setup)* | **4-bit Quantized** (GGUF Q4_K_M or `bitsandbytes` 4-bit) | Model weights consume ~14.2 GB. Ollama/HF loads ~95–100% of layers into the 16 GB GDDR6X VRAM, with the **32 GB DDR5 RAM** providing ample safety margin for KV cache & OS desktop overhead without CUDA OOM. | **Ollama** (fastest, ~15–25 tok/s) or **HF 4-bit** |
+| **RTX 3090 / RTX 4090 (24 GB VRAM)** | **4-bit or 8-bit Quantized** | Fits 100% inside 24 GB VRAM with substantial headroom. | **Ollama** or **HF 4-bit / 8-bit** |
+| **Multi-GPU / Enterprise ($\ge 56\text{ GB}$ VRAM: 2x 3090/4090, A6000, A100)** | **Full Precision (bfloat16)** | Full 16-bit unquantized model weights (~54 GB). | **HF bfloat16** or **vLLM** |
 
 ---
 
-## Proposed Pipeline
+### Option A: Using Ollama for Windows (Recommended for RTX 4080 + 32GB RAM)
 
-```text
-                         SCOGS RUBRIC
-                              │
-                              ▼
-                 MACHINE-READABLE CRITERIA
-                       JSON / YAML
-                              │
-                ┌─────────────┴─────────────┐
-                │                           │
-                ▼                           ▼
-       SYNTHETIC NOTE GENERATOR         LLM GRADER
-                │                           ▲
-                │                           │
-                ▼                           │
-        SYNTHETIC SCD NOTES ────────────────┘
-                │
-                ▼
-       STRUCTURED SCOGS OUTPUT
-                │
-                ├── Outcome
-                ├── Grade
-                ├── Evidence
-                ├── Rationale
-                ├── Confidence
-                └── Human Review Flag
-                │
-                ▼
-          GROUND-TRUTH COMPARISON
-                │
-                ▼
-             EVALUATION
-                │
-                ├── Exact Accuracy
-                ├── Within-One Accuracy
-                ├── Confusion Matrix
-                ├── Cohen's Kappa
-                └── Outcome-Level Accuracy
-                │
-                ▼
-       INTERACTIVE SCOGS DASHBOARD
+Ollama is the easiest and most performant way to run MedGemma 27B on an RTX 4080 with 32 GB DDR5 RAM. Its GGUF runtime optimizes memory mapping and layer placement to deliver high throughput (~15–25 tokens/s) while utilizing system DDR5 RAM for any memory buffer headroom.
+
+1. **Install Ollama for Windows:**
+   - Download and run the installer from [ollama.com/download/windows](https://ollama.com/download/windows).
+   - Ollama automatically detects NVIDIA CUDA drivers on your RTX 4080.
+
+2. **Pull the MedGemma 27B Model:**
+   Open PowerShell and run:
+   ```powershell
+   ollama pull medgemma-27b-text-it
+   ```
+
+3. **Run Extraction:**
+   - **Using the PowerShell Runner Script:**
+     ```powershell
+     .\scripts\run_windows_27b.ps1 -Backend ollama -Notes 20 -Repeat 2 -Out results\full.json
+     ```
+   - **Using the Batch Runner Script (Command Prompt):**
+     ```cmd
+     scripts\run_windows_27b.bat --notes 20 --repeat 2 --out results\full.json
+     ```
+   - **Using Direct Python Command:**
+     ```powershell
+     python scripts\experiments\medgemma_extraction.py --tier full --backend ollama --notes 20 --repeat 2 --out results\full.json
+     ```
+
+---
+
+### Option B: Using PyTorch + Hugging Face with CUDA & 4-bit Quantization
+
+If running directly in Python via Hugging Face Transformers:
+
+1. **Install PyTorch with CUDA 12.1+ support:**
+   ```powershell
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   ```
+
+2. **Install Transformers & 4-bit Quantization packages:**
+   ```powershell
+   pip install transformers accelerate bitsandbytes sentencepiece
+   ```
+
+3. **Run with 4-bit Quantization (`bitsandbytes`):**
+   The harness automatically enables `device_map="auto"` and `load_in_4bit=True`, which fits onto the RTX 4080 16GB VRAM and uses the 32GB DDR5 RAM as a fallback offload buffer if needed:
+   ```powershell
+   .\scripts\run_windows_27b.ps1 -Backend hf -Quant 4bit -Notes 20 -Repeat 2 -Out results\full.json
+   ```
+   Or via direct Python command:
+   ```powershell
+   python scripts\experiments\medgemma_extraction.py --tier full --backend hf --quant 4bit --notes 20 --repeat 2 --out results\full.json
+   ```
+
+---
+
+### Option C: Using vLLM or OpenAI-Compatible Local Server
+
+If serving MedGemma 27B via vLLM, SGLang, or llama.cpp server:
+
+```powershell
+python scripts\experiments\medgemma_extraction.py --tier full --backend openai --host http://localhost:8000 --notes 20 --repeat 2 --out results\full.json
 ```
 
 ---
 
-## Tools and Technology Stack
+### 💡 Windows & RTX 4080 Optimization Tips
 
-### Primary Language
-
-**R**
-
-R will be used for:
-
-* Data generation
-* Data processing
-* Model integration
-* Evaluation
-* Visualization
-* Dashboard development
+- **Free Up Initial VRAM:** Windows Desktop Window Manager (DWM) and hardware-accelerated web browsers typically consume 0.5–1.5 GB of VRAM. Closing heavy background applications (games, 3D apps, GPU-accelerated browser tabs) before starting ensures maximum free VRAM for model layers.
+- **DDR5 Bandwidth Advantage:** Your 32.0 GB DDR5 RAM provides substantial memory bandwidth (typically 4800–6000 MT/s), ensuring that any layer spillover or KV cache operations happen with minimal latency impact.
+- **PowerShell Execution Policy:** If running `.ps1` scripts for the first time, allow local scripts by running `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` in PowerShell.
 
 ---
 
-### Large Language Models
+## ☁️ Running on Google Colab (NVIDIA A100 GPU)
 
-The project is designed to support locally hosted or open-weight models.
+This is the **reporting path** — the runs whose numbers are quoted come from here.
 
-Potential tools include:
+- **Notebook:** [`notebooks/medgemma_27b_a100_16bit.ipynb`](notebooks/medgemma_27b_a100_16bit.ipynb) — 12 steps, A100 80GB, BF16 via Ollama.
 
-* Ollama
-* MedGemma
-* Llama
-* Mistral
-* Qwen
-* Other locally available models
+### How this notebook actually gets its weights
 
-The model layer should remain modular so that different models can be tested using the same clinical cases and grading framework.
+> [!IMPORTANT]
+> **Nothing is pulled from a model registry.** There is no `ollama pull` for MedGemma 27B
+> that works here. The notebook merges a BF16 GGUF, builds an Ollama store from it, and
+> caches **both** in `MyDrive/scogs_ollama_models`. Later sessions restore from Drive and
+> skip the merge entirely. Colab wipes local scratch every session; only Drive survives.
+
+### The steps
+
+| Step | What it does |
+| :--- | :--- |
+| 1–2 | Verify the A100, clone the repo at `BRANCH`, install only what is missing. |
+| 3 | `pytest -q` — the decision tables, schema, predicates and the §2 verifier. Red here means nothing downstream is worth reading. |
+| 4–5 | Model choice and the Drive cache; get the model into the local store. `5b`/`5c` are recovery paths, off by default. |
+| **6** | **Preflight gate ⛔** — halts the notebook. This is the cell that catches a daemon that answers but cannot `generate`, and quotes carrying corrupt GGUF byte tokens. |
+| 7 | Run the harness: `--cohort scd_primary --stratify --holdout-frac 0.25 --notes 20 --repeat 2`. |
+| 8–9 | Results, grounding against **both denominators**, and every accepted finding with its quote. |
+| **10–11** | **Generate the two review sheets ⭐** — the hand-check and the absence audit. See below; these produce the numbers nothing automated can. |
+| 12 | Download artifacts. |
+
+> [!WARNING]
+> **The notebook runs from what is _pushed_, never your working copy.** Step 2 clones from
+> GitHub and checks out `BRANCH`. Uncommitted fixes are invisible in Colab — commit and push
+> before running, or Step 2's harness assertion will fail.
 
 ---
 
-### LLM Integration
+## 🍎 Running on Mac / Apple Silicon (MedGemma 4B)
 
-Potential R packages and interfaces:
+1. **Install and Start Ollama:**
+   ```bash
+   ollama serve
+   ollama pull medgemma-1.5-4b-it
+   ```
 
-```text
-ellmer
-httr2
-jsonlite
+2. **Run Extraction (20 notes, 2 repeats):**
+   ```bash
+   python3 scripts/experiments/medgemma_extraction.py --tier local --notes 20 --repeat 2 --out results/local.json
+   ```
+
+3. **Run Mock Mode (No GPU / No Model Needed):**
+   ```bash
+   python3 scripts/experiments/medgemma_extraction.py --backend mock --notes 2
+   ```
+
+---
+
+## 📊 Understanding the Output & Metrics
+
+The extraction harness automatically calculates:
+
+- **Quote-verified %:** Measures whether proposed features carry a verbatim quote directly present in the note (catches hallucinations). **This is a grounding check, not precision.** It asks whether the quoted words are in the note; it cannot ask whether they *support* the value. `fio2_pct = 21` quoting *"the patient needed increasing oxygen by nasal cannula"* verifies at 100%. Precision is a human judgement and comes only from the hand-check sheet's `supports_value` column.
+- **Unit guard:** For a numeric feature whose schema declares a convertible unit, the number is read out of its own verified quote, in the unit the note wrote it in, and converted. A note using mg/L throughout otherwise puts `7.0` into an mg/dL creatinine field — a 10× error no type check can see. A value matching neither its quote's number nor that number's conversion is rejected and counted.
+- **Value conflicts:** One `(note, outcome)` routinely yields several verified values for one feature — a note carries five creatinines across twelve years and one of them belongs to the transplant donor. Where the schema states an aggregation ("Highest level of care this event actually reached") the values collapse by it; where it does not, the disagreement is reported and the feature is withheld from grading rather than resolved by emission order.
+- **Run-to-run consistency:** Measures output determinism at temperature 0 across repeated runs. At `--concurrency 1` with greedy decoding, 100% is the *expected* result — it is a smoke test for a nondeterministic serving stack, not evidence about the model.
+- **Invalid-value rate:** Detects values outside declared types or enums.
+- **Unparseable replies:** Tracks any malformed JSON generations.
+- **SCOGS Decision Table Grading:** Evaluates extracted features through the official SCOGS logic (outcomes: `graded`, `absent`, `refuted`, `grade_set`, or `cannot_grade`). `refuted` is split out of `absent`: the model *did* evidence the outcome and the decision tables overruled the call (a 36.5 °C "fever"). Pooled with `absent` it sends a reviewer to confirm an absence the rule engine, not the model, produced.
+- **Provenance & `run_id`:** Every result file carries a `run_id`, and every review sheet generated from it stamps that id on each row. A filled-in sheet that has drifted apart from its results file is worse than no sheet, because the review hours land on the wrong run and nothing says so.
+- **Throughput & Profiling:** Wall-clock time, tokens/second, and tokens per note.
+
+All detailed extractions and clinical note text are saved to the JSON file specified by `--out` (e.g. `results/full.json`, or `results/a100_27b_ollama.json` from the Colab notebook).
+
+---
+
+## 📝 Review Sheets — the numbers the harness cannot compute
+
+Everything above is behaviour the harness can check by itself. **Neither precision nor the
+false-negative rate is in that list**, and neither can be. Both need a human to read the note.
+Steps 10 and 11 of the Colab notebook generate the sheets that collect them.
+
+| Sheet | Column to fill | What it measures |
+| :--- | :--- | :--- |
+| `results/handcheck.csv` | `supports_value` (y/n) | **Precision.** Quote verification says the span is real; it does not say the span *supports the value*. This column is the only thing that does. |
+| `results/absence_audit.csv` | `truly_absent` (y/n) | **False-negative rate.** Of the pairs the model called absent, how many really were? Nothing else substitutes for this number. |
+| `results/refuted_audit.csv` | `truly_absent`, `reviewer_note` | Pairs where the model *did* evidence the outcome and the decision tables overruled it. Kept separate from `absent` on purpose — pooled, nobody would look. |
+| `results/conflicts.csv` | — | Features withheld from grading because one `(note, outcome)` produced several verified, disagreeing values. |
+
+> [!CAUTION]
+> **`results/*.csv` is gitignored, and that is deliberate.** Sheets are regenerated per run.
+> A stale sheet sitting beside a newer results file silently describes a *different run*, and
+> the review hours land on the wrong one. Every sheet stamps the `run_id` of the results file
+> it came from on each row — check it matches before filling anything in. If a filled-in sheet
+> ever needs committing, narrow the ignore rule first rather than forcing the add.
+
+---
+
+## 📈 Results Dashboard
+
+A self-contained browser dashboard for reading a run: KPI cards, outcome-status breakdown,
+a case explorer with **interactive verbatim quote highlighting** over the note text, the
+refuted/audit reviewer sheet, and drag-and-drop loading of any results JSON.
+
+```bash
+open dashboard/index.html            # no server needed
+python3 dashboard/server.py          # or, with live results/ endpoints, on :8080
 ```
 
-Model prompts will request structured outputs that can be programmatically validated and analyzed.
+See [`dashboard/README.md`](dashboard/README.md). Note that the run bundled into
+`data_bundle.js` is a **stale demonstration run**, not a current result — load your own
+results JSON through the Runs tab.
 
 ---
 
-### Synthetic Data
+## 📚 Reference Documents
 
-Potential packages:
-
-```text
-charlatan
-wakefield
-tidyverse
-```
-
-Synthetic clinical-note templates may also be generated using rule-based or LLM-assisted approaches.
-
----
-
-### Data Processing
-
-```text
-dplyr
-tidyr
-purrr
-stringr
-readr
-tibble
-```
-
----
-
-### Evaluation
-
-```text
-yardstick
-dplyr
-ggplot2
-```
-
-Metrics may include:
-
-* Exact-match accuracy
-* Within-one-grade accuracy
-* Confusion matrices
-* Cohen's kappa
-* Outcome-specific accuracy
-
----
-
-### Dashboard
-
-The interactive dashboard will primarily use:
-
-```text
-Shiny
-ggplot2
-plotly
-DT
-```
-
----
-
-### Development and Collaboration
-
-```text
-Git
-GitHub
-RStudio
-VS Code
-Ollama
-```
+| Document | What it is |
+| :--- | :--- |
+| [`rules.md`](rules.md) | The SCOGS rubric compiled to prose and decision tables. **This is the authority** — there is no external gold standard; the tables in `scripts/scogs/tables.py` implement this file. |
+| [`rules_vs_booklet_discrepancies.md`](rules_vs_booklet_discrepancies.md) | Every place `rules.md` departs from the printed booklet, and why. Also records where `tables.py` deliberately deviates from `rules.md` — a different axis, kept in its own section. |
+| [`SCOGS_Booklet.pdf`](SCOGS_Booklet.pdf) | The source booklet the rubric was transcribed from. |
+| [`tasks/plan.md`](tasks/plan.md) | Implementation plan. §7 defines the ground-truth review protocol. |
+| [`tasks/medgemma_extraction_test.md`](tasks/medgemma_extraction_test.md) | The P11 protocol: what is measured, the pass gates, and the limitations to state with any result. |
+| [`tasks/handoff.md`](tasks/handoff.md) | **Read this before running anything.** Current state, what to do next in order, and the traps that have already cost a session. |
 
 ---
 
 ## Repository Structure
 
-The repository may follow a structure similar to:
-
-```text
-SCOGS-SCRIBE/
-│
+```
 ├── README.md
-│
-├── LICENSE
-│
-│
+├── rules.md                          # The SCOGS rubric as prose + tables (the authority)
+├── rules_vs_booklet_discrepancies.md # Where rules.md departs from the booklet, and why
+├── SCOGS_Booklet.pdf                 # Source booklet
+├── dashboard/                        # Self-contained results dashboard
+│   ├── index.html                    #   open directly, no server required
+│   ├── server.py                     #   optional zero-dependency server w/ results/ API
+│   └── data_bundle.js                #   bundled demo run (stale - see dashboard/README.md)
+├── docs/
+│   └── windows_gpu_setup.md          # Detailed Windows NVIDIA GPU setup guide
+├── notebooks/
+│   └── medgemma_27b_a100_16bit.ipynb # Colab A100 reporting run, Steps 1-12
+├── scripts/
+│   ├── download_data.py              # Automated dataset downloader & cache builder
+│   ├── audit/                        # Booklet extraction and rules-vs-booklet comparison
+│   │   ├── extract_booklet.py
+│   │   ├── compare_grades.py
+│   │   └── compare_prose.py
+│   ├── experiments/
+│   │   └── medgemma_extraction.py    # Main MedGemma extraction test harness
+│   ├── run_windows_27b.ps1           # PowerShell runner for Windows
+│   ├── run_windows_27b.bat           # Batch runner for Windows
+│   └── scogs/                        # Core SCOGS rule engine and tables
+│       ├── build_schema.py           # Generates data/scogs_feature_schema.json
+│       ├── evaluate.py               # Rule evaluator
+│       ├── features.py               # 137 feature definitions
+│       ├── predicates.py             # Predicate parsing
+│       └── tables.py                 # 53 decision tables
+├── tasks/
+│   ├── plan.md                       # Implementation plan & roadmap
+│   ├── medgemma_extraction_test.md   # P11 test protocol & metrics definitions
+│   └── handoff.md                    # Current state, next actions, known traps
+├── tests/                            # Pytest suite (313 tests)
 ├── data/
-│   ├── raw/
-│   ├── synthetic/
-│   └── outputs/
-│
-├── scogs-schema/
-│   ├── acute-pain/
-│   ├── stroke/
-│   ├── splenic-sequestration/
-│   ├── acute-chest-syndrome/
-│   ├── priapism/
-│   ├── chronic-pain/
-│   ├── ckd/
-│   ├── retinopathy/
-│   ├── cd/
-│   ├── depression/
-│   ├── tcd-elevation/
-│   ├── asthma/
-│   ├── avn/
-│   ├── leg-ulcer/
-│   └── scogs_schema.json
-│
-├── synthetic-note-generator/
-│   ├── templates/
-│   ├── scripts/
-│   └── outputs/
-│
-├── grader/
-│   ├── prompts/
-│   ├── scripts/
-│   ├── schemas/
-│   └── outputs/
-│
-├── evaluation/
-│   ├── scripts/
-│   ├── metrics/
-│   ├── confusion-matrices/
-│   └── reports/
-│
-├── dashboard/
-│   ├── app.R
-│   ├── modules/
-│   └── www/
-│
-├── project-management/
-│   ├── team.md
-│   ├── tasks.md
-│   ├── decisions.md
-│   └── milestones.md
-│
-└── docs/
-    ├── methods.md
-    ├── limitations.md
-    ├── architecture.md
-    └── demo.md
+│   ├── scogs_feature_schema.json     # 137 features across 53 outcomes
+│   ├── clincal_notes.csv             # Clinical notes with multi-outcome labels
+│   └── clincal_notes_org.csv
+├── PMC-Patients/
+│   ├── scd_cache.json                # 978 pre-filtered sickle cell patient summaries
+│   ├── PMC-Patients-V2.json          # Full raw corpus (downloaded via script, gitignored)
+│   └── PMC-Patients.csv              # Full summary table (downloaded via script, gitignored)
+└── results/                          # Generated run JSON + review sheets (*.csv gitignored)
 ```
-
-The exact repository structure may evolve as development progresses.
-
----
-
-## Team
-
-### Team Lead
-
-**Joe Wardell**
-
-GitHub: `@ADD-GITHUB-HANDLE`
-
-### Team Members
-
-See:
-
-[`project-management/team.md`](project-management/team.md)
-
-Team roles may include:
-
-| Role                | Primary Responsibility                               |
-| ------------------- | ---------------------------------------------------- |
-| Project Lead        | Scope, coordination, integration, presentation       |
-| SCOGS Criteria Team | Convert grading criteria into machine-readable rules |
-| Synthetic Data Team | Create clinical-note cases with known ground truth   |
-| LLM / Prompt Team   | Develop and test grading prompts                     |
-| Evaluation Team     | Measure agreement and analyze model errors           |
-| Dashboard Team      | Build visualization and interactive interface        |
-| Documentation Team  | Maintain GitHub documentation and methods            |
-
-Team members may contribute across multiple areas.
-
----
-
-## Communication
-
-Primary team communication:
-
-**Add team Slack / Teams / GitHub Discussion channel here**
-
-GitHub Issues should be used for:
-
-* Tasks
-* Bugs
-* Feature requests
-* Documentation needs
-* Decisions requiring team discussion
-
----
-
-## Vision
-
-Create a scalable and computable approach for applying standardized sickle cell disease severity criteria to clinical information.
-
-Long term, a validated SCOGS-Scribe framework could support:
-
-* Cohort-scale disease severity profiling
-* Retrospective research
-* Longitudinal outcomes research
-* Standardized phenotype definitions
-* Clinical research
-* Trial endpoints
-* Multi-institutional comparisons
-* Automated clinical-data abstraction
-* Human-assisted chart review
-
----
-
-## Mission
-
-During the KIDS26 BioHackathon, the team will build and evaluate a prototype that converts synthetic unstructured sickle cell disease clinical notes into structured SCOGS severity grades.
-
-The project will prioritize:
-
-**Reproducibility → Transparency → Evaluation → Scalability**
-
-The objective is not simply to obtain an LLM answer.
-
-The objective is to create a system where we can determine:
-
-> What did the model predict?
-
-> What clinical evidence did it use?
-
-> Which SCOGS criteria support the prediction?
-
-> Was the prediction correct?
-
-> When should a human review the case?
-
----
-
-## BioHackathon Roadmap
-
-| Day       | Focus                                                                                                                                     | Expected Outcome                                                                                 |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Day 1** | Finalize outcomes, assign roles, encode SCOGS criteria, establish repository structure, create synthetic cases, and run first model tests | Initial SCOGS schemas, synthetic dataset, first successful note-to-grade model output            |
-| **Day 2** | Expand synthetic cases, develop grading pipeline, test prompts/models, calculate preliminary metrics, and build dashboard                 | Working end-to-end grading pipeline with initial accuracy results                                |
-| **Day 3** | Refine failure cases, integrate components, finalize evaluation, complete dashboard, document limitations, and prepare demo               | Stable demonstration, quantified results, documented repository, and presentation-ready workflow |
-
----
-
-## Day 1 Priorities
-
-* [ ] Confirm all 14 target outcomes
-* [ ] Assign team members and roles
-* [ ] Establish GitHub workflow
-* [ ] Define SCOGS JSON/YAML schema
-* [ ] Encode initial grading criteria
-* [ ] Develop synthetic-note format
-* [ ] Generate initial test cases
-* [ ] Establish expected LLM output schema
-* [ ] Run first LLM grading test
-* [ ] Confirm output can be parsed programmatically
-* [ ] Create initial dashboard framework
-
----
-
-## Day 2 Priorities
-
-* [ ] Expand synthetic cases across outcomes and grades
-* [ ] Test multiple clinical-note formats
-* [ ] Improve prompts
-* [ ] Test selected LLMs
-* [ ] Automate the grading workflow
-* [ ] Capture evidence and rationale
-* [ ] Calculate exact-match accuracy
-* [ ] Calculate within-one-grade accuracy
-* [ ] Generate confusion matrices
-* [ ] Evaluate performance by outcome
-* [ ] Begin error analysis
-* [ ] Integrate outputs with dashboard
-
----
-
-## Day 3 Priorities
-
-* [ ] Stabilize grading pipeline
-* [ ] Address major failure modes
-* [ ] Finalize model evaluation
-* [ ] Complete dashboard
-* [ ] Add human-review flags
-* [ ] Document methodology
-* [ ] Document limitations
-* [ ] Document repository structure
-* [ ] Clean code
-* [ ] Prepare demonstration cases
-* [ ] Prepare final presentation
-* [ ] Document next steps
-
----
-
-## Minimum Viable Product
-
-At minimum, the SCOGS-Scribe prototype should be able to:
-
-* [ ] Load or generate a synthetic SCD clinical note
-* [ ] Send the note to a locally available LLM
-* [ ] Identify the relevant SCOGS outcome
-* [ ] Assign a SCOGS severity grade
-* [ ] Extract supporting clinical evidence
-* [ ] Provide a structured rationale
-* [ ] Return machine-readable output
-* [ ] Compare the prediction with ground truth
-* [ ] Calculate model performance
-* [ ] Display the result in an interactive dashboard
-
-The project does **not** need to achieve perfect accuracy during the BioHackathon.
-
-A useful result may instead demonstrate:
-
-* Where automated grading works well
-* Which outcomes are difficult
-* Which grades are frequently confused
-* Which clinical evidence the model misses
-* When human review is necessary
-
----
-
-## Definition of Success
-
-A successful BioHackathon prototype will demonstrate the complete workflow:
-
-```text
-Clinical Note
-     ↓
-SCOGS-Scribe
-     ↓
-Outcome + Grade + Evidence
-     ↓
-Ground Truth Comparison
-     ↓
-Performance Metrics
-     ↓
-Dashboard
-```
-
-Success means leaving the BioHackathon with:
-
-* A functioning prototype
-* Reproducible code
-* Structured SCOGS criteria
-* Synthetic benchmark cases
-* Quantified performance
-* Identified failure modes
-* Clear documentation
-* An interactive demonstration
-* A roadmap for future validation
-
----
-
-## Stretch Goals
-
-If the minimum viable product is completed early:
-
-* [ ] Increase the number of synthetic cases
-* [ ] Add all grades represented within each selected outcome
-* [ ] Support multiple outcomes in the same clinical note
-* [ ] Add confidence estimates
-* [ ] Add a **Needs Human Review** flag
-* [ ] Compare multiple LLMs
-* [ ] Compare different prompt strategies
-* [ ] Compare zero-shot and rubric-grounded grading
-* [ ] Add multi-encounter clinical trajectories
-* [ ] Track severity from presentation through discharge
-* [ ] Add longitudinal SCOGS visualization
-* [ ] Develop patient-level severity profiles
-* [ ] Develop organ-system heatmaps
-* [ ] Export standardized analytic endpoints
-* [ ] Expand beyond the initial 14 outcomes
-* [ ] Move toward all 53 SCOGS outcomes
-
----
-
-## Human Review
-
-Automated grading should not assume every case can be confidently classified.
-
-Potential reasons to trigger human review include:
-
-```text
-Insufficient clinical evidence
-Conflicting clinical evidence
-Multiple possible grades
-Missing required diagnostic criteria
-Ambiguous documentation
-Low model confidence
-Unsupported model rationale
-Possible hallucinated evidence
-```
-
-A future version of SCOGS-Scribe could combine automated grading with targeted manual review rather than attempting complete automation.
-
----
-
-## Project Principles
-
-### 1. Ground the Model in SCOGS
-
-The model should grade cases using the SCOGS criteria rather than relying only on general clinical knowledge.
-
-### 2. Use Structured Outputs
-
-Predictions should be machine-readable and easy to validate.
-
-### 3. Capture Evidence
-
-Every predicted grade should be linked to evidence from the clinical note.
-
-### 4. Measure Performance
-
-A model prediction is not useful without evaluating whether it is correct.
-
-### 5. Make Errors Visible
-
-Failure cases should be preserved and studied rather than hidden.
-
-### 6. Start With Synthetic Data
-
-Synthetic cases allow rapid prototype development without protected patient data.
-
-### 7. Keep Humans in the Loop
-
-Ambiguous or low-confidence cases should be identifiable for review.
-
-### 8. Prioritize Reproducibility
-
-Prompts, model versions, criteria, code, and evaluation procedures should be documented.
-
----
-
-## Limitations
-
-SCOGS-Scribe is an exploratory research prototype.
-
-Important limitations include:
-
-* Synthetic notes are not equivalent to real clinical documentation.
-* Performance on synthetic cases does not establish performance on real patients.
-* Synthetic cases may be cleaner and more explicit than real notes.
-* LLM predictions may be incorrect.
-* LLMs may hallucinate clinical evidence.
-* Different models may produce different results.
-* Clinical terminology varies across institutions.
-* Clinical documentation varies across clinicians.
-* Some SCOGS grades may require information unavailable in a single note.
-* Longitudinal outcomes may require information across multiple encounters.
-* Model confidence does not necessarily represent calibrated statistical uncertainty.
-* Automated grading requires future expert validation.
-
-The prototype should **not be used for clinical decision-making**.
-
----
-
-## Data and Privacy
-
-The BioHackathon prototype is designed to use **synthetic clinical notes**.
-
-No protected patient information is required for the initial prototype.
-
-Future validation using real clinical notes would require:
-
-* Appropriate approvals
-* Data governance review
-* Secure computing environments
-* Appropriate clinical-data access
-* Collaboration with relevant data owners
-* Appropriate research oversight
-
-Synthetic-first development allows the engineering and evaluation framework to be created without making access to protected clinical notes a prerequisite for the BioHackathon.
-
----
-
-## Future Directions
-
-After the BioHackathon, potential next steps include:
-
-1. Expand the number of synthetic benchmark cases.
-2. Improve clinical realism of synthetic notes.
-3. Expand machine-readable SCOGS criteria.
-4. Add additional SCOGS outcomes.
-5. Evaluate multiple open-weight and hosted LLMs.
-6. Optimize prompting strategies.
-7. Evaluate structured-output reliability.
-8. Perform expert review of synthetic cases.
-9. Establish inter-rater agreement benchmarks.
-10. Validate automated grading against manually graded clinical notes.
-11. Compare LLM predictions with expert SCOGS reviewers.
-12. Develop uncertainty and human-review workflows.
-13. Create longitudinal severity profiles.
-14. Create standardized analytic datasets from model outputs.
-15. Explore integration with retrospective SCD cohort studies.
-16. Develop a reusable computable implementation of SCOGS.
-17. Prepare technical documentation and methods manuscripts.
-18. Expand toward all 53 SCOGS outcomes.
-
----
-
-## Longer-Term Vision
-
-The ultimate goal is not simply to classify clinical notes.
-
-The longer-term opportunity is to create a system that transforms:
-
-```text
-Unstructured Clinical Documentation
-                 ↓
-       Standardized Evidence
-                 ↓
-          SCOGS Outcomes
-                 ↓
-        SCOGS Severity Grades
-                 ↓
-      Longitudinal Severity Data
-                 ↓
-     Research-Ready Endpoints
-```
-
-A validated system could potentially make large-scale SCOGS research substantially more efficient and reproducible.
-
----
-
-## Contributing
-
-Team members should:
-
-1. Create or assign a GitHub Issue before starting major work.
-2. Work on a dedicated branch.
-3. Keep commits focused and descriptive.
-4. Avoid committing protected or confidential data.
-5. Document new scripts and major functions.
-6. Submit changes through pull requests when practical.
-7. Record major project decisions in `project-management/decisions.md`.
-
-Example branch names:
-
-```text
-feature/synthetic-notes
-feature/scogs-schema
-feature/llm-grader
-feature/evaluation
-feature/dashboard
-docs/readme
-fix/json-output
-```
-
-Example commit messages:
-
-```text
-Add acute pain SCOGS schema
-
-Create synthetic ACS cases
-
-Add structured LLM grading output
-
-Calculate exact-match accuracy
-
-Add patient severity dashboard
-
-Document grader limitations
-```
-
----
-
-## Documentation
-
-Project documentation should be maintained throughout the BioHackathon rather than added only at the end.
-
-Important documentation includes:
-
-```text
-README.md
-docs/methods.md
-docs/limitations.md
-docs/architecture.md
-project-management/team.md
-project-management/tasks.md
-project-management/decisions.md
-```
-
----
-
-## Reproducibility
-
-Whenever possible, record:
-
-* Model name
-* Model version
-* Prompt version
-* SCOGS schema version
-* Generation parameters
-* Synthetic case version
-* Evaluation date
-* Software/package versions
-
-This will allow team members to determine whether changes in model behavior are caused by:
-
-* Model changes
-* Prompt changes
-* Criteria changes
-* Dataset changes
-* Code changes
-
----
-
-## Disclaimer
-
-**SCOGS-Scribe is a research and BioHackathon prototype.**
-
-It is not intended for clinical use, diagnosis, treatment recommendations, or clinical decision-making.
-
-Any future application to real clinical data will require appropriate validation, governance, approvals, and expert clinical oversight.
-
----
-
-## The Question We Want to Answer
-
-> **Can standardized SCOGS severity criteria be transformed into a computable framework that allows an LLM to reproducibly grade sickle cell disease outcomes from clinical text?**
-
-The goal of the BioHackathon is not to build a perfect production system in three days.
-
-The goal is to leave with a **clear, transparent, reproducible, and evaluable prototype that others can build on.**
