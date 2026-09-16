@@ -246,3 +246,24 @@ def test_notebooks_execute_in_order_without_colab_or_shell_magics(
     assert len(outputs) == expected_runs
     assert len(list((tmp_path / "notebook results").glob("*/handcheck.csv"))) == expected_runs
     assert all(json.loads(p.read_text(encoding="utf-8"))["provenance"]["quant"] == "F16" for p in outputs)
+
+
+@pytest.mark.parametrize("flag_args", [
+    [],
+    ["--outcomes", "14"],
+    ["--outcomes", "focus"],
+])
+def test_cli_outcomes_default_and_aliases(flag_args, tmp_path):
+    out = tmp_path / f"outcomes_{'_'.join(flag_args) or 'default'}.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--backend", "mock", "--notes", "1",
+         "--out", str(out), *flag_args],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert len(data["provenance"]["outcomes"]) == 14
+    assert set(data["provenance"]["outcomes"]) == {
+        "10", "11", "12", "15", "17", "21", "24", "28", "29", "39", "40", "47", "48", "49"
+    }
+

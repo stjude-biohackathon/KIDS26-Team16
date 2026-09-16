@@ -10,7 +10,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "scripts
 from medgemma_extraction import (  # noqa: E402
     Tally, build_prompt, coerce, harness_status, is_scd_primary, normalize,
     outcome_seed, call_mock, reconcile, reduce_policy, scd_mentions,
-    select_notes, unit_guard, verify, GGUF_FILE_TYPES,
+    select_notes, unit_guard, verify, GGUF_FILE_TYPES, DEFAULT_OUTCOMES,
 )
 
 NOTE = ("A 14-year-old with HbSS presented with chest pain. FiO2 was escalated to 60%. "
@@ -538,3 +538,30 @@ def test_the_prompt_says_which_of_several_values_to_report():
     """'At most ONCE' alone does not say WHICH one, and the schema already answers it."""
     p = build_prompt(NOTE, "28")
     assert "at most ONCE" in p and '"highest"' in p
+
+
+def test_default_outcomes_are_the_14_focus_conditions():
+    from scogs.tables import TABLES
+
+    expected_14 = {
+        "10",  # Chronic Pain
+        "11",  # Cognitive Dysfunction (CD)
+        "12",  # Elevated TCD Ultrasonography Velocity (TCD Elevation)
+        "15",  # Stroke
+        "17",  # Sickle Cell Retinopathy (Retinopathy)
+        "21",  # Chronic Kidney Disease (CKD)
+        "24",  # Priapism
+        "28",  # Acute Sickle Cell Pain Episode (Acute Pain)
+        "29",  # Acute Splenic Sequestration (SS)
+        "39",  # Avascular Necrosis of Joints (AVN)
+        "40",  # Leg Ulcer
+        "47",  # Depression
+        "48",  # Acute Chest Syndrome (ACS)
+        "49",  # Asthma Exacerbation (Asthma)
+    }
+    parsed = set(DEFAULT_OUTCOMES.split(","))
+    assert parsed == expected_14
+    assert len(DEFAULT_OUTCOMES.split(",")) == 14
+    for outcome_id in parsed:
+        assert outcome_id in TABLES
+

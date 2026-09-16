@@ -20,7 +20,7 @@ The original stage-0 prompt is preserved as an ablation control.
    found quote and one invented quote per pair: grounding should be exactly 50%.
    This is never a model-quality result.
 3. For reporting, use `--cohort scd_primary --stratify --holdout-frac 0.25`,
-   20 notes, and outcomes `28,48,36,19`. For broader absence audits, select
+   20 notes, and the 14 focus outcomes `10,11,12,15,17,21,24,28,29,39,40,47,48,49` (or `all` for all 53). For broader absence audits, select
    `--cohort loose` deliberately and report the difference.
 4. Run with `--repeat 2 --concurrency 1`; preserve per-outcome and
    seeded-versus-holdout denominators.

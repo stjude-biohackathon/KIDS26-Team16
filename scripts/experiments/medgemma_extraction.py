@@ -43,6 +43,11 @@ from scogs.tables import TABLES
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 
+# Default 14 focus outcomes: Chronic Pain (10), CD (11), TCD Elevation (12),
+# Stroke (15), Retinopathy (17), CKD (21), Priapism (24), Acute Pain (28),
+# SS (29), AVN (39), Leg Ulcer (40), Depression (47), ACS (48), Asthma (49).
+DEFAULT_OUTCOMES = "10,11,12,15,17,21,24,28,29,39,40,47,48,49"
+
 # ------------------------------------------------------------------- prompting
 #
 # Every prompt and decoding change sits behind `--prompt-stage`, and stage "0"
@@ -1154,8 +1159,9 @@ def main() -> int:
                     help="pick notes to hit every target outcome, plus a random holdout")
     ap.add_argument("--holdout-frac", type=float, default=0.25,
                     help="fraction of notes drawn at random, to measure the seeds' bias")
-    ap.add_argument("--outcomes", default="28,48,36,19",
-                    help="comma-separated outcome IDs or 'all' for all 53 (default: 28,48,36,19)")
+    ap.add_argument("--outcomes", default=DEFAULT_OUTCOMES,
+                    help=f"comma-separated outcome IDs, '14'/'focus' for the 14 focus outcomes, "
+                         f"or 'all' for all 53 (default: {DEFAULT_OUTCOMES})")
     ap.add_argument("--repeat", type=int, default=1,
                     help="run N times and report run-to-run consistency at temperature 0")
     ap.add_argument("--concurrency", type=int, default=1,
@@ -1193,8 +1199,11 @@ def main() -> int:
         ap.error("--check-model requires --backend ollama")
     model = a.model
 
-    if a.outcomes.strip().lower() == "all":
+    raw_outcomes = a.outcomes.strip().lower()
+    if raw_outcomes == "all":
         outcomes = sorted(TABLES)
+    elif raw_outcomes in ("14", "focus"):
+        outcomes = [o.strip() for o in DEFAULT_OUTCOMES.split(",") if o.strip()]
     else:
         outcomes = [o.strip() for o in a.outcomes.split(",") if o.strip()]
         if not outcomes or len(outcomes) != len(set(outcomes)):

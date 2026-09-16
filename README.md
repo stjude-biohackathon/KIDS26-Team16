@@ -99,7 +99,7 @@ public Ollama registry tags. No weights are stored in this repository.
 | `--host` | `OLLAMA_HOST` or `http://localhost:11434` | Complete Ollama HTTP(S) URL |
 | `--model` | `medgemma-27b-f16` | Local tag; metadata must verify 27B and F16/BF16 |
 | `--cohort` | `loose` | `scd_primary` for disease-focused reporting; `loose` includes mention-only cases |
-| `--outcomes` | `28,48,36,19` | Pain episode, ACS, fever, AKI; other SCOGS IDs are supported |
+| `--outcomes` | `10,11,12,15,17,21,24,28,29,39,40,47,48,49` | 14 focus outcomes (Chronic Pain, CD, TCD, Stroke, Retinopathy, CKD, Priapism, Pain episode, SS, AVN, Leg Ulcer, Depression, ACS, Asthma); '14', 'focus', 'all', or custom comma-separated IDs supported |
 | `--notes` | `20` | Number of notes; evaluated pairs = notes x outcomes |
 | `--stratify` / `--no-stratify` | enabled | Outcome-enriched sampling plus a random holdout |
 | `--holdout-frac` | `0.25` | Random fraction used to assess sampling bias |
