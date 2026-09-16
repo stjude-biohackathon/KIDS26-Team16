@@ -525,14 +525,21 @@ def normalize(s: str) -> str:
 # against the note, so it is the one trustworthy place to read the unit the number
 # was actually written in.
 UNIT_TOKENS = {
-    "mg/dl":  r"mg\s*/\s*dl|mg\s+dl\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+decilit",
-    "mg/l":   r"mg\s*/\s*l(?![a-z/])|mg\s+l\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+lit",
-    "umol/l": r"[\u00b5u]mol\s*/\s*l|micromol",
-    "mmol/l": r"mmol\s*/\s*l|millimol",
-    "g/dl":   r"(?<![a-z])g\s*/\s*dl|grams?\s+per\s+decilit",
-    "g/l":    r"(?<![a-z])g\s*/\s*l(?![a-z/])|grams?\s+per\s+lit",
-    "degf":   r"\u00b0\s*f\b|\u00ba\s*f\b|\bfahrenheit",
-    "degc":   r"\u00b0\s*c\b|\u00ba\s*c\b|\bcelsius|\bcentigrade",
+    "mg/dl":   r"mg\s*/\s*dl|mg\s+dl\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+decilit",
+    "mg/l":    r"mg\s*/\s*l(?![a-z/])|mg\s+l\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+lit",
+    "umol/l":  r"[\u00b5u]mol\s*/\s*l|micromol",
+    "mmol/l":  r"mmol\s*/\s*l|millimol",
+    "g/dl":    r"(?<![a-z])g\s*/\s*dl|grams?\s+per\s+decilit",
+    "g/l":     r"(?<![a-z])g\s*/\s*l(?![a-z/])|grams?\s+per\s+lit",
+    "degf":    r"\u00b0\s*f\b|\u00ba\s*f\b|\bfahrenheit",
+    "degc":    r"\u00b0\s*c\b|\u00ba\s*c\b|\bcelsius|\bcentigrade",
+    "cm/s":    r"(?<![a-z])cm\s*/\s*s(?:ec)?\b|centimeters?\s+per\s+sec",
+    "m/s":     r"(?<![a-z])m\s*/\s*s(?:ec)?\b|meters?\s+per\s+sec",
+    "mg/g":    r"(?<![a-z])mg\s*/\s*g\b|mg\s+g\s*(?:\u2212|-)?\s*1|milligrams?\s+per\s+gram",
+    "ug/mg":   r"(?<![a-z])[\u00b5u]g\s*/\s*mg|mcg\s*/\s*mg|micrograms?\s+per\s+milligram",
+    "mg/mmol": r"(?<![a-z])mg\s*/\s*mmol|milligrams?\s+per\s+millimol",
+    "cm2":     r"(?<![a-z])cm\s*(?:\^2|2|\u00b2)\b|sq(?:uare)?\s*cm",
+    "mm2":     r"(?<![a-z])mm\s*(?:\^2|2|\u00b2)\b|sq(?:uare)?\s*mm",
 }
 
 # Keyed by the unit the SCHEMA declares, so a factor can never be applied to a
@@ -547,6 +554,13 @@ UNIT_CONVERSIONS = {
               "g/l":  lambda v: v / 10.0},
     "degC":  {"degc": lambda v: v,
               "degf": lambda v: (v - 32.0) * 5.0 / 9.0},
+    "cm/s":  {"cm/s": lambda v: v,
+              "m/s":  lambda v: v * 100.0},
+    "mg/g":  {"mg/g": lambda v: v,
+              "ug/mg": lambda v: v,
+              "mg/mmol": lambda v: v * 8.84},
+    "cm2":   {"cm2": lambda v: v,
+              "mm2": lambda v: v / 100.0},
 }
 
 UNIT_OK, UNIT_CONVERTED, UNIT_AMBIGUOUS = "ok", "converted", "ambiguous"
@@ -950,7 +964,9 @@ OUTCOME_SEEDS = {
     "05": r"myocardial infarction|\bMI\b|troponin",
     "06": r"hypertension|hypertensive|elevated blood pressure",
     "11": r"cognitive|neurocognitive|memory (loss|impairment)",
+    "12": r"transcranial doppler|\bTCD\b|TAMV|cerebral velocity",
     "15": r"stroke|infarct|h(a)?emorrhage|\bCVA\b",
+    "17": r"retinopath|fundoscop|neovasculari|proliferative sickle",
     "18": r"cholecyst|cholelith|gallstone|gallbladder",
     "21": r"chronic kidney disease|\bCKD\b|nephropathy|proteinuria",
     "31": r"hypersplenism|splenomegaly",
@@ -1139,7 +1155,7 @@ def main() -> int:
     ap.add_argument("--holdout-frac", type=float, default=0.25,
                     help="fraction of notes drawn at random, to measure the seeds' bias")
     ap.add_argument("--outcomes", default="28,48,36,19",
-                    help="comma-separated; default is a common-outcome sample")
+                    help="comma-separated outcome IDs or 'all' for all 53 (default: 28,48,36,19)")
     ap.add_argument("--repeat", type=int, default=1,
                     help="run N times and report run-to-run consistency at temperature 0")
     ap.add_argument("--concurrency", type=int, default=1,
@@ -1177,11 +1193,14 @@ def main() -> int:
         ap.error("--check-model requires --backend ollama")
     model = a.model
 
-    outcomes = [o.strip() for o in a.outcomes.split(",") if o.strip()]
-    if not outcomes or len(outcomes) != len(set(outcomes)):
-        ap.error("--outcomes must contain unique outcome ids")
-    for o in outcomes:
-        if o not in TABLES: raise SystemExit(f"unknown outcome {o!r}")
+    if a.outcomes.strip().lower() == "all":
+        outcomes = sorted(TABLES)
+    else:
+        outcomes = [o.strip() for o in a.outcomes.split(",") if o.strip()]
+        if not outcomes or len(outcomes) != len(set(outcomes)):
+            ap.error("--outcomes must contain unique outcome ids")
+        for o in outcomes:
+            if o not in TABLES: raise SystemExit(f"unknown outcome {o!r}")
 
     model_info, model_digest, served_quant = {}, None, None
     if a.backend == "ollama":

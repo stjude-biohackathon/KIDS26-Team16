@@ -225,6 +225,13 @@ def test_an_abbreviation_in_the_name_is_usable_on_its_own():
     assert outcome_seed("13").search("developed PRES")   # ...Encephalopathy Syndrome (PRES)
 
 
+def test_seeds_for_tcd_and_retinopathy():
+    assert outcome_seed("12").search("elevated TCD velocities")
+    assert outcome_seed("12").search("transcranial doppler showed abnormal velocity")
+    assert outcome_seed("17").search("proliferative sickle retinopathy on exam")
+    assert outcome_seed("17").search("fundoscopic examination revealed retinopathy")
+
+
 def test_selection_reaches_every_target_outcome():
     """Random sampling yields 40 pain crises and zero leg ulcers (plan §7)."""
     _, sel = select_notes(_pool(), 20, ["28", "48", "36"])
@@ -369,6 +376,32 @@ def test_a_feature_with_no_convertible_unit_family_is_never_touched():
     assert unit_guard("fio2_pct", 60.0, "FiO2 was escalated to 60%") == ("ok", 60.0, None)
     assert unit_guard("fio2_pct", 21.0, "on room air") == ("ok", 21.0, None)
     assert unit_guard("patient_age", 30.0, "A 30-year-old female") == ("ok", 30.0, None)
+
+
+def test_tcd_velocity_converts_from_meters_per_second():
+    # Model extracted raw 2.1 from quote without converting -> guard converts to 210.0 cm/s
+    assert unit_guard("tcd_velocity", 2.1, "TCD velocity was 2.1 m/s") == (
+        "converted", 210.0, "2.1 m/s -> 210.0 cm/s")
+    # Model already converted or quote was in cm/s -> ok
+    assert unit_guard("tcd_velocity", 210.0, "TCD showed 210 cm/s") == ("ok", 210.0, None)
+    assert unit_guard("tcd_velocity", 195.0, "measured 195 cm/sec") == ("ok", 195.0, None)
+
+
+def test_albuminuria_converts_from_mg_per_mmol_and_accepts_ug_per_mg():
+    # 10 mg/mmol * 8.84 = 88.4 mg/g
+    assert unit_guard("albuminuria", 10.0, "UACR was 10 mg/mmol") == (
+        "converted", 88.4, "10.0 mg/mmol -> 88.4 mg/g")
+    # 50 ug/mg is 1:1 with mg/g
+    assert unit_guard("albuminuria", 50.0, "urine albumin 50 ug/mg") == ("ok", 50.0, None)
+    assert unit_guard("albuminuria", 45.0, "urine albumin 45 mg/g") == ("ok", 45.0, None)
+
+
+def test_wound_area_converts_from_sq_mm():
+    # 800 mm2 / 100 = 8.0 cm2
+    assert unit_guard("wound_area_cm2", 800.0, "ulcer area was 800 mm2") == (
+        "converted", 8.0, "800.0 mm2 -> 8.0 cm2")
+    assert unit_guard("wound_area_cm2", 12.0, "wound area was 12 cm2") == ("ok", 12.0, None)
+    assert unit_guard("wound_area_cm2", 15.5, "wound of 15.5 cm²") == ("ok", 15.5, None)
 
 
 # ------------------------------------------------------- multi-value reconciliation
