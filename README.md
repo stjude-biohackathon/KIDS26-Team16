@@ -25,8 +25,8 @@ making accuracy claims. This is not a validated clinical decision tool.
 ### Windows PowerShell
 
 ```powershell
-git clone https://github.com/Edward-Bae-00/st_jude.git
-cd st_jude
+git clone https://github.com/stjude-biohackathon/KIDS26-Team16.git
+cd KIDS26-Team16
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m ipykernel install --user --name scogs --display-name "SCOGS"
@@ -39,8 +39,8 @@ issues. Select the **SCOGS** kernel in Jupyter or VS Code.
 ### Linux
 
 ```bash
-git clone https://github.com/Edward-Bae-00/st_jude.git
-cd st_jude
+git clone https://github.com/stjude-biohackathon/KIDS26-Team16.git
+cd KIDS26-Team16
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
