@@ -381,7 +381,7 @@ T("36", "Fever", [
           "which is what these rows now say. Under the rubric's literal '<= 38.4' a note "
           "reporting 101.2 F - the rubric's OWN Grade 1 endpoint - converts to 38.4444 and "
           "grades absent. Deviation from rules.md, recorded in "
-          "rules_vs_booklet_discrepancies.md. The neighbouring gap at outcome 10 "
+          "docs/reference/rules_vs_booklet_discrepancies.md. The neighbouring gap at outcome 10 "
           "(Pain and Hurt score of exactly 60) carries no such evidence and stays open."])
 
 T("37", "Sepsis", [

@@ -89,7 +89,7 @@ def rubric_cells():
     Outcomes 26 and 53 print two parallel tables, so the rubric has 275 physical
     cells across 265 (outcome, grade) pairs.
     """
-    text = ROOT.joinpath("rules.md").read_text()
+    text = ROOT.joinpath("rules.md").read_text(encoding="utf-8")
     secs = re.split(r"\n### (\d{2})\. ", text)
     cells = []
     for i in range(1, len(secs), 2):

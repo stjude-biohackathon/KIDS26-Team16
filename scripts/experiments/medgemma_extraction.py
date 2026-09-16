@@ -1,38 +1,13 @@
-"""P11 - Does MedGemma actually extract features well enough?
+"""Extract SCOGS features using full 16-bit MedGemma 27B through Ollama.
 
-Everything in the current plan assumes MedGemma is good at reading a note and
-filling in feature values. Nothing has checked that. This script checks it.
-
-It runs MedGemma ALONE - note in, features out, straight into the real decision
-tables - so what it measures is Version B of the plan (§3). Version A cannot be
-measured until the lexicon (P5) and a trained BERT exist. If the numbers here
-are bad, delete this file and the whole MedGemma direction with it. If they are
-good, this grows into Version B.
-
-Grades always come from the tables. Extraction quality is what is measured;
-grading never is.
-
-The contract from §2 is enforced, not assumed: every proposed value must carry a
-quote, and the quote must appear VERBATIM in the note. A value whose quote
-cannot be found is rejected, not down-weighted - that turns hallucination into a
-counted failure rather than a silent one.
+Grades come from deterministic tables, never the model. Proposed findings must
+carry a quote found in the note. Quote grounding is not clinical correctness;
+review the exported worksheets before reporting precision.
 
 Usage examples:
-    # 1. Local 4B tier (Apple Silicon / CPU / GPU via Ollama):
-    python3 scripts/experiments/medgemma_extraction.py --tier local --notes 20
-
-    # 2. Full 27B tier on NVIDIA Windows / Linux via Ollama:
-    python scripts/experiments/medgemma_extraction.py --tier full --notes 20 --repeat 2 --out results/full.json
-
-    # 3. Full 27B tier on NVIDIA Windows / Linux directly via PyTorch / HuggingFace (4-bit quant for 16-24GB GPUs):
-    python scripts/experiments/medgemma_extraction.py --tier full --backend hf --quant 4bit --notes 20 --out results/full.json
-
-    # 4. Mock backend (no GPU/model required):
-    python3 scripts/experiments/medgemma_extraction.py --backend mock --notes 2
-
-    # 5. Throughput run on a GPU with VRAM to spare (needs OLLAMA_NUM_PARALLEL>=4).
-    #    Measure run-to-run consistency separately, at --concurrency 1:
-    python scripts/experiments/medgemma_extraction.py --tier full --notes 20 --concurrency 4 --out results/full.json
+    python scripts/experiments/medgemma_extraction.py --check-model
+    python scripts/experiments/medgemma_extraction.py --cohort scd_primary --prompt-stage 3 --notes 20 --repeat 2 --out results/full.json
+    python scripts/experiments/medgemma_extraction.py --backend mock --notes 2
 """
 from __future__ import annotations
 
@@ -44,8 +19,6 @@ import re
 import sys
 import threading
 import time
-import urllib.error
-import urllib.request
 import zlib
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -53,14 +26,15 @@ from dataclasses import dataclass, field
 
 # Ensure UTF-8 output on Windows consoles (prevents charmap / cp1252 encode errors on °, µ, ×, etc.)
 if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
+from experiments.ollama_backend import (
+    DEFAULT_HOST, DEFAULT_MODEL, GGUF_FILE_TYPES, WEIGHTS, call_ollama, preflight,
+)
 from scogs.definitions import presence_brief
 from scogs.evaluate import grade
 from scogs.features import FEATURES
@@ -68,20 +42,6 @@ from scogs.predicates import parse
 from scogs.tables import TABLES
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-
-# Model ids are configuration, never hardcoded logic (§3).
-TIERS = {
-    "local": {
-        "hf": "google/medgemma-1.5-4b-it",
-        "ollama": "medgemma-1.5-4b-it",
-        "note": "dev tier, Apple Silicon; never quote its numbers (§3)",
-    },
-    "full": {
-        "hf": "google/medgemma-27b-text-it",
-        "ollama": "medgemma-27b-text-it",
-        "note": "reporting tier; needs a real GPU (NVIDIA CUDA / A100 / RTX 3090/4090)",
-    },
-}
 
 # ------------------------------------------------------------------- prompting
 #
@@ -504,181 +464,6 @@ def build_prompt(note: str, outcome: str, st: Stage = STAGE0) -> str:
 
 # -------------------------------------------------------------------- backends
 
-def get_model_info(model: str, host: str) -> dict:
-    try:
-        body = json.dumps({"name": model}).encode("utf-8")
-        req = urllib.request.Request(f"{host}/api/show", data=body,
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return json.loads(r.read().decode("utf-8"))
-    except Exception:
-        return {}
-
-
-# `general.file_type` is a GGUF quantisation enum, not an identity. Recording it as
-# the digest answered "which weights ran?" with the number 1.
-GGUF_FILE_TYPES = {
-    0: "F32", 1: "F16", 2: "Q4_0", 3: "Q4_1", 4: "Q4_1_SOME_F16", 7: "Q8_0", 8: "Q5_0",
-    9: "Q5_1", 10: "Q2_K", 11: "Q3_K_S", 12: "Q3_K_M", 13: "Q3_K_L", 14: "Q4_K_S",
-    15: "Q4_K_M", 16: "Q5_K_S", 17: "Q5_K_M", 18: "Q6_K", 19: "IQ2_XXS", 20: "IQ2_XS",
-    21: "Q2_K_S", 22: "IQ3_XS", 23: "IQ3_XXS", 24: "IQ1_S", 25: "IQ4_NL", 26: "IQ3_S",
-    27: "IQ3_M", 28: "IQ2_S", 29: "IQ2_M", 30: "IQ4_XS", 31: "IQ1_M", 32: "BF16",
-    36: "TQ1_0", 37: "TQ2_0"}
-
-
-def get_model_digest(model: str, host: str) -> str:
-    """The content hash Ollama holds for these weights - the only field that actually
-    identifies what ran. /api/show does not return it; /api/tags does."""
-    try:
-        with urllib.request.urlopen(f"{host.rstrip('/')}/api/tags", timeout=10) as r:
-            for m in json.loads(r.read().decode("utf-8")).get("models", []):
-                if m.get("name") in (model, f"{model}:latest"):
-                    return m.get("digest", "")
-    except Exception:
-        pass
-    return ""
-
-
-def call_ollama(prompt: str, model: str, host: str, stats: dict | None = None,
-                timeout: int = 300, fmt=None, seed: int = 0, temperature: float = 0.0,
-                num_predict: int = 1024, repeat_penalty: float = 1.1, **kwargs) -> str:
-    # keep_alive -1 pins the model in VRAM. Without it Ollama unloads after 5 idle
-    # minutes and the next call silently pays a full reload - 50+ GB at the F16 tier.
-    #
-    # `repeat_penalty` defaults to the stage 0 value of 1.1 and is dropped to 1.0
-    # from stage 1. A repetition penalty on a task whose output must contain text
-    # copied verbatim out of the note is pushing against the job: quotes reuse the
-    # note's tokens, feature names recur, and JSON punctuation recurs hardest of
-    # all. At temperature 0 under a grammar it buys nothing and can walk the
-    # decoder off an exact span, which lands as `quote_unfound`.
-    body = json.dumps({"model": model, "prompt": prompt, "stream": False,
-                       "format": fmt if fmt is not None else "json", "keep_alive": -1,
-                       "options": {"temperature": temperature, "seed": seed,
-                                   "num_predict": num_predict,
-                                   "repeat_penalty": repeat_penalty}}).encode("utf-8")
-    req = urllib.request.Request(f"{host}/api/generate", data=body,
-                                 headers={"Content-Type": "application/json"})
-    t0 = time.time()
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                resp = json.loads(r.read().decode("utf-8"))
-                if stats is not None:
-                    stats["prompt_eval_count"] = stats.get("prompt_eval_count", 0) + resp.get("prompt_eval_count", 0)
-                    stats["eval_count"] = stats.get("eval_count", 0) + resp.get("eval_count", 0)
-                    stats["eval_duration_sec"] = stats.get("eval_duration_sec", 0.0) + resp.get("eval_duration", 0) / 1e9
-                    stats["total_duration_sec"] = stats.get("total_duration_sec", 0.0) + (time.time() - t0)
-                return resp.get("response", "")
-        except Exception as e:
-            if attempt == 2:
-                print(f"    [warning] ollama call failed after 3 attempts: {e}", flush=True)
-                return ""
-            time.sleep(2)
-    return ""
-
-
-_HF_PIPELINE = None
-_HF_MODEL_NAME = None
-
-def get_hf_pipeline(model_name: str, quant: str = "none"):
-    global _HF_PIPELINE, _HF_MODEL_NAME
-    if _HF_PIPELINE is not None and _HF_MODEL_NAME == model_name:
-        return _HF_PIPELINE
-    try:
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-    except ImportError:
-        raise SystemExit(
-            "Hugging Face backend requires PyTorch and transformers:\n"
-            "    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n"
-            "    pip install transformers accelerate bitsandbytes\n"
-        )
-
-    print(f"\n[HF Backend] Loading model {model_name} on CUDA/GPU (quant={quant})...", flush=True)
-    kwargs = {"device_map": "auto"}
-    if torch.cuda.is_available():
-        kwargs["torch_dtype"] = torch.bfloat16
-    else:
-        kwargs["torch_dtype"] = torch.float32
-
-    if quant == "4bit":
-        kwargs["load_in_4bit"] = True
-    elif quant == "8bit":
-        kwargs["load_in_8bit"] = True
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
-    _HF_PIPELINE = pipeline("text-generation", model=model, tokenizer=tokenizer)
-    _HF_MODEL_NAME = model_name
-    print(f"[HF Backend] Model {model_name} loaded successfully.\n", flush=True)
-    return _HF_PIPELINE
-
-
-def call_hf(prompt: str, model: str, host: str, stats: dict | None = None,
-            quant: str = "none", num_predict: int = 1024, repeat_penalty: float = 1.1,
-            seed: int = 0, temperature: float = 0.0, **kwargs) -> str:
-    pipe = get_hf_pipeline(model, quant)
-    t0 = time.time()
-    messages = [{"role": "user", "content": prompt}]
-    prompt_formatted = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    # No grammar here: transformers has no schema-constrained decoding in this
-    # path, so the reply is fenced out below and the content gate does the rest.
-    sample = temperature > 0
-    gen = {"max_new_tokens": num_predict, "do_sample": sample,
-           "repetition_penalty": repeat_penalty}
-    if sample:
-        gen["temperature"] = temperature
-    out = pipe(prompt_formatted, **gen)
-    gen_text = out[0]["generated_text"][len(prompt_formatted):].strip()
-    dur = time.time() - t0
-    if stats is not None:
-        stats["eval_duration_sec"] = stats.get("eval_duration_sec", 0.0) + dur
-        stats["total_duration_sec"] = stats.get("total_duration_sec", 0.0) + dur
-        stats["prompt_eval_count"] = stats.get("prompt_eval_count", 0) + len(prompt_formatted.split())
-        stats["eval_count"] = stats.get("eval_count", 0) + len(gen_text.split())
-
-    m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", gen_text, re.S)
-    if m:
-        return m.group(1)
-    m = re.search(r"(\{.*\})", gen_text, re.S)
-    return m.group(1) if m else gen_text
-
-
-def call_openai_compatible(prompt: str, model: str, host: str, stats: dict | None = None,
-                           timeout: int = 300, fmt=None, seed: int = 0,
-                           temperature: float = 0.0, num_predict: int = 1024,
-                           **kwargs) -> str:
-    url = f"{host.rstrip('/')}/v1/chat/completions"
-    # A schema goes as `json_schema`; without one this falls back to `json_object`,
-    # which only guarantees the reply parses.
-    response_format = ({"type": "json_schema",
-                        "json_schema": {"name": "scogs_findings", "strict": True,
-                                        "schema": fmt}}
-                       if isinstance(fmt, dict) else {"type": "json_object"})
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": temperature,
-        "seed": seed,
-        "max_tokens": num_predict,
-        "response_format": response_format,
-    }).encode("utf-8")
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-    t0 = time.time()
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            resp = json.loads(r.read().decode("utf-8"))
-            usage = resp.get("usage", {})
-            if stats is not None:
-                stats["prompt_eval_count"] = stats.get("prompt_eval_count", 0) + usage.get("prompt_tokens", 0)
-                stats["eval_count"] = stats.get("eval_count", 0) + usage.get("completion_tokens", 0)
-                stats["total_duration_sec"] = stats.get("total_duration_sec", 0.0) + (time.time() - t0)
-            return resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-    except Exception as e:
-        print(f"    [warning] openai-compatible call failed: {e}", flush=True)
-        return ""
-
-
 def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **kwargs) -> str:
     """Deterministic stand-in so the harness itself can be tested and reviewed
     without a GPU. Emits one findable quote and one deliberate hallucination, so
@@ -709,9 +494,6 @@ def call_mock(prompt: str, model: str, host: str, stats: dict | None = None, **k
 
 BACKENDS = {
     "ollama": call_ollama,
-    "hf": call_hf,
-    "openai": call_openai_compatible,
-    "vllm": call_openai_compatible,
     "mock": call_mock,
 }
 
@@ -1116,12 +898,12 @@ def is_scd_primary(rec: dict) -> bool:
 
 def load_notes(cohort: str = "loose") -> list[dict]:
     """The candidate pool. Selection happens in select_notes()."""
-    cache = ROOT / "PMC-Patients" / "scd_cache.json"
+    cache = ROOT / "data" / "pmc_patients" / "scd_cache.json"
     if cache.exists():
         scd = json.loads(cache.read_text(encoding="utf-8"))
     else:
         pat = re.compile(r"sickle cell|\bSCD\b|HbSS|HbSC", re.I)
-        data = json.loads((ROOT / "PMC-Patients" / "PMC-Patients-V2.json").read_text(encoding="utf-8"))
+        data = json.loads((cache.parent / "PMC-Patients-V2.json").read_text(encoding="utf-8"))
         scd = [r for r in data if pat.search(r.get("patient", ""))]
         scd.sort(key=lambda r: r["patient_uid"])          # deterministic before sampling
         try:
@@ -1266,8 +1048,9 @@ def generate(backend, prompt, model, host, stats, st: Stage, fmt, **kw) -> tuple
     return reply, tries - 1
 
 
-def run(notes, outcomes, backend, model, host, tally, quant="none", timeout=300,
-        concurrency=1, st: Stage = STAGE0, num_predict: int | None = None):
+def run(notes, outcomes, backend, model, host, tally, timeout=300,
+        concurrency=1, st: Stage = STAGE0, num_predict: int | None = None,
+        num_ctx: int = 16384):
     """Model calls first (optionally in parallel), then verification - always serial.
 
     Verification stays on the main thread in the original note-major order, so the
@@ -1298,7 +1081,7 @@ def run(notes, outcomes, backend, model, host, tally, quant="none", timeout=300,
         prompt = build_prompt(rec["patient"], num, st)
         fmt = reply_schema(prompt_features(num, st), st) if st.schema else None
         reply, n_retry = generate(backend, prompt, model, host, local, st, fmt,
-                                  quant=quant, timeout=timeout, num_predict=budget,
+                                  timeout=timeout, num_predict=budget, num_ctx=num_ctx,
                                   repeat_penalty=1.0 if st.flat_penalty else 1.1)
         replies[i], stats_parts[i], retries[i] = reply, local, n_retry
         with print_lock:
@@ -1333,14 +1116,17 @@ def run(notes, outcomes, backend, model, host, tally, quant="none", timeout=300,
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tier", choices=sorted(TIERS), default="local")
-    ap.add_argument("--model", help="override the tier's model id")
+    ap.add_argument("--tier", choices=["full"], default="full", help=argparse.SUPPRESS)
+    ap.add_argument("--model", default=DEFAULT_MODEL,
+                    help="local Ollama tag for verified F16/BF16 MedGemma 27B weights")
     ap.add_argument("--backend", choices=sorted(BACKENDS), default="ollama",
-                    help="inference backend (ollama, hf, openai/vllm, mock)")
-    ap.add_argument("--host", default="http://localhost:11434",
-                    help="Ollama host or OpenAI-compatible server URL")
-    ap.add_argument("--quant", choices=["none", "4bit", "8bit"], default="none",
-                    help="quantization for Hugging Face backend (4bit/8bit recommended for 24GB GPUs)")
+                    help="ollama for inference; mock only checks harness plumbing")
+    ap.add_argument("--host", default=os.environ.get("OLLAMA_HOST", DEFAULT_HOST),
+                    help="Ollama URL including http:// (default OLLAMA_HOST or localhost:11434)")
+    ap.add_argument("--check-model", action="store_true",
+                    help="check 27B/16-bit metadata, digest, and synthetic generation, then exit")
+    ap.add_argument("--num-ctx", type=int, default=16384,
+                    help="Ollama context window; increase for long notes (uses more memory)")
     ap.add_argument("--timeout", type=int, default=300,
                     help="per-request timeout in seconds (default 300)")
     ap.add_argument("--notes", type=int, default=20)
@@ -1379,47 +1165,48 @@ def main() -> int:
     a = ap.parse_args()
     st = stage(a.prompt_stage, note_first=a.note_first)
 
-    if a.concurrency > 1 and a.backend == "hf":
-        print("!! --backend hf holds one lazily-initialised global pipeline and is not "
-              "safe to call\n   concurrently. Forcing --concurrency 1.")
-        a.concurrency = 1
-    if a.concurrency < 1:
-        raise SystemExit("--concurrency must be >= 1")
-
-    tier = TIERS[a.tier]
-    if a.model:
-        model = a.model
-    elif a.backend in {"hf", "openai", "vllm"}:
-        model = tier["hf"]
-    else:
-        model = tier["ollama"]
+    for name in ("notes", "repeat", "concurrency", "timeout", "num_ctx", "num_predict"):
+        value = getattr(a, name)
+        if value is not None and value < 1:
+            ap.error(f"--{name.replace('_', '-')} must be >= 1")
+    if not 0 <= a.holdout_frac <= 1:
+        ap.error("--holdout-frac must be between 0 and 1")
+    if a.out and pathlib.Path(a.out).exists():
+        ap.error(f"Output already exists: {a.out}. Choose a new path to preserve prior results.")
+    if a.check_model and a.backend != "ollama":
+        ap.error("--check-model requires --backend ollama")
+    model = a.model
 
     outcomes = [o.strip() for o in a.outcomes.split(",") if o.strip()]
+    if not outcomes or len(outcomes) != len(set(outcomes)):
+        ap.error("--outcomes must contain unique outcome ids")
     for o in outcomes:
         if o not in TABLES: raise SystemExit(f"unknown outcome {o!r}")
+
+    model_info, model_digest, served_quant = {}, None, None
+    if a.backend == "ollama":
+        try:
+            checked = preflight(model, a.host, timeout=a.timeout, num_ctx=a.num_ctx)
+        except (RuntimeError, ValueError) as exc:
+            ap.error(str(exc))
+        model_info = checked["model_info"]
+        model_digest, served_quant = checked["model_digest"], checked["quant"]
+        print(f"Preflight: {model} | {served_quant} | {model_digest}", flush=True)
+        if a.check_model:
+            return 0
 
     pool = load_notes(cohort=a.cohort)
     notes, selection = select_notes(pool, a.notes, outcomes,
                                     holdout_frac=a.holdout_frac, stratify=a.stratify)
-    model_info = get_model_info(model, a.host) if a.backend == "ollama" else {}
-    model_digest = (get_model_digest(model, a.host) if a.backend == "ollama" else "") \
-        or model_info.get("details", {}).get("parent_model", "")
-    file_type = model_info.get("model_info", {}).get("general.file_type")
-    if a.backend == "hf":
-        served_quant = a.quant
-    elif file_type is None:
-        served_quant = None
-    else:
-        served_quant = GGUF_FILE_TYPES.get(file_type, f"file_type_{file_type}")
+    if not notes:
+        ap.error(f"No notes available for cohort {a.cohort}")
 
     print("=" * 70)
     print(f"P11 MedGemma Extraction Test")
-    print(f"tier={a.tier}  weights={tier['hf']}  served-as={model}  backend={a.backend}")
-    if a.backend == "hf":
-        print(f"hf_quant={a.quant}")
+    print(f"weights={WEIGHTS if a.backend == 'ollama' else 'none (mock)'}  "
+          f"served-as={model}  backend={a.backend}")
     print(f"notes={len(notes)}  outcomes={','.join(outcomes)}  repeat={a.repeat}  "
           f"concurrency={a.concurrency}")
-    print(f"tier_note={tier['note']}")
     print("=" * 70)
 
     if a.concurrency > 1 and a.repeat > 1:
@@ -1439,11 +1226,10 @@ def main() -> int:
         t_start = time.time()
         try:
             runs.append(run(notes, outcomes, a.backend, model, a.host, t,
-                            quant=a.quant, timeout=a.timeout, concurrency=a.concurrency,
-                            st=st, num_predict=a.num_predict))
-        except (urllib.error.URLError, TimeoutError) as e:
-            raise SystemExit(f"backend unreachable at {a.host}: {e}\n"
-                             f"start it, or use --backend mock to exercise the harness")
+                            timeout=a.timeout, concurrency=a.concurrency,
+                            st=st, num_predict=a.num_predict, num_ctx=a.num_ctx))
+        except RuntimeError as exc:
+            raise SystemExit(f"Extraction failed; no result file written: {exc}") from exc
         t.wall_clock_sec = time.time() - t_start
         tallies.append(t)
         rep = t.report()
@@ -1533,10 +1319,11 @@ def main() -> int:
         for uid in runs[0]:
             for num in outcomes:
                 tot += 1
-                same += runs[0][uid][num][0] == runs[1][uid][num][0]
+                same += all(runs[0][uid][num][:2] == other[uid][num][:2]
+                            for other in runs[1:])
         consistency_pct = round(100 * same / tot, 1)
         print(f"\nTemperature-0 consistency across runs 1-{a.repeat}: {consistency_pct}% "
-              f"({same}/{tot} note-outcome pairs identical)")
+              f"({same}/{tot} pairs have identical features and presence in every repeat)")
         if a.concurrency == 1:
             print("   At --concurrency 1 with greedy decoding this is close to a tautology:")
             print("   100% is the expected result and evidences nothing about the model.")
@@ -1545,7 +1332,7 @@ def main() -> int:
     # Threshold assessment
     rep0 = tallies[0].report()
     print("\n" + "=" * 70)
-    print("Automated Metrics Evaluation (Tasks/medgemma_extraction_test.md §Automated metrics):")
+    print("Automated Metrics Evaluation (docs/research/extraction_protocol.md):")
     def band(v, good, workable):
         return f"GOOD (≥{good}%)" if v >= good else (f"WORKABLE ({workable}-{good}%)" if v >= workable else f"CONCERNING (<{workable}%)")
     qv_quoted = rep0["quote_verified_pct_of_quoted"]
@@ -1614,12 +1401,13 @@ def main() -> int:
             })
 
         provenance = {
-            "tier": a.tier,
-            "weights": tier["hf"],
-            "served_as": model,
+            "tier": "full" if a.backend == "ollama" else "mock",
+            "weights": WEIGHTS if a.backend == "ollama" else None,
+            "served_as": model if a.backend == "ollama" else None,
             "backend": a.backend,
             "quant": served_quant,
             "model_digest": model_digest,
+            "parameter_count": model_info.get("model_info", {}).get("general.parameter_count"),
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "notes_count": len(notes),
             "cohort": a.cohort,
@@ -1628,6 +1416,12 @@ def main() -> int:
             "outcomes": outcomes,
             "repeat": a.repeat,
             "concurrency": a.concurrency,
+            "num_ctx": a.num_ctx,
+            "num_predict": a.num_predict or (2048 if st.cot else 1024),
+            "temperature": 0.0,
+            "initial_seed": 0,
+            "repeat_penalty": 1.0 if st.flat_penalty else 1.1,
+            "consistency_definition": "features and presence identical across all repeats",
             # The rung, and what it turned on. A results file that does not say which
             # prompt produced it cannot be placed on the ladder, and the ladder is the
             # only thing that says which change bought which number.
@@ -1700,7 +1494,8 @@ def main() -> int:
             "features_extracted": dict(tallies[0].per_feature),
             "detailed_records": detailed_records,
         }
-        out_path.write_text(json.dumps(out_data, indent=2), encoding="utf-8")
+        with out_path.open("x", encoding="utf-8") as output:
+            output.write(json.dumps(out_data, indent=2))
         print(f"\nWrote full test results and note texts to {a.out}")
     return 0
 

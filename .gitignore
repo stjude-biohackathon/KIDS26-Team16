@@ -9,8 +9,10 @@ __pycache__/
 Thumbs.db
 
 # Large raw datasets (>100MB exceeds GitHub file limit; scd_cache.json is tracked)
-PMC-Patients/PMC-Patients-V2.json
-PMC-Patients/PMC-Patients.csv
+data/pmc_patients/PMC-Patients-V2.json
+data/pmc_patients/PMC-Patients.csv
+*.gguf
+*.safetensors
 *.tar.gz
 *.zip
 
@@ -28,4 +30,5 @@ venv/
 
 # Generated review sheets (regenerated per run; a stale one silently
 # describes a different run than the results file beside it)
-results/*.csv
+results/
+.ipynb_checkpoints/

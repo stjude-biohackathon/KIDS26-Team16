@@ -49,7 +49,7 @@ def main() -> int:
 
     schema = {
         "version": 2,
-        "source": "rules.md, verified against SCOGS_Booklet.pdf 2026-08-28",
+        "source": "rules.md, verified against docs/reference/SCOGS_Booklet.pdf 2026-08-28",
         "counts": {
             "features": len(FEATURES),
             "outcomes": len(TABLES),
@@ -77,7 +77,7 @@ def main() -> int:
         "review_queue": sorted(n for n, s in FEATURES.items() if s["review"]),
     }
 
-    OUT.write_text(json.dumps(schema, indent=1) + "\n")
+    OUT.write_text(json.dumps(schema, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
     print(f"  {len(FEATURES)} features, {len(TABLES)} outcomes, "
           f"{schema['counts']['rules']} rules")

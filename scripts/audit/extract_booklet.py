@@ -8,9 +8,9 @@ SP = pathlib.Path(__file__).parent
 _TXT = SP / "booklet_layout.txt"
 if not _TXT.exists():
     import subprocess
-    pdf = SP.parent.parent / "SCOGS_Booklet.pdf"
+    pdf = SP.parent.parent / "docs" / "reference" / "SCOGS_Booklet.pdf"
     subprocess.run(["pdftotext", "-layout", str(pdf), str(_TXT)], check=True)
-pages = _TXT.read_text().split("\f")
+pages = _TXT.read_text(encoding="utf-8").split("\f")
 
 TOC = [
  (13,"Arrhythmia"),(14,"Deep Vein Thrombosis (DVT)"),(15,"Diastolic Dysfunction"),
@@ -137,7 +137,7 @@ for i,(start,name) in enumerate(TOC):
         if stopped: break
     data[f"{i+1:02d}"] = dict(name=name, pages=[start,end], tables=parse(lines))
 
-SP.joinpath("booklet_grades.json").write_text(json.dumps(data, indent=1))
+SP.joinpath("booklet_grades.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
 print(f"parsed {len(data)} outcomes")
 for n,d in sorted(data.items()):
     ts = d["tables"]

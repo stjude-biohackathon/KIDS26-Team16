@@ -1,5 +1,8 @@
 # SCOGS `rules.md` vs `SCOGS_Booklet.pdf` — verification log
 
+Repository locations: [`rules.md`](../../rules.md) and
+[`SCOGS_Booklet.pdf`](SCOGS_Booklet.pdf).
+
 **Audit date:** 2026-08-27  
 **Source of truth:** `SCOGS_Booklet.pdf` (St. Jude Children's Research Hospital, 144 pp., created 2026-04-29)  
 **Scope:** all 53 health outcomes — grading rules (Grades 1–5), frequency classification, definition, diagnostic criteria, methodology, references — plus the framework front matter and the Grading Frequency Guide.

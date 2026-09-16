@@ -1,6 +1,6 @@
 {
  "version": 2,
- "source": "rules.md, verified against SCOGS_Booklet.pdf 2026-08-28",
+ "source": "rules.md, verified against docs/reference/SCOGS_Booklet.pdf 2026-08-28",
  "counts": {
   "features": 137,
   "outcomes": 53,
@@ -574,6 +574,9 @@
    "outcomes": [
     "48"
    ],
+   "per_outcome": {
+    "48": "FiO2 is what is DELIVERED to the patient (the oxygen concentration in inspired gas). SpO2 / pulse oximetry is what is MEASURED in the patient. Do not report SpO2 as FiO2."
+   },
    "used_by_outcomes": [
     "48"
    ]
@@ -3126,7 +3129,7 @@
     }
    ],
    "notes": [
-    "RUBRIC GAP CLOSED (2026-08-31): the rubric's Celsius text - Grade 1 '38.0-38.4', Grade 2 '> 38.5' - leaves (38.4, 38.5] matching no grade, so a temperature of exactly 38.5 degC graded as absent. The rubric's own Fahrenheit annotations resolve it: Grade 1 is '(100.4 - 101.2 degrees Fahrenheit)' = 38.0000-38.4444 degC, and Grade 2 is '(101.3 degrees Fahrenheit)' = exactly 38.5000 degC. The bands are contiguous in Fahrenheit and the Celsius text is a one-decimal rounding of 38.4444. So the intent is [38.0, 38.5) and [38.5, inf), which is what these rows now say. Under the rubric's literal '<= 38.4' a note reporting 101.2 F - the rubric's OWN Grade 1 endpoint - converts to 38.4444 and grades absent. Deviation from rules.md, recorded in rules_vs_booklet_discrepancies.md. The neighbouring gap at outcome 10 (Pain and Hurt score of exactly 60) carries no such evidence and stays open."
+    "RUBRIC GAP CLOSED (2026-08-31): the rubric's Celsius text - Grade 1 '38.0-38.4', Grade 2 '> 38.5' - leaves (38.4, 38.5] matching no grade, so a temperature of exactly 38.5 degC graded as absent. The rubric's own Fahrenheit annotations resolve it: Grade 1 is '(100.4 - 101.2 degrees Fahrenheit)' = 38.0000-38.4444 degC, and Grade 2 is '(101.3 degrees Fahrenheit)' = exactly 38.5000 degC. The bands are contiguous in Fahrenheit and the Celsius text is a one-decimal rounding of 38.4444. So the intent is [38.0, 38.5) and [38.5, inf), which is what these rows now say. Under the rubric's literal '<= 38.4' a note reporting 101.2 F - the rubric's OWN Grade 1 endpoint - converts to 38.4444 and grades absent. Deviation from rules.md, recorded in docs/reference/rules_vs_booklet_discrepancies.md. The neighbouring gap at outcome 10 (Pain and Hurt score of exactly 60) carries no such evidence and stays open."
    ]
   },
   "37": {

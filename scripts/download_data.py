@@ -2,7 +2,7 @@
 
 Downloads:
 - PMC-Patients-V2.json & PMC-Patients.csv from Hugging Face (zhengyun21/PMC-Patients)
-- Generates or updates the 978 Sickle Cell Disease (SCD) cohort cache (PMC-Patients/scd_cache.json)
+- Generates or updates the SCD cohort cache (data/pmc_patients/scd_cache.json)
 
 Usage:
     python scripts/download_data.py
@@ -20,8 +20,7 @@ import time
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PMC_DIR = ROOT / "PMC-Patients"
-DATA_DIR = ROOT / "data"
+PMC_DIR = ROOT / "data" / "pmc_patients"
 
 URLS = {
     "v2": {

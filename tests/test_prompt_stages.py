@@ -31,7 +31,7 @@ NOTE = ("A 14-year-old with HbSS presented with chest pain. FiO2 was escalated t
 
 # Every stage is measured against stage 0, so stage 0 is the one thing in this
 # file that must never change. Editing the prompt and re-pinning this digest
-# silently rebases every comparison in `tasks/` onto a different control.
+# silently rebases prior prompt comparisons onto a different control.
 STAGE0_DIGEST = "db00daf41e74046ddcf1bc346d87c927c28344238b54c923d576d23095c4b022"
 
 

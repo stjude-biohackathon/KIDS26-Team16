@@ -1,0 +1,4 @@
+# Inference and CSV export use the Python standard library; Ollama runs separately.
+jupyterlab>=4.2,<5
+ipykernel>=6.29,<8
+pytest>=8,<10

@@ -1,14 +1,14 @@
 """Verify rules.md grade cells against SCOGS_Booklet.pdf.
 
 Regenerate the input first:
-    pdftotext -layout SCOGS_Booklet.pdf scripts/audit/booklet_layout.txt
+    python scripts/audit/extract_booklet.py
 """
 import re, json, pathlib, unicodedata, difflib
 
 SP   = pathlib.Path(__file__).parent
-ROOT = pathlib.Path("/Users/edward/Desktop/st_jude")
-book = json.loads(SP.joinpath("booklet_grades.json").read_text())
-rules = ROOT.joinpath("rules.md").read_text()
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+book = json.loads(SP.joinpath("booklet_grades.json").read_text(encoding="utf-8"))
+rules = ROOT.joinpath("rules.md").read_text(encoding="utf-8")
 
 # ---- rules.md side: grade rows, grouped into tables the same way (grade resets)
 secs = re.split(r"\n### (\d{2})\. ", rules)
@@ -77,4 +77,5 @@ for d in sorted(diffs, key=lambda x: x["ratio"]):
         elif t=="insert": print(f"    RULES.MD ONLY: {r}")
         else:             print(f"    BOOKLET      : {b}\n    RULES.MD     : {r}")
     print()
-json.dump(diffs, open(SP/"grade_diffs.json","w"), indent=1)
+with (SP / "grade_diffs.json").open("w", encoding="utf-8") as output:
+    json.dump(diffs, output, indent=1)

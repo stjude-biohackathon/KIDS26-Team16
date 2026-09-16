@@ -1,15 +1,15 @@
 """Verify rules.md prose sections + frequency against the booklet.
 
 Regenerate the input first:
-    pdftotext -layout SCOGS_Booklet.pdf scripts/audit/booklet_layout.txt
+    python scripts/audit/extract_booklet.py
 """
 import re, json, pathlib, unicodedata, difflib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from extract_booklet import TOC, pages, FOOTER, HEADER          # reuse page map
 from compare_grades import norm, words                                  # reuse normalizer
 
-ROOT = pathlib.Path("/Users/edward/Desktop/st_jude")
-rules = ROOT.joinpath("rules.md").read_text()
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+rules = ROOT.joinpath("rules.md").read_text(encoding="utf-8")
 SECTION = re.compile(r"^\s{0,3}(Definition|Diagnostic Criteria|Methodology|References)\b")
 FREQ = re.compile(r"(Acute \+ Chronic|Chronic with [Ee]xacerbations?|Chronic|Acute)\s*$")
 
