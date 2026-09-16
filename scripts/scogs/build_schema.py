@@ -41,6 +41,8 @@ def main() -> int:
         if spec["derived"]:
             derived_in |= {w for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", spec["derived"])
                            if w in FEATURES}
+        if spec.get("computed_from"):
+            derived_in |= {w for w in spec["computed_from"] if w in FEATURES}
 
     undeclared = sorted((used | applicability_in) - set(FEATURES))
     orphans = sorted(set(FEATURES) - used - derived_in - applicability_in)

@@ -34,6 +34,9 @@ def derived_inputs():
         if spec["derived"]:
             for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", spec["derived"]):
                 if w in FEATURES: used.add(w)
+        if spec.get("computed_from"):
+            for w in spec["computed_from"]:
+                if w in FEATURES: used.add(w)
     return used
 
 

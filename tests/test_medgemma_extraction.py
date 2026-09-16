@@ -776,3 +776,18 @@ def test_patient_context_tallies_stay_separate():
         assert feats.get(k) == v
 
 
+def test_expand_derived_with_computed_from(monkeypatch):
+    from medgemma_extraction import expand_derived
+    from scogs.features import FEATURES
+    fake_features = dict(FEATURES)
+    fake_features["mock_base_a"] = {"type": "num", "derived": None, "computed_from": None}
+    fake_features["mock_base_b"] = {"type": "num", "derived": None, "computed_from": None}
+    fake_features["mock_computed"] = {
+        "type": "ord", "derived": None, "computed_from": ["mock_base_a", "mock_base_b"]
+    }
+    monkeypatch.setattr("medgemma_extraction.FEATURES", fake_features)
+    expanded = expand_derived({"mock_computed"})
+    assert expanded == {"mock_computed", "mock_base_a", "mock_base_b"}
+
+
+

@@ -25,13 +25,14 @@ from __future__ import annotations
 FEATURES: dict[str, dict] = {}
 
 def F(name, type, definition, *, scope="encounter", values=None, unit=None,
-      outcomes=(), per_outcome=None, review=False, derived=None):
+      outcomes=(), per_outcome=None, review=False, derived=None, computed_from=None):
     if name in FEATURES:
         raise ValueError(f"duplicate feature {name!r}")
     FEATURES[name] = dict(type=type, scope=scope, values=list(values) if values else None,
                           unit=unit, definition=definition,
                           outcomes=sorted(outcomes), per_outcome=per_outcome or {},
-                          review=review, derived=derived)
+                          review=review, derived=derived,
+                          computed_from=list(computed_from) if computed_from else None)
     return name
 
 # ============================================================ patient / encounter

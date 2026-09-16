@@ -175,6 +175,12 @@ def expand_derived(names: set[str]) -> set[str]:
         if n in seen: continue
         seen.add(n)
         spec = FEATURES[n]
+        if spec.get("computed_from"):
+            out.add(n)
+            for inp in spec["computed_from"]:
+                if inp in FEATURES and inp not in seen:
+                    stack.append(inp)
+            continue
         if not spec["derived"]:
             out.add(n); continue
         inputs = [w for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", spec["derived"])
