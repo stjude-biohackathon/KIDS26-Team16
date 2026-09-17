@@ -11,7 +11,7 @@ from html import escape
 
 from dashboard.evaluation import FOCUS_OUTCOMES
 from dashboard.view_state import PENDING_REASON
-from tests.shiny_session import analyze_live_note, explore, live
+from tests.shiny_session import analyze_live_note, explore, live, loop_ticks_during_analysis
 
 FIXTURE = "tests/fixtures/sample_run.json"
 
@@ -175,9 +175,39 @@ def test_live_analysis_lands_on_a_graded_outcome():
     assert "GRADE" in out["executive_grade_card"]
 
 
+def test_live_analysis_leaves_the_event_loop_free():
+    """Grading must not run on the event loop.
+
+    14 outcomes is minutes of blocking work. On the event loop it starves the
+    session's websocket: the browser drops the connection and the finished
+    results go to a closed socket ("socket.send() raised exception"), so the
+    clinician waits out the whole run and sees nothing.
+    """
+    assert loop_ticks_during_analysis(0.3) > 10
+
+
 def test_live_analysis_can_be_narrowed_to_one_outcome():
     """Deselecting is still how a clinician runs a single outcome."""
     out = analyze_live_note(live_outcome=["48"])
     summary = out["patient_outcomes_summary_ui"]
     assert "Acute Chest Syndrome (ACS)" in summary
     assert "Chronic Leg Ulcer" not in summary
+
+
+def test_live_model_status_badge_installed_and_uninstalled(monkeypatch):
+    from tests.shiny_session import _render
+    from dashboard import evaluation
+
+    monkeypatch.setattr(evaluation, "get_installed_models", lambda host: ["medgemma-1.5-4b-it:latest"])
+
+    # When medgemma-1.5-4b-it is selected (default, installed)
+    out_installed = _render(mode="live", then=None, inputs={})
+    assert "Ollama Online" in out_installed["live_model_status_badge"]
+    assert "Ready" in out_installed["live_model_status_badge"]
+
+    # When gemma4:21b is selected (not installed)
+    out_uninstalled = _render(mode="live", then={"live_model_select": "gemma4:21b"}, inputs={})
+    assert "Model Not Installed" in out_uninstalled["live_model_status_badge"]
+    assert "gemma4:21b" in out_uninstalled["live_model_status_badge"]
+    assert "ollama pull" in out_uninstalled["live_model_status_badge"]
+

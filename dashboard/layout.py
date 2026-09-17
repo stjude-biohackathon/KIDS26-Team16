@@ -56,6 +56,9 @@ app_ui = ui.page_sidebar(
         class_="clinical-sidebar",
     ),
     ui.tags.head(
+        ui.tags.link(rel="preconnect", href="https://fonts.googleapis.com"),
+        ui.tags.link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin=""),
+        ui.tags.link(href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap", rel="stylesheet"),
         # Inlined into the page rather than served as files, so the app has no
         # static-route configuration to get wrong.
         ui.include_css(STATIC_DIR / "dashboard.css", method="inline"),
@@ -88,20 +91,22 @@ app_ui = ui.page_sidebar(
             ),
             class_="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom",
         ),
-        outcomes_overview_card,
-        ui.output_ui("executive_grade_card"),
-        ui.div(class_="my-3"),
-        ui.card(
-            ui.card_header(ui.span("Clinical Note Context & Verified Spans", class_="card-header-title")),
-            ui.output_ui("note_inspector_ui"),
-            class_="mb-3 shadow-xs",
+        ui.div(
+            outcomes_overview_card,
+            ui.output_ui("executive_grade_card"),
+            ui.card(
+                ui.card_header(ui.span("Clinical Note Context & Verified Spans", class_="card-header-title")),
+                ui.output_ui("note_inspector_ui"),
+                class_="shadow-xs",
+            ),
+            ui.card(
+                ui.card_header(ui.span("Clinical Findings & Grounding Verification", class_="card-header-title")),
+                ui.output_ui("findings_table_ui"),
+                class_="shadow-xs",
+            ),
+            ui.output_ui("profiling_card"),
+            class_="d-flex flex-column gap-4"
         ),
-        ui.card(
-            ui.card_header(ui.span("Clinical Findings & Grounding Verification", class_="card-header-title")),
-            ui.output_ui("findings_table_ui"),
-            class_="mb-3 shadow-xs",
-        ),
-        ui.output_ui("profiling_card"),
         class_="container-fluid py-2",
     ),
     title="SCOGS Clinical Dashboard",

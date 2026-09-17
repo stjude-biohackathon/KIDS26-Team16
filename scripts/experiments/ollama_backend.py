@@ -8,7 +8,10 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
-DEFAULT_MODEL = "medgemma-27b-f16"
+# LOCAL: the 27B F16 weights are not installed on this machine; gemma4:12b is.
+# The strict preflight below still refuses it, so callers that want it must pass
+# strict=False (the CLI's --force-model, and the dashboard's availability check).
+DEFAULT_MODEL = "medgemma-1.5-4b-it"
 DEFAULT_HOST = "http://localhost:11434"
 WEIGHTS = "google/medgemma-27b-text-it"
 GGUF_FILE_TYPES = {
@@ -51,35 +54,51 @@ def request_json(host: str, endpoint: str, body: dict | None = None,
     return result
 
 
-def validate_model(info: dict, strict: bool = True) -> str:
-    """Require measured parameter count and unambiguous 16-bit GGUF metadata.
+def validate_model(info: dict, strict: bool = True, model: str | None = None) -> str:
+    """Validate model metadata against supported architectures.
 
-    The 27B label is rounded; Gemma 3 text weights fall in the 26-29B range.
-    Metadata cannot prove medical fine-tuning: the operator must verify the source.
-    When strict=False, bypasses the 27B / F16 requirement for experimental models.
+    Supported model families:
+      - MedGemma 27B (gemma3 architecture, ~26-29B parameters, F16/BF16)
+      - MedGemma 1.5 4B-IT (gemma3 architecture, ~3.9B parameters)
+      - Gemma 4 21B (gemma4 architecture, ~21B parameters)
+
+    When strict=False, bypasses parameter/architecture checks for experimental models.
     """
     details = info.get("details", {})
     if not strict:
         return str(details.get("quantization_level") or "custom")
     metadata = info.get("model_info", {})
     count = metadata.get("general.parameter_count")
-    if not isinstance(count, (int, float)) or not 26e9 <= count < 29e9:
-        raise ValueError(f"Only full 27B models are supported; parameter count is {count!r}")
-    if metadata.get("general.architecture") != "gemma3":
-        raise ValueError("Expected MedGemma 27B text weights with gemma3 architecture")
+    arch = metadata.get("general.architecture")
     raw_type = metadata.get("general.file_type")
     quant = details.get("quantization_level")
-    if raw_type is not None:
-        precision = GGUF_FILE_TYPES.get(raw_type)
-        if precision not in {"F16", "BF16"}:
-            raise ValueError(f"Only F16/BF16 weights are allowed; GGUF file type is {raw_type!r}")
-        if quant is not None and quant != precision:
-            raise ValueError(f"Conflicting model precision metadata: {precision} versus {quant}")
+    precision = GGUF_FILE_TYPES.get(raw_type) if raw_type is not None else quant
+
+    target = (model or "").lower()
+    if "4b" in target or "medgemma-1.5" in target:
+        if not isinstance(count, (int, float)) or not 3e9 <= count < 5e9:
+            raise ValueError(f"Expected MedGemma 1.5 4B parameters (~3.9B); got parameter count {count!r}")
+        if arch != "gemma3":
+            raise ValueError(f"Expected MedGemma 1.5 4B with gemma3 architecture; got {arch!r}")
+        return str(precision or quant or "custom")
+    elif "21b" in target or ("gemma4" in target and "27b" not in target):
+        if arch != "gemma4" and (not isinstance(count, (int, float)) or not 10e9 <= count < 25e9):
+            raise ValueError(f"Expected Gemma 4 21B architecture or parameter count; got arch={arch!r}, count={count!r}")
+        return str(precision or quant or "custom")
     else:
-        precision = quant
-    if precision not in {"F16", "BF16"}:
-        raise ValueError(f"Only unquantized F16/BF16 weights are allowed; got {precision!r}")
-    return precision
+        # Default / MedGemma 27B strict validation
+        if not isinstance(count, (int, float)) or not 26e9 <= count < 29e9:
+            raise ValueError(f"Only full 27B models are supported; parameter count is {count!r}")
+        if arch != "gemma3":
+            raise ValueError("Expected MedGemma 27B text weights with gemma3 architecture")
+        if raw_type is not None:
+            if precision not in {"F16", "BF16"}:
+                raise ValueError(f"Only F16/BF16 weights are allowed; GGUF file type is {raw_type!r}")
+            if quant is not None and quant != precision:
+                raise ValueError(f"Conflicting model precision metadata: {precision} versus {quant}")
+        if precision not in {"F16", "BF16"}:
+            raise ValueError(f"Only unquantized F16/BF16 weights are allowed; got {precision!r}")
+        return precision
 
 
 def call_ollama(prompt: str, model: str, host: str, stats: dict | None = None,
@@ -109,7 +128,7 @@ def call_ollama(prompt: str, model: str, host: str, stats: dict | None = None,
 def preflight(model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
               timeout: int = 300, num_ctx: int = 16384, strict: bool = True) -> dict:
     info = request_json(host, "/api/show", {"model": model}, timeout=timeout)
-    precision = validate_model(info, strict=strict)
+    precision = validate_model(info, strict=strict, model=model)
     tags = request_json(host, "/api/tags", timeout=timeout)
     canonical = model if ":" in model.rsplit("/", 1)[-1] else f"{model}:latest"
     entry = next((item for item in tags.get("models", [])

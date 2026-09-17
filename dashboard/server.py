@@ -1,6 +1,7 @@
 """Reactive server logic for the SCOGS Shiny dashboard."""
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -11,12 +12,18 @@ from shiny.types import SilentException
 
 from dashboard.data import get_available_run_files, load_csv_notes, load_run_file
 from dashboard.evaluation import (
+    DEFAULT_LIVE_MODEL,
+    DEFAULT_MODEL,
     FOCUS_OUTCOMES,
     LIVE_CONCURRENCY,
+    check_ollama_status,
     extract_and_grade_note,
+    get_live_concurrency,
+    get_model_choices,
     grade_badge,
     is_derived,
     is_ollama_available,
+    save_live_run_results,
 )
 from dashboard.highlight import highlight_note_quotes
 from dashboard.view_state import (
@@ -81,10 +88,40 @@ def server(input, output, session):
     @output
     @render.ui
     def header_status_badge():
-        ollama_up = is_ollama_available()
-        if ollama_up:
-            return ui.span("Ollama Connected (MedGemma 27B)", class_="badge bg-success", style="font-size: 0.76rem;")
-        return ui.span("Ollama Offline (Deterministic Mode)", class_="badge bg-secondary", style="font-size: 0.76rem;")
+        selected_model = (
+            input.live_model_select()
+            if (hasattr(input, "live_model_select") and input.live_model_select())
+            else DEFAULT_LIVE_MODEL
+        )
+        status, _ = check_ollama_status(model=selected_model)
+
+        if status == "ready":
+            return ui.span(f"Ollama Online ({selected_model})", class_="badge badge-grade-1", style="font-size: 0.76rem;")
+        elif status == "not_installed":
+            return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
+        return ui.span(f"Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
+
+    @output
+    @render.ui
+    def live_model_status_badge():
+        selected_model = (
+            input.live_model_select()
+            if (hasattr(input, "live_model_select") and input.live_model_select())
+            else DEFAULT_LIVE_MODEL
+        )
+        status, _ = check_ollama_status(model=selected_model)
+
+        if status == "ready":
+            return ui.span(f"● Ollama Online ({selected_model} Ready • 16,384 ctx)", class_="badge badge-grade-1 mb-2")
+        elif status == "not_installed":
+            return ui.div(
+                ui.span(f"▲ Model Not Installed: {selected_model}", class_="badge badge-cannot-grade mb-1"),
+                ui.div(
+                    f"Ollama is running, but '{selected_model}' is not installed. Run 'ollama pull {selected_model}' in terminal to download it, or analyze below in deterministic mode.",
+                    class_="small text-muted mb-2",
+                ),
+            )
+        return ui.span(f"● Ollama Offline ({selected_model}) - Deterministic Mode", class_="badge bg-secondary mb-2")
 
     # Dynamic Sidebar Controls
     @output
@@ -104,12 +141,9 @@ def server(input, output, session):
             )
         else:
             # Mode 2: Live Note Evaluator
-            ollama_up = is_ollama_available()
-            badge = (
-                ui.span("Ollama Online (MedGemma 27B)", class_="badge bg-success mb-2")
-                if ollama_up
-                else ui.span("Ollama Offline (Deterministic Mode)", class_="badge bg-secondary mb-2")
-            )
+            model_choices = get_model_choices(grouped=True)
+            flat_choices = get_model_choices(grouped=False)
+            default_model = DEFAULT_LIVE_MODEL if DEFAULT_LIVE_MODEL in flat_choices else next(iter(flat_choices.keys()))
 
             df = csv_notes()
             csv_choices = {}
@@ -124,12 +158,18 @@ def server(input, output, session):
 
             return ui.div(
                 ui.span("NOTE SOURCE & INFERENCE", class_="sidebar-section-label"),
-                badge,
+                ui.input_select(
+                    "live_model_select",
+                    "Inference Model:",
+                    choices=model_choices,
+                    selected=default_model,
+                ),
+                ui.output_ui("live_model_status_badge"),
                 ui.input_radio_buttons(
                     "live_source",
                     "Input Source:",
                     choices={"csv": "From CSV Dataset", "custom": "Paste Custom Note"},
-                    selected="csv" if csv_choices else "custom",
+                    selected="custom",
                 ),
                 ui.panel_conditional(
                     "input.live_source === 'csv'",
@@ -152,8 +192,13 @@ def server(input, output, session):
                     options={"plugins": ["remove_button"]},
                 ),
                 ui.layout_columns(
-                    ui.input_numeric("patient_age_input", "Age (years):", value=25.0, min=0.0, max=120.0, step=0.5),
-                    ui.input_select("patient_sex_input", "Sex:", choices={"male": "Male", "female": "Female", "unknown": "Unknown"}, selected="male"),
+                    ui.input_numeric("patient_age_input", "Age (years):", value=None, min=0.0, max=120.0, step=0.5),
+                    ui.input_select(
+                        "patient_sex_input",
+                        "Sex:",
+                        choices={"": "Select sex (optional)", "male": "Male", "female": "Female", "unknown": "Unknown"},
+                        selected="",
+                    ),
                     col_widths=[6, 6],
                 ),
                 ui.input_checkbox("outcome_present_input",
@@ -190,11 +235,23 @@ def server(input, output, session):
             sex_val = str(row.get("patient_sex", "unknown"))
             if sex_val in ("male", "female", "unknown"):
                 ui.update_select("patient_sex_input", selected=sex_val)
+            else:
+                ui.update_select("patient_sex_input", selected="")
             age_val = row.get("patient_age")
             if pd.notna(age_val):
                 ui.update_numeric("patient_age_input", value=round(float(age_val), 1))
+            else:
+                ui.update_numeric("patient_age_input", value=None)
         except Exception:
             pass
+
+    @reactive.effect
+    @reactive.event(input.live_source)
+    def _handle_custom_source():
+        if input.app_mode() == "live" and input.live_source() == "custom":
+            ui.update_text_area("live_note_text", value="")
+            ui.update_numeric("patient_age_input", value=None)
+            ui.update_select("patient_sex_input", selected="")
 
     # Load Run File Reactively
     @reactive.effect
@@ -300,15 +357,15 @@ def server(input, output, session):
     # Trigger Live Note Evaluation
     @reactive.effect
     @reactive.event(input.btn_analyze)
-    def _perform_live_eval():
-        note_text = input.live_note_text() or ""
+    async def _perform_live_eval():
+        note_text = current("live_note_text", "") or ""
         outcome_ids = selected_live_outcomes()
-        patient_sex = input.patient_sex_input() or "unknown"
-        patient_age = input.patient_age_input()
-        present = bool(input.outcome_present_input())
+        patient_sex = current("patient_sex_input", "") or "unknown"
+        patient_age = current("patient_age_input", None)
+        present = bool(current("outcome_present_input", True))
 
         manual_dict: dict[str, Any] = {}
-        raw_manual = input.manual_features_json()
+        raw_manual = current("manual_features_json", "")
         if raw_manual and raw_manual.strip():
             try:
                 manual_dict = json.loads(raw_manual.strip())
@@ -316,19 +373,58 @@ def server(input, output, session):
                 ui.notification_show(f"JSON Parse Error in manual features: {e}", type="warning")
 
         manual_dict["present"] = present
+        context = {"patient_sex": patient_sex, "patient_age": patient_age}
 
-        res = extract_and_grade_note(
-            note_text=note_text,
-            outcomes=outcome_ids,
-            patient_context={"patient_sex": patient_sex, "patient_age": patient_age},
-            use_ollama=is_ollama_available(),
-            # Deterministic mode has one set of typed values; every selected
-            # outcome is graded against it.
-            manual_features={num: dict(manual_dict) for num in outcome_ids},
-            concurrency=LIVE_CONCURRENCY,
-        )
-        live_eval_result.set(res)
-        ui.notification_show(f"Analysis and grading complete: {len(res)} outcomes", type="message")
+        # Both calls below run in a worker thread. Grading 14 outcomes is minutes
+        # of blocking work, and on the event loop it starves the session's
+        # websocket: the browser gives up on the ping, and the finished results
+        # are then written to a closed socket ("socket.send() raised exception").
+        selected_model = current("live_model_select", DEFAULT_LIVE_MODEL) or DEFAULT_LIVE_MODEL
+        online = await asyncio.to_thread(is_ollama_available, model=selected_model)
+        results: dict[str, Any] = {}
+        model_concurrency = get_live_concurrency(selected_model)
+        with ui.Progress(min=0, max=len(outcome_ids)) as progress:
+            progress.set(0, message="Grading outcomes", detail=f"0 of {len(outcome_ids)}")
+            # A chunk at a time, so the overview fills in as outcomes land instead
+            # of staying empty until the last one is graded.
+            for start in range(0, len(outcome_ids), model_concurrency):
+                chunk = outcome_ids[start:start + model_concurrency]
+                results.update(await asyncio.to_thread(
+                    extract_and_grade_note,
+                    note_text=note_text,
+                    outcomes=chunk,
+                    patient_context=context,
+                    use_ollama=online,
+                    model=selected_model,
+                    # Deterministic mode has one set of typed values; every
+                    # selected outcome is graded against it.
+                    manual_features={num: dict(manual_dict) for num in chunk},
+                    concurrency=model_concurrency,
+                ))
+                live_eval_result.set(dict(results))
+                progress.set(len(results), detail=f"{len(results)} of {len(outcome_ids)}")
+
+        # Save live run outputs into results/live
+        try:
+            saved_path = await asyncio.to_thread(
+                save_live_run_results,
+                note_text=note_text,
+                outcomes=outcome_ids,
+                results=results,
+                model=selected_model,
+                backend="ollama" if online else "deterministic",
+                patient_age=patient_age,
+                patient_sex=patient_sex,
+            )
+            ui.notification_show(
+                f"Analysis and grading complete ({len(results)} outcomes). Saved to {saved_path}",
+                type="message",
+            )
+        except Exception as e:
+            ui.notification_show(
+                f"Analysis complete ({len(results)} outcomes), but saving to results/live failed: {e}",
+                type="warning",
+            )
 
     # Helper: resolve active state data
     def get_current_view_state() -> dict[str, Any]:
@@ -355,8 +451,9 @@ def server(input, output, session):
             return explore_view_state(run_data, uid, str(outcome_num))
         results = live_eval_result.get()
         return live_view_state(results, live_outcome_num(results),
-                               input.live_note_text() or "", input.patient_age_input(),
-                               input.patient_sex_input())
+                               current("live_note_text", "") or "",
+                               current("patient_age_input", None),
+                               current("patient_sex_input", None))
 
     # ==========================================================================
     # 4. Renderers: Cards, Tables, Inspector
@@ -374,7 +471,7 @@ def server(input, output, session):
             return ui.div(
                 title,
                 ui.span(f"{graded} outcomes graded" if graded != 1 else "1 outcome graded",
-                        class_="badge bg-light text-secondary border fw-normal ms-2",
+                        class_="badge-engine fw-normal ms-2",
                         style="font-size: 0.78rem;"),
                 class_="d-flex align-items-center flex-wrap gap-1",
             )
@@ -388,7 +485,7 @@ def server(input, output, session):
         return ui.div(
             ui.span(f"Encounter Outcomes & Severity Overview: {uid}", class_="card-header-title"),
             ui.span(rec.get("title") or "Clinical Encounter",
-                    class_="badge bg-light text-secondary border fw-normal ms-2",
+                    class_="badge-engine fw-normal ms-2",
                     style="font-size: 0.78rem;"),
             class_="d-flex align-items-center flex-wrap gap-1",
         )
@@ -502,32 +599,45 @@ def server(input, output, session):
             )
 
         details_row = []
-        if matched:
-            details_row.append(
-                ui.div(
-                    ui.span("Matched Rule Predicate: ", class_="fw-semibold text-secondary fs-7"),
-                    ui.div(ui.code(str(matched), class_="dsl-code-block")),
-                )
-            )
         if reason:
             details_row.append(
                 ui.div(
-                    ui.span("Decision Rationale: ", class_="fw-semibold text-secondary fs-7"),
-                    ui.span(str(reason), class_="fs-7"),
+                    ui.span("Decision Rationale", class_="sidebar-section-label mb-1"),
+                    ui.span(str(reason), class_="fs-7 text-secondary"),
+                    class_="mb-2"
+                )
+            )
+        if matched:
+            details_row.append(
+                ui.div(
+                    ui.span("Matched Rule Predicate", class_="sidebar-section-label mb-1"),
+                    ui.div(ui.code(str(matched), class_="dsl-code-block")),
+                    class_="mb-2"
                 )
             )
         if missing:
             details_row.append(
                 ui.div(
-                    ui.span("Missing Required Features: ", class_="fw-semibold text-danger fs-7"),
+                    ui.span("Missing Required Features", class_="sidebar-section-label text-danger mb-1"),
                     ui.span(", ".join(str(m) for m in missing), class_="text-danger fs-7"),
+                    class_="mb-2"
                 )
             )
         if undecided:
+            clause_elements = []
+            for grade_num, clause in undecided:
+                clause_elements.append(
+                    ui.div(
+                        ui.span(f"Grade {grade_num}", class_="badge badge-not-applicable px-2 py-1 me-2 fw-semibold", style="font-size: 0.72rem;"),
+                        ui.code(str(clause), class_="dsl-code-block fs-7"),
+                        class_="mb-2 d-flex align-items-center"
+                    )
+                )
             details_row.append(
                 ui.div(
-                    ui.span("Undecided Clauses: ", class_="fw-semibold text-muted fs-7"),
-                    ui.span(str(undecided), class_="text-muted fs-7"),
+                    ui.span("Undecided Clauses", class_="sidebar-section-label mb-2"),
+                    ui.div(*clause_elements, class_="ps-2 border-start border-2 border-secondary"),
+                    class_="mb-2 w-100"
                 )
             )
 
@@ -538,7 +648,7 @@ def server(input, output, session):
             ui.card_header(
                 ui.div(
                     ui.span(f"Outcome #{state.get('outcome_num')}: {state.get('outcome_name')}", class_="card-header-title"),
-                    ui.span(meta_info, class_="badge bg-light text-secondary border fw-normal", style="font-size: 0.78rem;"),
+                    ui.span(meta_info, class_="badge-engine fw-normal", style="font-size: 0.78rem;"),
                     class_="d-flex justify-content-between align-items-center flex-wrap gap-2",
                 )
             ),
@@ -637,11 +747,11 @@ def server(input, output, session):
         note_html = highlight_note_quotes(state["note_text"], state.get("accepted_findings", []))
         return ui.div(
             ui.div(
-                ui.span(f"Patient ID: {state.get('patient_uid')}", class_="badge bg-light text-dark border me-2"),
-                ui.span(f"Sex: {state.get('patient_sex') or 'unknown'}", class_="badge bg-light text-dark border me-2"),
+                ui.span(f"Patient ID: {state.get('patient_uid')}", class_="badge-engine me-2"),
+                ui.span(f"Sex: {state.get('patient_sex') or 'unknown'}", class_="badge-engine me-2"),
                 ui.span(
                     f"Age: {state.get('patient_age'):.1f} yrs" if state.get("patient_age") is not None else "Age: N/A",
-                    class_="badge bg-light text-dark border",
+                    class_="badge-engine",
                 ),
                 class_="mb-2 d-flex align-items-center flex-wrap gap-1",
             ),
@@ -672,7 +782,7 @@ def server(input, output, session):
                     ui.layout_columns(
                         ui.div(
                             ui.span("Model Architecture", class_="sidebar-section-label"),
-                            ui.h5(prov.get("weights") or "MedGemma 27B", class_="fw-bold mb-0 text-dark"),
+                            ui.h5(prov.get("weights") or "MedGemma 27B", class_="fw-bold mb-0"),
                             ui.span(f"Prompt Stage: {prov.get('prompt_stage', 'N/A')} ({prov.get('quant') or 'F16'})", class_="fs-7 text-secondary mt-1"),
                             class_="metric-box",
                         ),
@@ -691,10 +801,10 @@ def server(input, output, session):
                         ui.div(
                             ui.span("Grade Distribution", class_="sidebar-section-label"),
                             ui.div(
-                                ui.span(f"Graded: {statuses.get('graded', 0)}", class_="badge bg-success me-1"),
-                                ui.span(f"Absent: {statuses.get('absent', 0)}", class_="badge bg-secondary me-1"),
-                                ui.span(f"Cannot: {statuses.get('cannot_grade', 0)}", class_="badge bg-warning text-dark me-1"),
-                                ui.span(f"Refuted: {statuses.get('refuted', 0)}", class_="badge bg-purple text-white"),
+                                ui.span(f"Graded: {statuses.get('graded', 0)}", class_="badge badge-grade-1 me-1"),
+                                ui.span(f"Absent: {statuses.get('absent', 0)}", class_="badge badge-absent me-1"),
+                                ui.span(f"Cannot: {statuses.get('cannot_grade', 0)}", class_="badge badge-cannot-grade me-1"),
+                                ui.span(f"Refuted: {statuses.get('refuted', 0)}", class_="badge badge-refuted"),
                                 class_="d-flex flex-wrap gap-1 mt-1",
                             ),
                             class_="metric-box",
@@ -705,6 +815,27 @@ def server(input, output, session):
                 ),
             )
         else:
+            live_model = (
+                input.live_model_select()
+                if (hasattr(input, "live_model_select") and input.live_model_select())
+                else DEFAULT_LIVE_MODEL
+            )
+            status, _ = check_ollama_status(model=live_model)
+
+            conc = get_live_concurrency(live_model)
+            if status == "ready":
+                engine_title = f"Ollama / {live_model}"
+                engine_desc = f"Real-time extraction (Installed & Ready • {conc}x Concurrency)"
+                engine_color = "text-success"
+            elif status == "not_installed":
+                engine_title = f"Ollama / {live_model}"
+                engine_desc = "Model not installed (Deterministic fallback active)"
+                engine_color = "text-warning"
+            else:
+                engine_title = "Deterministic Engine"
+                engine_desc = "Ollama offline (Deterministic fallback active)"
+                engine_color = "text-secondary"
+
             return ui.card(
                 ui.card_header(ui.span("Live Execution Telemetry", class_="card-header-title")),
                 ui.div(
@@ -717,8 +848,9 @@ def server(input, output, session):
                         ),
                         ui.div(
                             ui.span("Inference Engine", class_="sidebar-section-label"),
-                            ui.h5("Ollama / MedGemma 27B", class_="fw-bold mb-0"),
-                            ui.span("Real-time clinical entity extraction", class_="fs-7 text-secondary mt-1"),
+                            ui.h5(engine_title, class_="fw-bold mb-0"),
+                            ui.span(engine_desc, class_=f"fs-7 {engine_color} mt-1 d-block"),
+                            ui.span(f"Context: 16,384 tokens • Concurrency: {conc} workers", class_="fs-7 text-secondary mt-1"),
                             class_="metric-box",
                         ),
                         col_widths=[6, 6],

@@ -39,14 +39,146 @@ FOCUS_OUTCOMES: dict[str, dict[str, str]] = {
     "49": {"name": "Asthma", "organ_system": "Pulmonary", "acuity": "Chronic"},
 }
 
+# Supported models for live extraction
+ALLOWED_MODELS: dict[str, str] = {
+    "medgemma-1.5-4b-it": "MedGemma 1.5 4B-IT",
+    "gemma4:21b": "Gemma 4 21B",
+    "medgemma-27b-f16": "MedGemma 27B",
+}
+DEFAULT_LIVE_MODEL = "medgemma-1.5-4b-it"
+
+
+def get_installed_models(host: str = DEFAULT_HOST) -> list[str]:
+    """-> list of model names/tags installed on the Ollama instance at `host`."""
+    from experiments.ollama_backend import request_json
+    try:
+        data = request_json(host, "/api/tags", timeout=3)
+        installed = []
+        for item in data.get("models", []):
+            name = str(item.get("name") or item.get("model") or "").strip()
+            if name:
+                installed.append(name)
+        return installed
+    except Exception:
+        return []
+
+
+def is_model_installed(model: str, installed_models: list[str]) -> bool:
+    """True if `model` matches an entry in `installed_models` (handling :latest canonicalization)."""
+    if not model or not installed_models:
+        return False
+    canonical = model if ":" in model.rsplit("/", 1)[-1] else f"{model}:latest"
+    for item in installed_models:
+        item_canonical = item if ":" in item.rsplit("/", 1)[-1] else f"{item}:latest"
+        if item == model or item == canonical or item_canonical == canonical or item_canonical == model:
+            return True
+        if item.rstrip(":latest") == model.rstrip(":latest"):
+            return True
+    return False
+
+
+def check_ollama_status(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> tuple[str, str]:
+    """-> (status, display_message).
+
+    Status is one of:
+      - 'ready': Ollama server is reachable and `model` is installed and ready.
+      - 'not_installed': Ollama server is reachable, but `model` is not installed.
+      - 'offline': Ollama server is unreachable.
+    """
+    installed = get_installed_models(host)
+    if not installed:
+        from experiments.ollama_backend import request_json
+        try:
+            request_json(host, "/api/tags", timeout=3)
+            # Server responded but no models installed
+            return ("not_installed", f"Model '{model}' not installed (Ollama has 0 models)")
+        except Exception:
+            return ("offline", f"Ollama Server Offline ({host})")
+
+    if is_model_installed(model, installed):
+        return ("ready", f"Ollama Online - '{model}' Ready")
+    else:
+        return ("not_installed", f"Model '{model}' not installed in Ollama")
+
+
+def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False) -> dict[str, Any]:
+    """-> choices mapping for live evaluation.
+
+    Categorizes models into installed and not-installed, clearly labeled.
+    If grouped=True, returns {group_name: {model_tag: label}}.
+    If grouped=False, returns flat {model_tag: label}.
+    """
+    installed_tags = get_installed_models(host)
+    ollama_online = bool(installed_tags)
+    if not ollama_online:
+        from experiments.ollama_backend import request_json
+        try:
+            request_json(host, "/api/tags", timeout=3)
+            ollama_online = True
+        except Exception:
+            ollama_online = False
+
+    installed_group: dict[str, str] = {}
+    uninstalled_group: dict[str, str] = {}
+
+    if not ollama_online:
+        for tag, label in ALLOWED_MODELS.items():
+            uninstalled_group[tag] = f"{label} (Ollama Offline)"
+        if grouped:
+            return {"Supported Models (Ollama Offline)": uninstalled_group}
+        return uninstalled_group
+
+    for tag, label in ALLOWED_MODELS.items():
+        if is_model_installed(tag, installed_tags):
+            installed_group[tag] = f"{label} (Installed)"
+        else:
+            uninstalled_group[tag] = f"{label} (Not Installed)"
+
+    # Include any additional models detected in Ollama
+    for tag in installed_tags:
+        if not is_model_installed(tag, list(ALLOWED_MODELS.keys())):
+            installed_group[tag] = f"{tag} (Installed)"
+
+    if grouped:
+        res: dict[str, dict[str, str]] = {}
+        if installed_group:
+            res["Installed in Ollama"] = installed_group
+        if uninstalled_group:
+            res["Not Installed (Pull Required)"] = uninstalled_group
+        return res
+
+    return {**installed_group, **uninstalled_group}
+
+
 # The patient id a pasted note gets inside the harness; it never leaves this module.
 LIVE_NOTE_UID = "LIVE-CASE"
 
+#: Seconds the availability check waits. It runs a real generation, so a cold
+#: model has to load inside it; 3s was enough for a resident 27B and is not
+#: enough for a first call after `ollama run` has unloaded the weights.
+PREFLIGHT_TIMEOUT = 60
+
 #: How many of the live evaluator's outcome calls run at once. Grading one note
-#: against all 14 focus outcomes is 14 generations, and serially that is minutes
-#: of waiting. Batching only confounds *repeated* runs of the same outcome
+#: against all 14 focus outcomes is 14 generations, and serially that is a long
+#: wait. Batching only confounds *repeated* runs of the same outcome
 #: (experiments/run_output.py); the dashboard grades each outcome once.
-LIVE_CONCURRENCY = 4
+#: LOCAL: 2, not 4 for large models - at 3 parallel requests this machine's Ollama dies with
+#: "llama-server process no longer running" (three 16k contexts on top of 27B weights).
+#: For lightweight 4B models (medgemma-1.5-4b-it), memory footprint is small (~2.4 GB),
+#: allowing higher concurrency (4 workers) to process the 14 focus outcomes much faster.
+LIVE_CONCURRENCY = 2
+
+
+def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:
+    """-> concurrency level for live evaluation based on model size.
+
+    For 4B models (e.g. medgemma-1.5-4b-it), memory footprint is small (~2.4 GB),
+    enabling 4 parallel workers. For 27B+ models, concurrency is capped at 2.
+    """
+    model_lower = (model or "").lower()
+    if "4b" in model_lower:
+        return 4
+    return LIVE_CONCURRENCY
 
 # Dashboard and CSV sex codes -> the schema's `patient_sex` values (scogs/features.py).
 # Anything else ("unknown", blank) is left out so the rules see it as UNKNOWN.
@@ -108,9 +240,10 @@ def cannot_grade(outcome: str, reason: str) -> OutcomeGrade:
 
 
 def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = "ollama",
-                         model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
+                         model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST,
                          prompt_stage: str = DEFAULT_PROMPT_STAGE, patient_sex: str = "unknown",
-                         patient_age: Any = None, concurrency: int = 1) -> dict[str, dict[str, Any]]:
+                         patient_age: Any = None, concurrency: int = 1,
+                         num_ctx: int = 16384) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for one pasted note, extracted exactly as the CLI does.
 
     Runs the note as a one-note batch through `run()`: the CLI's prompt stage,
@@ -121,7 +254,7 @@ def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = 
     outcome_ids = [normalize_outcome_id(outcome) for outcome in outcomes]
     note = {"patient_uid": LIVE_NOTE_UID, "patient": note_text}
     results, _ = run([note], outcome_ids, backend, model, host, Tally(),
-                     concurrency=concurrency, st=stage(prompt_stage))
+                     concurrency=concurrency, st=stage(prompt_stage), num_ctx=num_ctx)
     context = clinician_context(patient_sex, patient_age)
 
     items = {}
@@ -145,8 +278,9 @@ def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = 
 def extract_and_grade_note(note_text: str, outcomes: list[str],
                            patient_context: dict[str, Any] | None = None, use_ollama: bool = False,
                            manual_features: dict[str, dict[str, Any]] | None = None,
-                           model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
-                           concurrency: int = LIVE_CONCURRENCY) -> dict[str, dict[str, Any]]:
+                           model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST,
+                           concurrency: int | None = None,
+                           num_ctx: int = 16384) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for the live evaluator, from the model or from typed values.
 
     Every item has the same keys in both modes, so the UI renders them identically.
@@ -154,11 +288,13 @@ def extract_and_grade_note(note_text: str, outcomes: list[str],
     context = patient_context or {}
     sex, age = context.get("patient_sex", "unknown"), context.get("patient_age")
     outcome_ids = [normalize_outcome_id(outcome) for outcome in outcomes]
+    active_concurrency = concurrency if concurrency is not None else get_live_concurrency(model)
     if use_ollama:
         try:
             return extract_with_harness(note_text, outcome_ids, model=model, host=host,
                                         patient_sex=sex, patient_age=age,
-                                        concurrency=min(len(outcome_ids), concurrency))
+                                        concurrency=min(len(outcome_ids), active_concurrency),
+                                        num_ctx=num_ctx)
         except Exception as exc:
             # Any backend failure is shown on the card; it must not crash the session.
             return {outcome: failed_item(outcome, exc) for outcome in outcome_ids}
@@ -199,13 +335,129 @@ def failed_item(outcome: str, error: Exception) -> dict[str, Any]:
     }
 
 
-def is_ollama_available(model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST) -> bool:
-    """True when the local Ollama server answers the preflight for `model`."""
+def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> bool:
+    """True when the local Ollama server is running and answers preflight for `model`."""
+    status, _ = check_ollama_status(model=model, host=host)
+    if status != "ready":
+        return False
     try:
-        preflight(model=model, host=host, timeout=3)
+        preflight(model=model, host=host, timeout=PREFLIGHT_TIMEOUT, strict=False)
         return True
     except Exception:
         return False
+
+
+def save_live_run_results(
+    note_text: str,
+    outcomes: list[str],
+    results: dict[str, Any],
+    model: str = DEFAULT_LIVE_MODEL,
+    backend: str = "ollama",
+    patient_age: Any = None,
+    patient_sex: str | None = None,
+    output_dir: str | Path = "results/live",
+    num_ctx: int = 16384,
+) -> Path:
+    """Save live note evaluation results to a JSON file compatible with the run explorer.
+
+    -> Path to the saved file.
+    """
+    import json
+    from dataclasses import asdict
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_id = f"live-{timestamp}"
+    filename = f"live_run_{timestamp}.json"
+    file_path = out_dir / filename
+
+    outcome_ids = [normalize_outcome_id(o) for o in outcomes]
+    status_counts: dict[str, int] = {}
+    status_by_outcome: dict[str, dict[str, int]] = {}
+
+    per_outcome_details = {}
+    for num in outcome_ids:
+        item = results.get(num, {})
+        status = item.get("status", "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+        status_by_outcome[num] = {status: 1}
+
+        grade_res = item.get("grade_result")
+        if isinstance(grade_res, GradeResult):
+            grade_dict = asdict(grade_res)
+            grade_dict["grades"] = list(grade_dict.get("grades", []))
+            grade_dict["missing"] = list(grade_dict.get("missing", []))
+            grade_dict["undecided"] = [list(u) for u in grade_dict.get("undecided", [])]
+        elif isinstance(grade_res, dict):
+            grade_dict = dict(grade_res)
+        else:
+            grade_dict = {"status": status, "grade": None, "reason": None}
+
+        per_outcome_details[num] = {
+            "outcome_name": item.get("outcome_name", outcome_display_name(num)),
+            "present": item.get("present", False),
+            "status": status,
+            "extracted_features": item.get("extracted_features", {}),
+            "accepted_findings": item.get("accepted_findings", []),
+            "conflicts": item.get("conflicts", []),
+            "grade_result": grade_dict,
+            "raw_reply": item.get("raw_reply", ""),
+        }
+
+    age_float = None
+    try:
+        if patient_age is not None and str(patient_age).strip():
+            age_float = float(patient_age)
+    except (ValueError, TypeError):
+        pass
+
+    sex_str = str(patient_sex).strip().lower() if patient_sex else None
+    if sex_str not in ("male", "female"):
+        sex_str = None
+
+    record = {
+        "patient_uid": LIVE_NOTE_UID,
+        "title": f"Live Evaluation ({model})",
+        "age": [[age_float, "year"]] if age_float is not None else None,
+        "patient_age": age_float,
+        "gender": sex_str,
+        "patient_sex": sex_str,
+        "patient_note": note_text,
+        "outcomes": per_outcome_details,
+    }
+
+    run_doc = {
+        "provenance": {
+            "timestamp": timestamp,
+            "run_id": run_id,
+            "model": model,
+            "weights": model,
+            "served_as": model,
+            "backend": backend,
+            "num_ctx": num_ctx,
+            "notes_count": 1,
+            "outcomes": outcome_ids,
+            "source": "live",
+        },
+        "profiling": {
+            "total_outcomes": len(outcome_ids),
+        },
+        "automated_metrics": {
+            "outcomes_graded": len(results),
+            "accepted_findings_total": sum(len(item.get("accepted_findings", [])) for item in results.values()),
+        },
+        "grade_status": status_counts,
+        "grade_status_by_outcome": status_by_outcome,
+        "detailed_records": [record],
+    }
+
+    with file_path.open("w", encoding="utf-8") as f:
+        json.dump(run_doc, f, indent=2)
+
+    return file_path
 
 
 def grade_badge(status: str, grade: int | float | None, grades: tuple = ()) -> tuple[str, str]:

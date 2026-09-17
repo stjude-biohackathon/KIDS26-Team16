@@ -26,6 +26,11 @@ def model_info(quant="F16", count=27_000_000_000, file_type=1):
     }
 
 
+#: The weights the fake server serves. Tests name it explicitly: the CLI's
+#: default model tag is an operator setting, not part of what they check.
+SERVED_MODEL = "medgemma-27b-f16"
+
+
 @pytest.fixture
 def ollama_server():
     state = {"info": model_info(), "requests": [], "error": False}
@@ -35,7 +40,7 @@ def ollama_server():
             pass
 
         def do_GET(self):
-            self.respond({"models": [{"name": "medgemma-27b-f16:latest",
+            self.respond({"models": [{"name": f"{SERVED_MODEL}:latest",
                                       "digest": "sha256:test-model"}]})
 
         def do_POST(self):
@@ -95,9 +100,25 @@ def test_smaller_quantized_or_unverifiable_models_are_rejected(info):
         backend.validate_model(info)
 
 
+def test_allowed_different_models_validation():
+    backend = importlib.import_module("experiments.ollama_backend")
+    # MedGemma 1.5 4B-IT
+    info_4b = {"model_info": {"general.architecture": "gemma3", "general.parameter_count": 3_880_263_168, "general.file_type": 2}, "details": {"quantization_level": "Q4_0"}}
+    assert backend.validate_model(info_4b, strict=True, model="medgemma-1.5-4b-it") == "Q4_0"
+
+    # Gemma 4 21B
+    info_21b = {"model_info": {"general.architecture": "gemma4", "general.parameter_count": 21_000_000_000, "general.file_type": 1}, "details": {"quantization_level": "F16"}}
+    assert backend.validate_model(info_21b, strict=True, model="gemma4:21b") == "F16"
+
+    # MedGemma 27B
+    info_27b = model_info("F16", file_type=1)
+    assert backend.validate_model(info_27b, strict=True, model="medgemma-27b-f16") == "F16"
+
+
 def test_preflight_checks_metadata_digest_and_generation(ollama_server):
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), "--host", ollama_server["host"], "--check-model"],
+        [sys.executable, str(SCRIPT), "--host", ollama_server["host"],
+         "--model", SERVED_MODEL, "--check-model"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode == 0, result.stderr
@@ -110,7 +131,7 @@ def test_rejected_model_never_receives_patient_notes(ollama_server, tmp_path):
     out = tmp_path / "invalid.json"
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--host", ollama_server["host"],
-         "--notes", "1", "--out", str(out)],
+         "--model", SERVED_MODEL, "--notes", "1", "--out", str(out)],
         capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode != 0
@@ -122,7 +143,7 @@ def test_generation_error_is_not_an_empty_success(ollama_server, monkeypatch):
     ollama_server["error"] = True
     monkeypatch.setattr(extraction.time, "sleep", lambda _: None)
     with pytest.raises(RuntimeError, match="out of memory"):
-        extraction.call_ollama("synthetic prompt", "medgemma-27b-f16",
+        extraction.call_ollama("synthetic prompt", SERVED_MODEL,
                                ollama_server["host"])
 
 
@@ -170,7 +191,8 @@ def test_any_other_prompt_stage_can_still_be_chosen(name, tmp_path):
 def test_results_and_review_exports_use_the_real_output_contract(ollama_server, tmp_path):
     out = tmp_path / "run with spaces" / "results.json"
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), "--host", ollama_server["host"], "--notes", "2",
+        [sys.executable, str(SCRIPT), "--host", ollama_server["host"],
+         "--model", SERVED_MODEL, "--notes", "2",
          "--cohort", "scd_primary", "--repeat", "2", "--prompt-stage", "3",
          "--out", str(out)], cwd=tmp_path, capture_output=True, text=True, encoding="utf-8",
     )

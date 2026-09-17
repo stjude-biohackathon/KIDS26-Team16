@@ -47,7 +47,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", sans-serif;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     background-color: var(--scogs-canvas);
     color: var(--scogs-text);
     -webkit-font-smoothing: antialiased;

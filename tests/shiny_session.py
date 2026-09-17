@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import time
 from typing import Any
 
 from shiny._connection import MockConnection
@@ -27,6 +28,7 @@ from dashboard.interactive_dashboard import app
 OUTPUT_IDS = (
     "sidebar_controls",
     "header_status_badge",
+    "live_model_status_badge",
     "run_case_selector_ui",
     "run_outcome_selector_ui",
     "outcomes_card_title",
@@ -63,8 +65,10 @@ def _reported_values(html: str) -> dict[str, Any]:
         values[match.group(1)] = match.group(2)
     for match in _NUMERIC.finditer(html):
         value = _VALUE_ATTR.search(match.group(0))
-        if value:
+        if value and value.group(1):
             values[match.group(1)] = float(value.group(1))
+        else:
+            values[match.group(1)] = None
     return values
 
 
@@ -186,3 +190,63 @@ def analyze_live_note(note: str = "Patient admitted with a severe vaso-occlusive
                        inputs={"outcome_present_input": True})
     finally:
         server.is_ollama_available = online
+
+
+def loop_ticks_during_analysis(seconds: float = 0.3) -> int:
+    """-> how many 10ms heartbeats the event loop ran while a blocking analysis
+    of that length was in flight.
+
+    The heartbeat stands in for the session's websocket ping. An analysis that
+    runs on the event loop starves it: the browser gives up on the ping and the
+    finished results are written to a socket that is already closed. Grading one
+    note against all 14 outcomes takes minutes, so that is not a corner case.
+    """
+    import dashboard.server as server
+
+    ticks = 0
+    window: list[int] = []
+
+    def blocking_analysis(**kwargs: Any) -> dict[str, dict[str, Any]]:
+        window.append(ticks)
+        time.sleep(seconds)
+        window.append(ticks)
+        return {num: {"outcome_name": f"Outcome {num}", "present": False,
+                      "extracted_features": {}, "accepted_findings": [], "conflicts": {},
+                      "status": "absent", "grade_result": None}
+                for num in kwargs["outcomes"]}
+
+    async def go() -> None:
+        nonlocal ticks
+        stop = asyncio.Event()
+
+        async def heartbeat() -> None:
+            nonlocal ticks
+            while not stop.is_set():
+                await asyncio.sleep(0.01)
+                ticks += 1
+
+        beat = asyncio.create_task(heartbeat())
+        browser = FakeBrowser()
+        await browser.start(app_mode="live", outcome_present_input=True)
+        click = asyncio.create_task(
+            browser.send_inputs(live_note_text="a note", btn_analyze=1, live_outcome=["28"]))
+        # Hold the loop open until the analysis has been through its blocking
+        # stretch: letting the session settle first would close the loop while the
+        # worker is still asleep, and the heartbeat would stop with it.
+        deadline = time.monotonic() + seconds + 5
+        while len(window) < 2 and time.monotonic() < deadline:
+            await asyncio.sleep(0.01)
+        await click
+        await browser.stop()
+        stop.set()
+        await beat
+
+    analysis, online = server.extract_and_grade_note, server.is_ollama_available
+    server.extract_and_grade_note = blocking_analysis
+    server.is_ollama_available = lambda *args, **kwargs: False
+    try:
+        asyncio.run(go())
+    finally:
+        server.extract_and_grade_note = analysis
+        server.is_ollama_available = online
+    return window[1] - window[0] if len(window) == 2 else -1
