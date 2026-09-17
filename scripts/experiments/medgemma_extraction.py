@@ -21,7 +21,6 @@ import sys
 import threading
 import time
 import zlib
-from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
@@ -33,12 +32,13 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from experiments.grading import grade_outcome
 from experiments.ollama_backend import (
-    DEFAULT_HOST, DEFAULT_MODEL, WEIGHTS, call_ollama, preflight,
+    DEFAULT_HOST, DEFAULT_MODEL, call_ollama, preflight,
 )
 from experiments.verification import Tally, precheck, verify
-from experiments.cohort import is_scd_primary, load_notes, select_notes
+from experiments.cohort import load_notes, select_notes
+from experiments import run_output
+from experiments.run_output import Repeats, ServedModel
 from scogs.definitions import presence_brief
 from scogs.features import FEATURES
 from scogs.predicates import parse
@@ -146,7 +146,8 @@ ORD_CUES = {
 def feature_brief(name: str, outcome: str, st: Stage = STAGE0) -> str:
     spec = FEATURES[name]
     bits = [f'"{name}" ({spec["type"]}']
-    if spec["values"]: bits.append(f', one of: {", ".join(spec["values"])}')
+    if spec["values"]:
+        bits.append(f', one of: {", ".join(spec["values"])}')
     if spec["unit"]:
         # Stage 0 renders the schema's unit as though it were an instruction
         # ("in mg/dL") three lines above a rule telling the model not to convert.
@@ -157,7 +158,8 @@ def feature_brief(name: str, outcome: str, st: Stage = STAGE0) -> str:
     bits.append(")")
     line = "".join(bits) + " - " + spec["definition"]
     clarifier = spec["per_outcome"].get(outcome)
-    if clarifier: line += f" For this outcome specifically: {clarifier}"
+    if clarifier:
+        line += f" For this outcome specifically: {clarifier}"
     if st.precision and name in ORD_CUES:
         line += f" In notes this reads as: {ORD_CUES[name]}"
     return line
@@ -175,7 +177,8 @@ def expand_derived(names: set[str]) -> set[str]:
     stack = list(names)
     while stack:
         n = stack.pop()
-        if n in seen: continue
+        if n in seen:
+            continue
         seen.add(n)
         spec = FEATURES[n]
         if spec.get("computed_from"):
@@ -185,11 +188,14 @@ def expand_derived(names: set[str]) -> set[str]:
                     stack.append(inp)
             continue
         if not spec["derived"]:
-            out.add(n); continue
+            out.add(n)
+            continue
         inputs = [w for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", spec["derived"])
                   if w in FEATURES and w != n]
-        if inputs: stack += inputs
-        else: out.add(n)
+        if inputs:
+            stack += inputs
+        else:
+            out.add(n)
     return out
 
 
@@ -227,8 +233,10 @@ def order_features(names: list[str], outcome: str, st: Stage = STAGE0) -> list[s
 
 def value_schema(name: str) -> dict:
     spec = FEATURES[name]
-    if spec["type"] == "bool": return {"type": "boolean"}
-    if spec["type"] == "num":  return {"type": "number"}
+    if spec["type"] == "bool":
+        return {"type": "boolean"}
+    if spec["type"] == "num":
+        return {"type": "number"}
     return {"enum": list(spec["values"] or [])}
 
 
@@ -314,9 +322,12 @@ def reply_is_usable(reply: str) -> bool:
     if not isinstance(findings, list):
         return False
     for f in findings:
-        if not isinstance(f, dict): return False
-        if not f.get("feature") or not f.get("quote"): return False
-        if f.get("value") is None: return False
+        if not isinstance(f, dict):
+            return False
+        if not f.get("feature") or not f.get("quote"):
+            return False
+        if f.get("value") is None:
+            return False
     return True
 
 
@@ -497,7 +508,8 @@ def prompt_features(outcome: str, st: Stage = STAGE0) -> list[str]:
     """
     table = TABLES[outcome]
     needed = {n for _, pred in table.all_rows() for n in parse(pred).names()}
-    if table.on: needed.add(table.on)
+    if table.on:
+        needed.add(table.on)
     return order_features(sorted(expand_derived(needed)), outcome, st)
 
 
@@ -750,7 +762,10 @@ def run(notes, outcomes, backend, model, host, tally, timeout=300,
     return results, context_results
 
 
-def main() -> int:
+# ---------------------------------------------------------------- command line
+
+def build_parser() -> argparse.ArgumentParser:
+    """-> the CLI parser. Its help text is user documentation (README.md shows examples)."""
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tier", choices=["full"], default="full", help=argparse.SUPPRESS)
@@ -805,366 +820,121 @@ def main() -> int:
                     help="completion token budget (default 1024, or 2048 once --prompt-stage "
                          "adds the evidence field)")
     ap.add_argument("--out", default=None)
-    a = ap.parse_args()
-    st = stage(a.prompt_stage, note_first=a.note_first,
-               patient_context=bool(a.patient_context),
-               feedback_retry=bool(a.feedback_retry))
+    return ap
 
+
+def validate_args(ap: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Reject argument combinations argparse cannot express; exits through ap.error()."""
     for name in ("notes", "repeat", "concurrency", "timeout", "num_ctx", "num_predict"):
-        value = getattr(a, name)
+        value = getattr(args, name)
         if value is not None and value < 1:
             ap.error(f"--{name.replace('_', '-')} must be >= 1")
-    if not 0 <= a.holdout_frac <= 1:
+    if not 0 <= args.holdout_frac <= 1:
         ap.error("--holdout-frac must be between 0 and 1")
-    if a.out and pathlib.Path(a.out).exists():
-        ap.error(f"Output already exists: {a.out}. Choose a new path to preserve prior results.")
-    if a.check_model and a.backend != "ollama":
+    # A results file is the evidence for one specific run; never overwrite one.
+    if args.out and pathlib.Path(args.out).exists():
+        ap.error(f"Output already exists: {args.out}. Choose a new path to preserve prior results.")
+    if args.check_model and args.backend != "ollama":
         ap.error("--check-model requires --backend ollama")
-    model = a.model
 
-    raw_outcomes = a.outcomes.strip().lower()
-    if raw_outcomes == "all":
-        outcomes = sorted(TABLES)
-    elif raw_outcomes in ("14", "focus"):
-        outcomes = [o.strip() for o in DEFAULT_OUTCOMES.split(",") if o.strip()]
-    else:
-        outcomes = [o.strip() for o in a.outcomes.split(",") if o.strip()]
-        if not outcomes or len(outcomes) != len(set(outcomes)):
-            ap.error("--outcomes must contain unique outcome ids")
-        for o in outcomes:
-            if o not in TABLES: raise SystemExit(f"unknown outcome {o!r}")
 
-    model_info, model_digest, served_quant = {}, None, None
-    if a.backend == "ollama":
+def parse_outcomes(ap: argparse.ArgumentParser, raw: str) -> list[str]:
+    """-> outcome ids from --outcomes: "all", "14" / "focus", or a comma-separated list."""
+    choice = raw.strip().lower()
+    if choice == "all":
+        return sorted(TABLES)
+    if choice in ("14", "focus"):
+        return [o.strip() for o in DEFAULT_OUTCOMES.split(",") if o.strip()]
+    outcomes = [o.strip() for o in raw.split(",") if o.strip()]
+    if not outcomes or len(outcomes) != len(set(outcomes)):
+        ap.error("--outcomes must contain unique outcome ids")
+    for outcome in outcomes:
+        if outcome not in TABLES:
+            raise SystemExit(f"unknown outcome {outcome!r}")
+    return outcomes
+
+
+def check_served_model(ap: argparse.ArgumentParser, args: argparse.Namespace) -> ServedModel:
+    """-> what Ollama is really serving, after the fail-closed 27B / 16-bit preflight."""
+    try:
+        checked = preflight(args.model, args.host, timeout=args.timeout, num_ctx=args.num_ctx)
+    except (RuntimeError, ValueError) as exc:
+        ap.error(str(exc))
+    served = ServedModel(model_info=checked["model_info"], digest=checked["model_digest"],
+                         quant=checked["quant"])
+    print(f"Preflight: {args.model} | {served.quant} | {served.digest}", flush=True)
+    return served
+
+
+def run_repeats(args: argparse.Namespace, st: Stage, notes: list[dict],
+                outcomes: list[str]) -> Repeats:
+    """-> every repeat's results and tallies; prints each repeat's tally as it finishes."""
+    repeats = Repeats()
+    for i in range(args.repeat):
+        tally = Tally()
+        context_tally = Tally() if st.patient_context else None
+        started = time.time()
         try:
-            checked = preflight(model, a.host, timeout=a.timeout, num_ctx=a.num_ctx)
-        except (RuntimeError, ValueError) as exc:
-            ap.error(str(exc))
-        model_info = checked["model_info"]
-        model_digest, served_quant = checked["model_digest"], checked["quant"]
-        print(f"Preflight: {model} | {served_quant} | {model_digest}", flush=True)
-        if a.check_model:
-            return 0
-
-    pool = load_notes(cohort=a.cohort)
-    notes, selection = select_notes(pool, a.notes, outcomes,
-                                    holdout_frac=a.holdout_frac, stratify=a.stratify)
-    if not notes:
-        ap.error(f"No notes available for cohort {a.cohort}")
-
-    print("=" * 70)
-    print("P11 MedGemma Extraction Test")
-    print(f"weights={WEIGHTS if a.backend == 'ollama' else 'none (mock)'}  "
-          f"served-as={model}  backend={a.backend}")
-    print(f"notes={len(notes)}  outcomes={','.join(outcomes)}  repeat={a.repeat}  "
-          f"concurrency={a.concurrency}")
-    print("=" * 70)
-
-    if a.concurrency > 1 and a.repeat > 1:
-        print()
-        print("!! CONCURRENCY WARNING - run-to-run consistency is confounded.")
-        print(f"   At --concurrency {a.concurrency} the server batches requests, and a batch's")
-        print("   composition depends on timing, so it differs between repeats. Batched float")
-        print("   reductions are not bit-identical, so a token can flip at temperature 0 for")
-        print("   reasons that have nothing to do with the model. Mismatches below are then")
-        print("   'model nondeterminism OR batching', and you cannot tell which.")
-        print("   Measure consistency with --concurrency 1. Use >1 for throughput and cost.")
-        print()
-
-    runs, tallies = [], []
-    ctx_runs, ctx_tallies = [], []
-    for i in range(a.repeat):
-        t = Tally()
-        ct = Tally() if st.patient_context else None
-        t_start = time.time()
-        try:
-            res, ctx_res = run(notes, outcomes, a.backend, model, a.host, t,
-                               timeout=a.timeout, concurrency=a.concurrency,
-                               st=st, num_predict=a.num_predict, num_ctx=a.num_ctx,
-                               ctx_tally=ct)
-            runs.append(res)
-            ctx_runs.append(ctx_res)
+            results, context_results = run(notes, outcomes, args.backend, args.model, args.host, tally,
+                                           timeout=args.timeout, concurrency=args.concurrency,
+                                           st=st, num_predict=args.num_predict, num_ctx=args.num_ctx,
+                                           ctx_tally=context_tally)
         except RuntimeError as exc:
             raise SystemExit(f"Extraction failed; no result file written: {exc}") from exc
-        t.wall_clock_sec = time.time() - t_start
-        tallies.append(t)
-        if ct is not None:
-            ctx_tallies.append(ct)
-        rep = t.report()
-        sec_per_note = t.wall_clock_sec / len(notes) if notes else 0
-        tok_per_sec = t.completion_tokens / t.wall_clock_sec if t.wall_clock_sec > 0 else 0
-        print(f"\nRun {i+1} completed in {t.wall_clock_sec:.1f}s ({sec_per_note:.2f}s/note, {tok_per_sec:.1f} tok/s):")
-        if ct is not None:
-            crep = ct.report()
-            print(f"  Patient context:      {crep['accepted']} accepted / {crep['proposed']} proposed "
-                  f"({crep['quote_verified']} verified quotes, {crep['quote_unfound']} unfound)")
-        print(f"  Proposed findings:    {rep['proposed']}")
-        print(f"    null placeholders:  {rep['null_placeholder']:4d}  {rep['null_placeholder_pct']:5.1f}%  (no quote -> prompt not followed)")
-        print(f"    quote verified:     {t.quote_ok:4d}  {rep['quote_verified_pct_of_quoted']:5.1f}% of quoted | {rep['quote_verified_pct']:.1f}% of all")
-        print(f"    quote not in note:  {t.quote_unfound:4d}  {rep['hallucinated_pct_of_quoted']:5.1f}% of quoted | {rep['hallucinated_quote_pct']:.1f}% of all")
-        print(f"  Accepted findings:    {rep['accepted']}")
-        print("     ^ a verified quote means the words are in the note, NOT that they")
-        print("       support the value. Precision needs the hand-check sheet.")
-        print(f"  Invalid values:       {rep['invalid_value']}")
-        if rep['unit_converted'] or rep['unit_mismatch'] or rep['unit_ambiguous']:
-            print(f"  Unit guard:           {rep['unit_converted']} converted into the "
-                  f"schema's unit, {rep['unit_mismatch']} rejected as unconvertible, "
-                  f"{rep['unit_ambiguous']} left alone (quote carried several units)")
-        if rep['quote_value_mismatch']:
-            print(f"  Number not in quote:  {rep['quote_value_mismatch']} rejected - the "
-                  f"value is neither the number its quote carries nor its conversion")
-        if rep['present_true']:
-            print(f"    present=true:       {rep['present_true']:4d}  of which quoted "
-                  f"{rep['present_quoted']} ({rep['present_quoted_pct']:.1f}%), "
-                  f"unfound {rep['present_quote_unfound']}, unquoted {rep['present_unquoted']}")
-        if rep['content_retries'] or rep['unusable_replies']:
-            print(f"    content retries:    {rep['content_retries']:4d}  "
-                  f"still unusable after retrying: {rep['unusable_replies']}")
-        if rep.get('feedback_retries'):
-            print(f"    feedback retries:   {rep['feedback_retries']:4d}  "
-                  f"re-prompts with error feedback")
-        if rep['value_conflicts']:
-            print(f"  !! VALUE CONFLICTS:   {rep['value_conflicts']} feature(s) had several "
-                  f"verified values and no aggregation rule.")
-            print("     Withheld from grading rather than guessed at; listed per note in --out.")
-        if rep['tokenizer_artifacts']:
-            print(f"  !! TOKENIZER ARTIFACTS: {rep['tokenizer_artifacts']} quotes carry corrupt GGUF byte tokens.")
-            print("     The served weights are broken; these numbers are not a clean measurement.")
-        print(f"  Unparseable replies:  {rep['unparseable_replies']}")
-        print(f"  Prompt tokens:        {rep['prompt_tokens']} (~{rep['prompt_tokens']//len(notes)} tok/note)")
-        print(f"  Completion tokens:    {rep['completion_tokens']} (~{rep['completion_tokens']//len(notes)} tok/note)")
+        repeats.runs.append(results)
+        repeats.context_runs.append(context_results)
+        # The repeat's wall clock replaces run()'s own figure: it includes setup.
+        tally.wall_clock_sec = time.time() - started
+        repeats.tallies.append(tally)
+        if context_tally is not None:
+            repeats.context_tallies.append(context_tally)
+        run_output.print_run_tally(i + 1, tally, context_tally, len(notes))
+    return repeats
 
-    # grades, from the run-1 features through the real decision tables
-    statuses = Counter()
-    by_outcome = {num: Counter() for num in outcomes}
-    by_selection = {"seeded": Counter(), "holdout": Counter(), "random": Counter()}
-    grade_results_detail = {}
-    for uid, per in runs[0].items():
-        grade_results_detail[uid] = {}
-        for num, (feats, present, *_) in per.items():
-            graded = grade_outcome(num, feats, present)
-            status = graded.status
-            if status == "missed_presence":
-                tallies[0].presence_contradicted += 1
-            statuses[status] += 1
-            by_outcome[num][status] += 1
-            by_selection[selection[uid].split(":")[0]][status] += 1
-            grade_results_detail[uid][num] = graded.to_record(feats, present)
 
-    print(f"\nGrade status over {len(notes)}x{len(outcomes)} note-outcome pairs:")
-    for k, v in statuses.most_common():
-        print(f"   {k:15s} {v:3d} ({100*v/(len(notes)*len(outcomes)):.1f}%)")
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point. -> process exit code. `argv=None` reads sys.argv (tests rely on this)."""
+    ap = build_parser()
+    args = ap.parse_args(argv)
+    st = stage(args.prompt_stage, note_first=args.note_first,
+               patient_context=bool(args.patient_context),
+               feedback_retry=bool(args.feedback_retry))
+    validate_args(ap, args)
+    outcomes = parse_outcomes(ap, args.outcomes)
 
-    cols = ["graded", "grade_set", "cannot_grade", "absent", "refuted", "missed_presence", "not_applicable"]
-    print(f"\nPer outcome (n={len(notes)} each) - a pooled number hides this shape:")
-    print(f"   {'':>3s} {'outcome':30s} " + " ".join(f"{c[:12]:>12s}" for c in cols))
-    for num in outcomes:
-        c = by_outcome[num]
-        print(f"   {num:>3s} {TABLES[num].name[:30]:30s} "
-              + " ".join(f"{c.get(col, 0):>12d}" for col in cols))
+    served = ServedModel()
+    if args.backend == "ollama":
+        served = check_served_model(ap, args)
+        if args.check_model:
+            return 0
 
-    print("\nSeeded vs unstratified holdout - the size of the selection bias:")
-    for k, c in by_selection.items():
-        if sum(c.values()):
-            print(f"   {k:8s} n={sum(c.values()):3d}  " + "  ".join(
-                f"{col}={c.get(col, 0)}" for col in cols if c.get(col)))
+    pool = load_notes(cohort=args.cohort)
+    notes, selection = select_notes(pool, args.notes, outcomes,
+                                    holdout_frac=args.holdout_frac, stratify=args.stratify)
+    if not notes:
+        ap.error(f"No notes available for cohort {args.cohort}")
 
-    consistency_pct = None
-    if a.repeat > 1:
-        same = tot = 0
-        for uid in runs[0]:
-            for num in outcomes:
-                tot += 1
-                same += all(runs[0][uid][num][:2] == other[uid][num][:2]
-                            for other in runs[1:])
-        consistency_pct = round(100 * same / tot, 1)
-        print(f"\nTemperature-0 consistency across runs 1-{a.repeat}: {consistency_pct}% "
-              f"({same}/{tot} pairs have identical features and presence in every repeat)")
-        if a.concurrency == 1:
-            print("   At --concurrency 1 with greedy decoding this is close to a tautology:")
-            print("   100% is the expected result and evidences nothing about the model.")
-            print("   It is a smoke test for a nondeterministic serving stack, not a metric.")
+    run_output.print_run_banner(args, notes, outcomes)
+    if args.concurrency > 1 and args.repeat > 1:
+        run_output.print_concurrency_warning(args.concurrency)
 
-    # Threshold assessment
-    rep0 = tallies[0].report()
-    print("\n" + "=" * 70)
-    print("Automated Metrics Evaluation (docs/research/extraction_protocol.md):")
-    def band(v, good, workable):
-        return f"GOOD (≥{good}%)" if v >= good else (f"WORKABLE ({workable}-{good}%)" if v >= workable else f"CONCERNING (<{workable}%)")
-    qv_quoted = rep0["quote_verified_pct_of_quoted"]
-    qv_status = band(qv_quoted, 95, 85)
-    if consistency_pct is None:
-        cs_status = "NOT MEASURED (needs --repeat 2)"
-    elif consistency_pct < 90:
-        cs_status = "CONCERNING (<90%)"
-    elif consistency_pct < 98:
-        cs_status = "WORKABLE (90-98%)"
-    elif a.concurrency == 1:
-        cs_status = "EXPECTED - greedy and unbatched; a near-tautology, not evidence"
-    else:
-        cs_status = "GOOD (≥98%) and meaningful - it held under batching"
-    iv_pct = 100 * rep0["invalid_value"] / (rep0["proposed"] or 1)
-    iv_status = "GOOD (≤2%)" if iv_pct <= 2 else ("WORKABLE (2-10%)" if iv_pct <= 10 else "CONCERNING (>10%)")
-    print(f"  - Quote-verified % (of quoted proposals):  {qv_quoted}% -> {qv_status}")
-    print(f"  - Quote-verified % (of ALL proposals):     {rep0['quote_verified_pct']}%")
-    print("      NB: quote-verified is a GROUNDING check, not precision. It asks only")
-    print("      whether the quoted words appear in the note - a quote that does not")
-    print("      support its value passes it. Precision comes from the hand-check sheet.")
-    print(f"  - Null-placeholder rate:   {rep0['null_placeholder_pct']}% -> "
-          f"{'GOOD (≤5%)' if rep0['null_placeholder_pct'] <= 5 else 'CONCERNING - the prompt omission rule is being ignored'}")
-    cs_value = "  n/a" if consistency_pct is None else f"{consistency_pct}%"
-    print(f"  - Run-to-run consistency:  {cs_value} -> {cs_status}")
-    print(f"  - Invalid-value rate:      {iv_pct:.1f}% -> {iv_status}")
-    print(f"  - Unit conversions:        {rep0['unit_converted']} applied, "
-          f"{rep0['unit_mismatch']} unconvertible, "
-          f"{rep0['quote_value_mismatch']} value/quote mismatches")
-    print(f"  - Value conflicts:         {rep0['value_conflicts']} withheld "
-          f"(several verified values, no aggregation rule)")
-    print(f"  - Unparseable replies:     {rep0['unparseable_replies']} -> {'GOOD (0)' if rep0['unparseable_replies']==0 else 'CONCERNING'}")
-    print("=" * 70)
+    repeats = run_repeats(args, st, notes, outcomes)
 
-    if a.out:
-        out_path = pathlib.Path(a.out)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        detailed_records = []
-        for rec in notes:
-            uid = rec["patient_uid"]
-            per_outcome_details = {}
-            for num in outcomes:
-                feats, present, reply, detail = runs[0][uid][num]
-                per_outcome_details[num] = {
-                    "outcome_name": TABLES[num].name,
-                    "present": present,
-                    "extracted_features": feats,
-                    # Every finding that cleared §2, in emission order, and every
-                    # feature withheld for disagreeing with itself. The review sheets
-                    # read these directly: re-deriving acceptance downstream is how a
-                    # hand-check sheet silently stops describing the run it came from.
-                    "accepted_findings": detail["accepted"],
-                    "conflicts": detail["conflicts"],
-                    "grade_result": grade_results_detail[uid][num],
-                    "raw_reply": reply,
-                }
-            rec_dict = {
-                "patient_uid": uid,
-                "selection": selection[uid],          # seeded:<outcome> | holdout | random
-                "scd_primary": is_scd_primary(rec),   # a label now, not a filter
-                "title": rec.get("title", ""),
-                "age": rec.get("age"),
-                "gender": rec.get("gender"),
-                "patient_note": rec["patient"],
-                "outcomes": per_outcome_details,
-            }
-            if st.patient_context and ctx_runs:
-                ctx_feats, ctx_reply, ctx_det = ctx_runs[0].get(uid, ({}, "", {}))
-                rec_dict["patient_context"] = {
-                    "extracted_features": ctx_feats,
-                    "accepted_findings": ctx_det.get("accepted", []),
-                    "conflicts": ctx_det.get("conflicts", []),
-                    "raw_reply": ctx_reply,
-                }
-            detailed_records.append(rec_dict)
+    # Grades come from the first repeat; later repeats only measure consistency.
+    summary = run_output.summarize_grades(repeats.runs[0], outcomes, selection, repeats.tallies[0])
+    run_output.print_grade_summary(summary, len(notes), outcomes)
+    consistency_pct = run_output.report_consistency(repeats.runs, outcomes, args.repeat,
+                                                    args.concurrency)
 
-        provenance = {
-            "tier": "full" if a.backend == "ollama" else "mock",
-            "weights": WEIGHTS if a.backend == "ollama" else None,
-            "served_as": model if a.backend == "ollama" else None,
-            "backend": a.backend,
-            "quant": served_quant,
-            "model_digest": model_digest,
-            "parameter_count": model_info.get("model_info", {}).get("general.parameter_count"),
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "notes_count": len(notes),
-            "cohort": a.cohort,
-            "stratified": a.stratify,
-            "holdout_frac": a.holdout_frac if a.stratify else None,
-            "outcomes": outcomes,
-            "repeat": a.repeat,
-            "concurrency": a.concurrency,
-            "num_ctx": a.num_ctx,
-            "num_predict": a.num_predict or (2048 if st.cot else 1024),
-            "temperature": 0.0,
-            "initial_seed": 0,
-            "repeat_penalty": 1.0 if st.flat_penalty else 1.1,
-            "consistency_definition": "features and presence identical across all repeats",
-            # The rung, and what it turned on. A results file that does not say which
-            # prompt produced it cannot be placed on the ladder, and the ladder is the
-            # only thing that says which change bought which number.
-            "prompt_stage": st.name,
-            "prompt_stage_flags": {k: v for k, v in vars(st).items()
-                                   if k != "name" and v},
-            # True when consistency was measured under batching, which can flip a
-            # token at temperature 0 for reasons unrelated to the model.
-            "consistency_confounded_by_batching": a.concurrency > 1 and a.repeat > 1,
-        }
-        # Every artifact derived from this run carries this id. Without it a review
-        # sheet and a results file cannot be told apart from a review sheet and a
-        # DIFFERENT run's results file, and the reviewer's hours land on the wrong run.
-        provenance["run_id"] = "{}-{:08x}".format(
-            provenance["timestamp"].replace("-", "").replace(":", "").rstrip("Z"),
-            zlib.crc32(json.dumps(provenance, sort_keys=True).encode("utf-8")))
+    # Read the tally only now: summarize_grades() adds presence contradictions to it.
+    first_report = repeats.tallies[0].report()
+    invalid_value_pct = run_output.print_metrics_assessment(first_report, consistency_pct,
+                                                            args.concurrency)
 
-        out_data = {
-            "provenance": provenance,
-            "profiling": {
-                "total_wall_clock_sec": round(tallies[0].wall_clock_sec, 2),
-                "sec_per_note": round(tallies[0].wall_clock_sec / len(notes), 2),
-                "total_prompt_tokens": tallies[0].prompt_tokens,
-                "total_completion_tokens": tallies[0].completion_tokens,
-                "prompt_tokens_per_note": tallies[0].prompt_tokens // len(notes),
-                "completion_tokens_per_note": tallies[0].completion_tokens // len(notes),
-                "completion_tokens_per_sec": round(tallies[0].completion_tokens / tallies[0].wall_clock_sec, 1) if tallies[0].wall_clock_sec > 0 else 0,
-            },
-            "automated_metrics": {
-                "proposed": rep0["proposed"],
-                "quoted": rep0["quoted"],
-                "quote_verified": rep0["quote_verified"],
-                "quote_unfound": rep0["quote_unfound"],
-                "null_placeholder": rep0["null_placeholder"],
-                "null_placeholder_pct": rep0["null_placeholder_pct"],
-                "quote_verified_pct": rep0["quote_verified_pct"],
-                "quote_verified_pct_of_quoted": rep0["quote_verified_pct_of_quoted"],
-                "hallucinated_quote_pct": rep0["hallucinated_quote_pct"],
-                "hallucinated_pct_of_quoted": rep0["hallucinated_pct_of_quoted"],
-                "tokenizer_artifacts": rep0["tokenizer_artifacts"],
-                "invalid_value_count": rep0["invalid_value"],
-                "invalid_value_pct": round(iv_pct, 1),
-                "unit_converted": rep0["unit_converted"],
-                "unit_ambiguous": rep0["unit_ambiguous"],
-                "unit_mismatch": rep0["unit_mismatch"],
-                "quote_value_mismatch": rep0["quote_value_mismatch"],
-                "value_conflicts": rep0["value_conflicts"],
-                "accepted": rep0["accepted"],
-                "unknown_feature": rep0["unknown_feature"],
-                # `present` gates every other result, so its grounding belongs beside the
-                # findings' grounding rather than only in the per-run tally.
-                "present_true": rep0["present_true"],
-                "present_quoted": rep0["present_quoted"],
-                "present_quote_unfound": rep0["present_quote_unfound"],
-                "present_unquoted": rep0["present_unquoted"],
-                "presence_contradicted": rep0["presence_contradicted"],
-                "present_quoted_pct": rep0["present_quoted_pct"],
-                "content_retries": rep0["content_retries"],
-                "unusable_replies": rep0["unusable_replies"],
-                "feedback_retries": rep0.get("feedback_retries", 0),
-                # Quote verification is a grounding check: it asks whether the quoted
-                # words are in the note, never whether they support the value. There is
-                # no automated precision number here, and there should not appear to be.
-                "quote_verified_measures": "quote presence in the note, not value support",
-                "unparseable_replies": rep0["unparseable_replies"],
-                "run_to_run_consistency_pct": consistency_pct,
-            },
-            "runs": [t.report() for t in tallies],
-            "patient_context_tally": ctx_tallies[0].report() if (st.patient_context and ctx_tallies) else None,
-            "grade_status": dict(statuses),
-            "grade_status_by_outcome": {k: dict(v) for k, v in by_outcome.items()},
-            "grade_status_by_selection": {k: dict(v) for k, v in by_selection.items() if sum(v.values())},
-            "features_extracted": dict(tallies[0].per_feature),
-            "detailed_records": detailed_records,
-        }
-        with out_path.open("x", encoding="utf-8") as output:
-            output.write(json.dumps(out_data, indent=2))
-        print(f"\nWrote full test results and note texts to {a.out}")
+    if args.out:
+        results = run_output.build_results(args, st, served, notes, selection, outcomes, repeats,
+                                           summary, first_report, consistency_pct, invalid_value_pct)
+        run_output.write_results(args.out, results)
     return 0
 
 

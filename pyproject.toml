@@ -25,5 +25,4 @@ select = ["F", "E4", "E7", "E9"]
 "scripts/scogs/*.py" = ["E701", "E702"]
 "tests/*.py" = ["E701", "E702", "E731"]
 # TEMPORARY - each entry is deleted by the task that rewrites the file (tasks/plan.md).
-"scripts/experiments/medgemma_extraction.py" = ["E701", "E702"]      # Task 6
 "scripts/audit/*.py" = ["E401", "E701", "E702", "F401"]              # Task 9
