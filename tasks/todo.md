@@ -1,6 +1,6 @@
 # MedGemma Pipeline Execution & Validation Checklist
 
-This checklist outlines the concise steps to verify the MedGemma extraction pipeline, run the 14 core focus outcomes (including primary SCD base evaluation and negative-control absence auditing), and audit clinical extraction accuracy.
+This checklist outlines the concise steps to verify the MedGemma extraction pipeline, run the 14 core focus outcomes (including primary SCD base evaluation and negative-control absence auditing), benchmark alternative models (Gemma4-31B and Qwen3.6-35BA3B), and audit clinical extraction accuracy.
 
 ---
 
@@ -110,7 +110,117 @@ Evaluating these 14 outcomes requires two complementary runs:
 
 ---
 
-## 3. Key Performance Indicators & Quality Gates
+## 3. Alternative Model Benchmarking (Gemma4-31B & Qwen3.6-35BA3B)
+
+Evaluate alternative models (**Gemma4-31B** and **Qwen3.6-35BA3B**) against MedGemma 27B to benchmark cross-architecture performance, quote-grounding fidelity, and reasoning consistency on clinical extraction across the 14 focus outcomes.
+
+> [!NOTE]
+> The default extraction preflight in `scripts/experiments/ollama_backend.py` checks for `gemma3` architecture and F16/BF16 27B weights. When testing alternative models like `Gemma4-31B` or `Qwen3.6-35BA3B` via Ollama, ensure backend model validation accommodates their respective architecture and parameter specifications.
+
+### 3A. Gemma4-31B Evaluation
+
+- [ ] **3.1 Setup / serve Gemma4-31B in Ollama**
+  Verify the model tag (e.g. `gemma4-31b` or `gemma4:31b`) is loaded in Ollama:
+  ```bash
+  ollama list
+  ```
+
+- [ ] **3.2 Run 14 Focus Outcomes on Primary SCD Cohort (`Gemma4-31B`)**
+  Run extraction on the 14 core focus outcomes with default Stage 3 prompt formatting:
+  ```bash
+  python3 scripts/experiments/medgemma_extraction.py \
+    --model gemma4-31b \
+    --cohort scd_primary \
+    --notes 20 \
+    --prompt-stage 3 \
+    --outcomes 14 \
+    --stratify \
+    --holdout-frac 0.25 \
+    --repeat 2 \
+    --concurrency 1 \
+    --out results/run_gemma4_31b_14_focus_stage3.json
+  ```
+
+- [ ] **3.3 Absence Audit on Negative-Control Notes (`Gemma4-31B`)**
+  Evaluate the loose cohort to check if Gemma4-31B hallucinates features on negative controls and measure false-negative rates:
+  ```bash
+  python3 scripts/experiments/medgemma_extraction.py \
+    --model gemma4-31b \
+    --cohort loose \
+    --notes 20 \
+    --prompt-stage 3 \
+    --outcomes 14 \
+    --stratify \
+    --holdout-frac 0.25 \
+    --repeat 2 \
+    --concurrency 1 \
+    --out results/run_gemma4_31b_absence_loose_stage3.json
+  ```
+
+- [ ] **3.4 Export Review Worksheets for Gemma4-31B**
+  ```bash
+  python3 scripts/experiments/review_results.py results/run_gemma4_31b_14_focus_stage3.json --output-dir results/review_gemma4_31b_14_focus_stage3 --handcheck-limit 100 --absence-limit 50
+  python3 scripts/experiments/review_results.py results/run_gemma4_31b_absence_loose_stage3.json --output-dir results/review_gemma4_31b_absence_loose_stage3 --handcheck-limit 100 --absence-limit 50
+  ```
+
+### 3B. Qwen3.6-35BA3B Evaluation
+
+- [ ] **3.5 Setup / serve Qwen3.6-35BA3B in Ollama**
+  Verify the model tag (e.g. `qwen3.6-35ba3b` or `qwen3.6:35b-a3b`) is loaded in Ollama:
+  ```bash
+  ollama list
+  ```
+
+- [ ] **3.6 Run 14 Focus Outcomes on Primary SCD Cohort (`Qwen3.6-35BA3B`)**
+  Run extraction on the 14 core focus outcomes with default Stage 3 prompt formatting:
+  ```bash
+  python3 scripts/experiments/medgemma_extraction.py \
+    --model qwen3.6-35ba3b \
+    --cohort scd_primary \
+    --notes 20 \
+    --prompt-stage 3 \
+    --outcomes 14 \
+    --stratify \
+    --holdout-frac 0.25 \
+    --repeat 2 \
+    --concurrency 1 \
+    --out results/run_qwen36_35ba3b_14_focus_stage3.json
+  ```
+
+- [ ] **3.7 Absence Audit on Negative-Control Notes (`Qwen3.6-35BA3B`)**
+  Evaluate the loose cohort to check if Qwen3.6-35BA3B hallucinates features on negative controls and measure false-negative rates:
+  ```bash
+  python3 scripts/experiments/medgemma_extraction.py \
+    --model qwen3.6-35ba3b \
+    --cohort loose \
+    --notes 20 \
+    --prompt-stage 3 \
+    --outcomes 14 \
+    --stratify \
+    --holdout-frac 0.25 \
+    --repeat 2 \
+    --concurrency 1 \
+    --out results/run_qwen36_35ba3b_absence_loose_stage3.json
+  ```
+
+- [ ] **3.8 Export Review Worksheets for Qwen3.6-35BA3B**
+  ```bash
+  python3 scripts/experiments/review_results.py results/run_qwen36_35ba3b_14_focus_stage3.json --output-dir results/review_qwen36_35ba3b_14_focus_stage3 --handcheck-limit 100 --absence-limit 50
+  python3 scripts/experiments/review_results.py results/run_qwen36_35ba3b_absence_loose_stage3.json --output-dir results/review_qwen36_35ba3b_absence_loose_stage3 --handcheck-limit 100 --absence-limit 50
+  ```
+
+### 3C. Cross-Model Head-to-Head Comparison
+
+- [ ] **3.9 Cross-Model Synthesis & Benchmark Comparison**
+  Compare key metrics across all three model architectures (MedGemma 27B vs. Gemma4-31B vs. Qwen3.6-35BA3B):
+  - Quote-verified grounding rate (`accepted / proposed`)
+  - Absence specificity & false negative rate (`absence_audit.csv`)
+  - Rule refutations (`refuted_audit.csv`) and internal value conflicts (`conflicts.csv`)
+  - Structured output compliance (JSON parseability and omission contract adherence)
+
+---
+
+## 4. Key Performance Indicators & Quality Gates
 
 When reviewing run summaries (`automated_metrics`), verify against these protocol benchmarks:
 
