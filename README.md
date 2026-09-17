@@ -80,10 +80,15 @@ python -m shiny run dashboard/interactive_dashboard.py
   groups you are not interested in. Reading a case needs nothing else — the sidebar's
   outcome dropdown, and clicking an outcome in the list, are for drilling into one of
   them.
-- **Evaluate Live Note** grades a pasted note. With Ollama running it uses the same
-  prompts, quote verification and grading as `medgemma_extraction.py`; without Ollama
-  it grades the feature values you type in. The clinical-notes CSV it offers as a note
-  source loads on first use, so opening the app in Explore mode never reads it.
+- **Evaluate Live Note** grades a pasted note.
+  - **Online Mode (Ollama running)**: Uses the same prompts, constrained decoding, quote verification, and CTCAE grading as `medgemma_extraction.py`. The LLM reads the narrative and determines both clinical presence and extracted features from text.
+  - **Deterministic Fallback & Simulation Mode (Ollama offline or manual rule testing)**: Runs CTCAE decision tables directly on manual inputs without calling an LLM:
+    - **Simulated Feature Values (JSON)**: Pass key-value pairs (e.g. `{"care_setting": "icu", "resp_support": "invasive_ventilation"}`) to test decision tables directly across outcomes.
+    - **"Assume outcomes are clinically present" Checkbox**:
+      - **Checked (Default)**: Assumes the patient has been diagnosed with the outcome, allowing the CTCAE decision table to compute severity (**Grades 1–5**) from the simulated feature values.
+      - **Unchecked**: Assumes the condition is absent; all selected outcomes immediately evaluate as **Absent (Grade 0)**, regardless of the values in the JSON field.
+      - *Note*: In online mode, this checkbox is bypassed because the LLM extracts presence directly from the text.
+  - The clinical-notes CSV it offers as a note source loads on first use, so opening the app in Explore mode never reads it.
 
 ## Terminal workflow
 
