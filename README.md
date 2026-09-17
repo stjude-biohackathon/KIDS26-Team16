@@ -74,10 +74,16 @@ from the repository root:
 python -m shiny run dashboard/interactive_dashboard.py
 ```
 
-- **Explore Saved Runs** opens `results/*.json` (or the bundled test fixture) case by case.
+- **Explore Saved Runs** opens `results/**/*.json` (or the bundled test fixture) case by
+  case. Picking a case lists every outcome it covers, grouped as **Present**,
+  **Cannot grade** and **Not present**; the tick boxes above that list hide whichever
+  groups you are not interested in. Reading a case needs nothing else — the sidebar's
+  outcome dropdown, and clicking an outcome in the list, are for drilling into one of
+  them.
 - **Evaluate Live Note** grades a pasted note. With Ollama running it uses the same
   prompts, quote verification and grading as `medgemma_extraction.py`; without Ollama
-  it grades the feature values you type in.
+  it grades the feature values you type in. The clinical-notes CSV it offers as a note
+  source loads on first use, so opening the app in Explore mode never reads it.
 
 ## Terminal workflow
 
@@ -100,7 +106,19 @@ python scripts/experiments/medgemma_extraction.py --cohort scd_primary --notes 2
 
 # Export worksheets from exactly that saved run; no model call.
 python scripts/experiments/review_results.py results/full.json
+
+# Run a labelled CSV of your own, then score the presence calls against its labels.
+python scripts/experiments/medgemma_extraction.py --notes-file data/SCD_summaries.csv \
+    --note-column summary --no-stratify --out results/summaries.json
+python scripts/experiments/score_presence.py results/summaries.json \
+    --labels data/SCD_summaries.csv
 ```
+
+`--notes-file` runs every row of a CSV; `--note-column` chooses which of its columns is
+the note, so the same cases can be run as full text and as summaries and compared.
+`score_presence.py` scores those runs against a ground-truth outcome column — presence
+only, because outcome labels carry no severity grades. See
+[tasks/run.md](tasks/run.md) for the full procedure and its caveats.
 
 The default local tag is `medgemma-27b-f16`. For an imported BF16 model, pass
 `--model medgemma-27b-bf16`. These are **local aliases you create**, not claimed
@@ -112,7 +130,10 @@ public Ollama registry tags. No weights are stored in this repository.
 | --- | --- | --- |
 | `--host` | `OLLAMA_HOST` or `http://localhost:11434` | Complete Ollama HTTP(S) URL |
 | `--model` | `medgemma-27b-f16` | Local tag; metadata must verify 27B and F16/BF16 |
-| `--cohort` | `loose` | `scd_primary` for disease-focused reporting; `loose` includes mention-only cases |
+| `--cohort` | `loose` | `scd_primary` for disease-focused reporting; `loose` includes mention-only cases. Does not apply with `--notes-file` |
+| `--notes-file` | none | Read notes from a CSV instead of the bundled cache; every row is a note and the cohort gate does not run. Pair with `--no-stratify` |
+| `--note-column` | `original_case_text` | Which `--notes-file` column holds the note text. Run the same file once per column to compare note forms |
+| `--id-column` | `case_id` | Which `--notes-file` column identifies the row |
 | `--outcomes` | `10,11,12,15,17,21,24,28,29,39,40,47,48,49` | 14 focus outcomes (Chronic Pain, CD, TCD, Stroke, Retinopathy, CKD, Priapism, Pain episode, SS, AVN, Leg Ulcer, Depression, ACS, Asthma); '14', 'focus', 'all', or custom comma-separated IDs supported |
 | `--notes` | `20` | Number of notes; evaluated pairs = notes x outcomes |
 | `--stratify` / `--no-stratify` | enabled | Outcome-enriched sampling plus a random holdout |
@@ -167,7 +188,7 @@ collaborators. Clear notebook outputs before committing.
 ```text
 notebooks/                  Two ordered, cross-platform entry points
 dashboard/                  Shiny app: saved-run explorer and live note grading
-scripts/experiments/        Extraction CLI, verification, grading, cohort selection, Ollama client, review exports
+scripts/experiments/        Extraction CLI, verification, grading, cohort selection, Ollama client, review exports, presence scoring
 scripts/scogs/              Feature definitions, predicates, deterministic tables
 scripts/audit/              Optional rubric-to-PDF verification utilities
 scripts/download_data.py    Optional full-corpus downloader

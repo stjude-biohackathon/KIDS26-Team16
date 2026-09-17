@@ -3,7 +3,18 @@ import json
 import pathlib
 
 from dashboard.evaluation import evaluate_clinical_features
-from dashboard.view_state import PENDING_REASON, explore_view_state, grade_details, live_view_state
+from dashboard.view_state import (
+    ABSENT,
+    CANNOT_GRADE,
+    PENDING_REASON,
+    PRESENT,
+    explore_view_state,
+    grade_details,
+    live_view_state,
+    outcome_bucket,
+    outcome_rank,
+    outcome_status,
+)
 
 FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "sample_run.json"
 VOC_INPATIENT = {"care_setting": "inpatient", "pain_co_complication": False,
@@ -39,3 +50,48 @@ def test_grade_details_from_a_live_result_and_a_saved_record():
     assert live["grade"] == 3 and "care_setting >= inpatient" in live["matched"]
     saved = grade_details({"status": "cannot_grade", "grade": None, "reason": "no rule decided"})
     assert saved["needs_review"] is True and saved["missing"] == ()
+
+
+# --- The three states the outcome overview groups and filters by -------------
+
+def outcome(status=None, present=False, findings=0, grade=None):
+    result = {"status": status, "grade": grade} if status else {}
+    return {"present": present, "grade_result": result,
+            "accepted_findings": [{"feature": f"f{i}"} for i in range(findings)]}
+
+
+def test_a_graded_outcome_is_present():
+    assert outcome_bucket(outcome("graded", present=True, grade=3.0)) == PRESENT
+    assert outcome_bucket(outcome("grade_set", present=True)) == PRESENT
+
+
+def test_a_detected_outcome_the_rules_could_not_grade_is_its_own_category():
+    assert outcome_bucket(outcome("cannot_grade", present=True)) == CANNOT_GRADE
+
+
+def test_an_outcome_flagged_present_without_a_status_counts_as_present():
+    """Older results files carry `present` but no grade_result."""
+    assert outcome_bucket(outcome(present=True)) == PRESENT
+
+
+def test_everything_else_is_ruled_out():
+    assert outcome_bucket(outcome("absent")) == ABSENT
+    assert outcome_bucket(outcome()) == ABSENT
+    assert outcome_bucket(outcome("refuted")) == ABSENT
+
+
+def test_outcome_status_falls_back_to_the_presence_flag():
+    assert outcome_status(outcome(present=True)) == "graded"
+    assert outcome_status(outcome(present=False)) == "absent"
+    assert outcome_status(outcome("cannot_grade", present=True)) == "cannot_grade"
+
+
+def test_the_most_informative_outcome_sorts_first():
+    """Landing on a case should show a grade, not the first key in the file."""
+    outcomes = {
+        "40": outcome("absent"),
+        "48": outcome("cannot_grade", present=True, findings=1),
+        "28": outcome("graded", present=True, findings=2, grade=3.0),
+        "15": outcome(present=True),
+    }
+    assert [k for k, _ in sorted(outcomes.items(), key=outcome_rank)] == ["28", "48", "15", "40"]

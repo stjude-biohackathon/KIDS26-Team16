@@ -9,9 +9,67 @@ from __future__ import annotations
 from typing import Any
 
 from dashboard.evaluation import FOCUS_OUTCOMES
+from scogs import GRADE_SET, GRADED
 from scogs import GradeResult
 
 PENDING_REASON = "Click 'Analyze & Grade Note' to compute deterministic SCOGS grade."
+
+#: The three states the outcome overview groups by, and that its filter offers.
+#: A clinician reads a case as "what has this patient got, what could we not
+#: decide, and what did we rule out" - not as seven harness statuses.
+PRESENT = "present"
+CANNOT_GRADE = "cannot_grade"
+ABSENT = "absent"
+OUTCOME_BUCKETS = (PRESENT, CANNOT_GRADE, ABSENT)
+
+#: Headings over each group in the overview, and the short words the filter
+#: above it uses for the same three groups.
+BUCKET_LABELS = {
+    PRESENT: "Complications Detected & Graded",
+    CANNOT_GRADE: "Detected Complications (Missing Rule Criteria)",
+    ABSENT: "Confirmed Absent Outcomes",
+}
+FILTER_LABELS = {
+    PRESENT: "Present",
+    CANNOT_GRADE: "Cannot grade",
+    ABSENT: "Not present",
+}
+
+
+def outcome_status(outcome: dict) -> str:
+    """-> one saved outcome's harness status; results files written before
+    `status` existed fall back to their presence flag."""
+    grade_result = outcome.get("grade_result") or {}
+    return grade_result.get("status") or (GRADED if outcome.get("present") else ABSENT)
+
+
+def outcome_bucket(outcome: dict) -> str:
+    """-> which of `OUTCOME_BUCKETS` this outcome belongs in."""
+    status = outcome_status(outcome)
+    if status in (GRADED, GRADE_SET):
+        return PRESENT
+    if status == CANNOT_GRADE or outcome.get("present"):
+        return CANNOT_GRADE
+    return ABSENT
+
+
+def outcome_rank(item: tuple[str, dict]) -> tuple[int, int]:
+    """Sort key over `(outcome_num, outcome)`: the most informative outcome first.
+
+    Opening a case should land on something a clinician can read - a grade, or
+    failing that the outcome with the most evidence behind it - rather than on
+    whichever key happens to come first in the file.
+    """
+    _, outcome = item
+    grade_result = outcome.get("grade_result") or {}
+    findings = len(outcome.get("accepted_findings") or [])
+    if grade_result.get("status") in (GRADED, GRADE_SET) and grade_result.get("grade") is not None:
+        return (0, -findings)
+    if findings:
+        return (1, -findings)
+    if outcome.get("present"):
+        return (2, 0)
+    return (3, 0)
 
 
 def explore_view_state(run_data: dict | None, uid: str, outcome_num: str) -> dict[str, Any]:

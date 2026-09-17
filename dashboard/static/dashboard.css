@@ -323,3 +323,100 @@ body {
     background: #94a3b8;
     border-radius: 3px;
 }
+
+/* Outcome Summary Buttons in Top Overview Card */
+.outcome-summary-btn {
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-align: left;
+    display: inline-flex;
+    align-items: center;
+}
+.outcome-btn-graded {
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    color: var(--scogs-text);
+}
+.outcome-btn-graded:hover {
+    background: var(--scogs-surface);
+    border-color: var(--scogs-primary);
+}
+.outcome-btn-cannot {
+    background: var(--scogs-surface-subtle);
+    border: 1px dashed #ea580c;
+    color: var(--scogs-text);
+}
+.outcome-btn-cannot:hover {
+    background: var(--scogs-surface);
+    border-color: #ea580c;
+}
+.outcome-btn-absent {
+    background: transparent;
+    border: 1px solid var(--scogs-border-subtle);
+    color: var(--scogs-text-muted);
+    font-size: 0.74rem;
+    padding: 2px 8px;
+}
+.outcome-btn-absent:hover {
+    background: var(--scogs-surface-subtle);
+    color: var(--scogs-text);
+}
+.outcome-summary-btn.outcome-pill-active {
+    outline: 2px solid var(--scogs-primary);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+/* Scrollable Findings Table Container with Sticky Header */
+.findings-scroll-container {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+.findings-scroll-container thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* "SHOW: Present / Cannot grade / Not present" filter in the overview card
+   header. Bootstrap lays a checkbox group out as a block with a label above it;
+   inside a card header it has to sit on one line beside the title. */
+.outcome-filter .shiny-input-container {
+    margin-bottom: 0;
+    width: auto;
+}
+.outcome-filter .control-label {
+    display: none;
+}
+.outcome-filter .shiny-options-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 14px;
+}
+.outcome-filter .checkbox-inline,
+.outcome-filter .form-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding-left: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--scogs-text);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.outcome-filter input[type="checkbox"] {
+    margin: 0;
+    float: none;
+    cursor: pointer;
+    accent-color: var(--scogs-primary);
+}
+.outcome-filter .sidebar-section-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}

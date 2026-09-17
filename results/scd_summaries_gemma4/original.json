@@ -1,0 +1,1049 @@
+{
+  "provenance": {
+    "tier": "full",
+    "weights": "google/medgemma-27b-text-it",
+    "served_as": "gemma4:12b",
+    "backend": "ollama",
+    "quant": "Q4_K_M",
+    "model_digest": "4eb23ef187e2c5462566d6a1d3bbbc2f1346d0b4327cbb66d58fffbcc9b2b05c",
+    "parameter_count": 11907350576,
+    "timestamp": "2026-09-17T19:56:18Z",
+    "notes_count": 2,
+    "notes_file": "data/SCD_summaries.csv",
+    "note_column": "original_case_text",
+    "cohort": null,
+    "stratified": false,
+    "holdout_frac": null,
+    "outcomes": [
+      "10",
+      "11",
+      "12",
+      "15",
+      "17",
+      "21",
+      "24",
+      "28",
+      "29",
+      "39",
+      "40",
+      "47",
+      "48",
+      "49"
+    ],
+    "repeat": 1,
+    "concurrency": 1,
+    "num_ctx": 16384,
+    "num_predict": 2048,
+    "temperature": 0.0,
+    "initial_seed": 0,
+    "repeat_penalty": 1.0,
+    "consistency_definition": "features and presence identical across all repeats",
+    "prompt_stage": "3",
+    "prompt_stage_flags": {
+      "schema": true,
+      "structure": true,
+      "flat_penalty": true,
+      "retry": true,
+      "presence": true,
+      "death_both": true,
+      "cot": true,
+      "precision": true,
+      "patient_context": true
+    },
+    "consistency_confounded_by_batching": false,
+    "run_id": "20260917T195618-77c8dd9c"
+  },
+  "profiling": {
+    "total_wall_clock_sec": 2313.9,
+    "sec_per_note": 1156.95,
+    "total_prompt_tokens": 55398,
+    "total_completion_tokens": 2542,
+    "prompt_tokens_per_note": 27699,
+    "completion_tokens_per_note": 1271,
+    "completion_tokens_per_sec": 1.1
+  },
+  "automated_metrics": {
+    "proposed": 17,
+    "quoted": 17,
+    "quote_verified": 13,
+    "quote_unfound": 4,
+    "null_placeholder": 0,
+    "null_placeholder_pct": 0.0,
+    "quote_verified_pct": 76.5,
+    "quote_verified_pct_of_quoted": 76.5,
+    "hallucinated_quote_pct": 23.5,
+    "hallucinated_pct_of_quoted": 23.5,
+    "tokenizer_artifacts": 0,
+    "invalid_value_count": 0,
+    "invalid_value_pct": 0.0,
+    "unit_converted": 0,
+    "unit_ambiguous": 0,
+    "unit_mismatch": 0,
+    "quote_value_mismatch": 0,
+    "value_conflicts": 0,
+    "accepted": 13,
+    "unknown_feature": 0,
+    "present_true": 6,
+    "present_quoted": 6,
+    "present_quote_unfound": 0,
+    "present_unquoted": 0,
+    "presence_contradicted": 0,
+    "present_quoted_pct": 100.0,
+    "content_retries": 0,
+    "unusable_replies": 0,
+    "feedback_retries": 0,
+    "quote_verified_measures": "quote presence in the note, not value support",
+    "unparseable_replies": 0,
+    "run_to_run_consistency_pct": null
+  },
+  "runs": [
+    {
+      "proposed": 17,
+      "accepted": 13,
+      "quoted": 17,
+      "quote_verified": 13,
+      "quote_unfound": 4,
+      "null_placeholder": 0,
+      "null_placeholder_pct": 0.0,
+      "quote_verified_pct": 76.5,
+      "quote_verified_pct_of_quoted": 76.5,
+      "hallucinated_quote_pct": 23.5,
+      "hallucinated_pct_of_quoted": 23.5,
+      "tokenizer_artifacts": 0,
+      "unit_converted": 0,
+      "unit_ambiguous": 0,
+      "unit_mismatch": 0,
+      "quote_value_mismatch": 0,
+      "value_conflicts": 0,
+      "present_true": 6,
+      "present_quoted": 6,
+      "present_quote_unfound": 0,
+      "present_unquoted": 0,
+      "presence_contradicted": 0,
+      "present_quoted_pct": 100.0,
+      "content_retries": 0,
+      "unusable_replies": 0,
+      "feedback_retries": 0,
+      "missing_quote": 0,
+      "invalid_value": 0,
+      "unknown_feature": 0,
+      "unparseable_replies": 0,
+      "prompt_tokens": 55398,
+      "completion_tokens": 2542,
+      "wall_clock_sec": 2313.9
+    }
+  ],
+  "patient_context_tally": {
+    "proposed": 2,
+    "accepted": 2,
+    "quoted": 2,
+    "quote_verified": 2,
+    "quote_unfound": 0,
+    "null_placeholder": 0,
+    "null_placeholder_pct": 0.0,
+    "quote_verified_pct": 100.0,
+    "quote_verified_pct_of_quoted": 100.0,
+    "hallucinated_quote_pct": 0.0,
+    "hallucinated_pct_of_quoted": 0.0,
+    "tokenizer_artifacts": 0,
+    "unit_converted": 0,
+    "unit_ambiguous": 0,
+    "unit_mismatch": 0,
+    "quote_value_mismatch": 0,
+    "value_conflicts": 0,
+    "present_true": 0,
+    "present_quoted": 0,
+    "present_quote_unfound": 0,
+    "present_unquoted": 0,
+    "presence_contradicted": 0,
+    "present_quoted_pct": 0.0,
+    "content_retries": 0,
+    "unusable_replies": 0,
+    "feedback_retries": 0,
+    "missing_quote": 0,
+    "invalid_value": 0,
+    "unknown_feature": 0,
+    "unparseable_replies": 0,
+    "prompt_tokens": 2870,
+    "completion_tokens": 114,
+    "wall_clock_sec": 0.0
+  },
+  "grade_status": {
+    "absent": 22,
+    "cannot_grade": 3,
+    "graded": 2,
+    "grade_set": 1
+  },
+  "grade_status_by_outcome": {
+    "10": {
+      "absent": 2
+    },
+    "11": {
+      "absent": 2
+    },
+    "12": {
+      "absent": 2
+    },
+    "15": {
+      "absent": 2
+    },
+    "17": {
+      "absent": 2
+    },
+    "21": {
+      "cannot_grade": 1,
+      "absent": 1
+    },
+    "24": {
+      "absent": 2
+    },
+    "28": {
+      "graded": 1,
+      "grade_set": 1
+    },
+    "29": {
+      "absent": 2
+    },
+    "39": {
+      "cannot_grade": 1,
+      "absent": 1
+    },
+    "40": {
+      "absent": 2
+    },
+    "47": {
+      "absent": 2
+    },
+    "48": {
+      "graded": 1,
+      "cannot_grade": 1
+    },
+    "49": {
+      "absent": 2
+    }
+  },
+  "grade_status_by_selection": {
+    "random": {
+      "absent": 22,
+      "cannot_grade": 3,
+      "graded": 2,
+      "grade_set": 1
+    }
+  },
+  "features_extracted": {
+    "death_attributed": 3,
+    "pain_co_complication": 2,
+    "resp_support": 2,
+    "care_setting": 2,
+    "avn_on_imaging": 1,
+    "transfusion_type": 2,
+    "acs_other_support": 1
+  },
+  "detailed_records": [
+    {
+      "patient_uid": "PMC10253251_01",
+      "selection": "random",
+      "scd_primary": true,
+      "title": "",
+      "age": null,
+      "gender": null,
+      "patient_note": "A 58-year-old male with a history of sickle cell disease (SCD), avascular necrosis of the humerus and femur, pulmonary hypertension with right heart failure, chronic kidney disease, paroxysmal atrial fibrillation, and deep vein thrombosis/pulmonary embolism presented to an outside hospital with symptoms of chest pain and shortness of breath and was diagnosed with a sickle cell pain crisis.\nChest X-ray demonstrated prominence of the pulmonary interstitium, likely due to congestion/mild edema. Electrocardiogram revealed sinus tachycardia with no ST segment changes. He was started on doxycycline, vancomycin, and cefepime and admitted for further management. Hemoglobin (Hgb) down trended to 5.8 g/dl, and he was transfused with three units of pRBCs. His pain remained uncontrolled, requiring morphine via patient-controlled analgesia. He subsequently became diaphoretic, tachycardic, and tachypneic. His respiratory status declined, and his oxygen requirements increased to 15 l. He was intubated and transferred to a university hospital intensive care unit, where hematologists diagnosed acute chest syndrome, as he developed fever and chest pain. A chest X-ray showed bilateral patchy consolidations.\nFour days later, the patient developed episodes of supraventricular tachycardia and atrial fibrillation with rapid ventricular responses (rates > 160) accompanied by hypotension. The patient was administered intravenous amiodarone with continued intravenous heparin. After intravenous administration of 150 mg of amiodarone, a drip was started at 1 mg/minute. He was later transitioned to oral dosing at 400 mg twice a day to achieve a total 10-gram load followed by maintenance dosing at 200 mg per day.\nFour days following the initiation of amiodarone, the patient's hemoglobin count increased from 6.4 g/dl to 9.4 g/dl, and his hematocrit level increased from 19.3% to 28.5%, even though he only received one unit of additional blood during that time period (Fig. 1 and Fig. 2). This improvement in anemia was associated with marked improvement in symptoms, and the patient was discharged two days later.\nFollowing discharge, the patient continued to do clinically well and was maintained on amiodarone therapy for over three months. After a follow-up appointment with an electrophysiologist, the decision was made to discontinue amiodarone due to concerns over potential long-term side effects. Plans were made for an ablation procedure.",
+      "outcomes": {
+        "10": {
+          "outcome_name": "Chronic Pain",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a sickle cell pain crisis and a patient with a history of avascular necrosis of the humerus and femur, but it does not provide specific scores for pain and hurt, PROMIS T-scores, or the number of unplanned visits for pain treatment. The criteria for 'present' are not met as there is no evidence of pain on most days for at least 3 months.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "11": {
+          "outcome_name": "Cognitive Dysfunction",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease and other medical conditions, but it does not mention any cognitive assessments, IQ scores, or any other measures of cognitive function.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "12": {
+          "outcome_name": "Elevated TCD Ultrasonography Velocity",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who underwent treatment for acute chest syndrome and heart failure. There is no mention of a transcranial doppler (TCD) ultrasound or any specific blood flow velocity measurements in the brain.\", \"findings\": [], \"present\": false}"
+        },
+        "15": {
+          "outcome_name": "Stroke (hemorrhagic or ischemic)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who experienced a sickle cell pain crisis, acute chest syndrome, and cardiac issues (tachycardia, atrial fibrillation). There is no mention of any neurological symptoms, stroke, or TIA. Therefore, the outcome of stroke is not present.\", \"findings\": [], \"present\": false}"
+        },
+        "17": {
+          "outcome_name": "Sickle Cell Retinopathy (SCR)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease and a history of pulmonary hypertension, acute chest syndrome, and heart failure. There is no mention of ophthalmology evaluations, sickle cell retinopathy, or visual acuity measurements.\", \"findings\": [], \"present\": false}"
+        },
+        "21": {
+          "outcome_name": "Chronic Kidney Disease (CKD)",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "cannot_grade",
+            "rule_status": "cannot_grade",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no rule decided; missing albuminuria, death_attributed, egfr"
+          },
+          "raw_reply": "{\"evidence\": \"The note mentions a history of chronic kidney disease, but does not provide specific values for eGFR or albuminuria. The presence of CKD is supported by the patient's history, but the specific findings are not reported.\", \"findings\": [], \"present\": true, \"present_quote\": \"chronic kidney disease\"}"
+        },
+        "24": {
+          "outcome_name": "Priapism",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": "unknown",
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease and acute chest syndrome who received treatment for tachycardia and pulmonary issues. There is no mention of a painful, persistent, unwanted erection or any related interventions for priapism.\", \"findings\": [], \"present\": false}"
+        },
+        "28": {
+          "outcome_name": "Acute Sickle Cell Pain Episode",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 58.0,
+            "death_attributed": false,
+            "pain_co_complication": true,
+            "resp_support": "invasive_ventilation",
+            "care_setting": "icu"
+          },
+          "accepted_findings": [
+            {
+              "feature": "death_attributed",
+              "value": false,
+              "quote": "the patient was discharged two days later",
+              "unit": null
+            },
+            {
+              "feature": "pain_co_complication",
+              "value": true,
+              "quote": "hematologists diagnosed acute chest syndrome",
+              "unit": null
+            },
+            {
+              "feature": "resp_support",
+              "value": "invasive_ventilation",
+              "quote": "He was intubated",
+              "unit": null
+            },
+            {
+              "feature": "care_setting",
+              "value": "icu",
+              "quote": "intensive care unit",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 4,
+            "features": {
+              "patient_age": 58.0,
+              "death_attributed": false,
+              "pain_co_complication": true,
+              "resp_support": "invasive_ventilation",
+              "care_setting": "icu"
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": null
+          },
+          "raw_reply": "{\"evidence\": \"The patient, a 58-year-old male with sickle cell disease, presented with chest pain and shortness of breath and was diagnosed with a sickle cell pain crisis. The note mentions that his pain was uncontrolled and required morphine, and he was later diagnosed with acute chest syndrome. He was intubated and transferred to an intensive care unit. The note does not mention any other complications like DVT or pulmonary embolism, although the patient has a history of DVT/PE.\", \"findings\": [\n    {\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"the patient was discharged two days later\"},\n    {\"feature\": \"pain_co_complication\", \"value\": true, \"quote\": \"hematologists diagnosed acute chest syndrome\"},\n    {\"feature\": \"life_support_other\", \"value\": false, \"quote\": \"none\"},\n    {\"feature\": \"renal_replacement\", \"value\": false, \"quote\": \"none\"},\n    {\"feature\": \"resp_support\", \"value\": \"invasive_ventilation\", \"quote\": \"He was intubated\"},\n    {\"feature\": \"vasopressors\", \"value\": false, \"quote\": \"none\"},\n    {\"feature\": \"care_setting\", \"value\": \"icu\", \"quote\": \"intensive care unit\"}\n], \"present\": true, \"present_quote\": \"diagnosed with a sickle cell pain crisis\"}"
+        },
+        "29": {
+          "outcome_name": "Acute Splenic Sequestration",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who experienced a significant drop in hemoglobin (5.8 g/dl) and was transfused with pRBCs. However, there is no mention of an acutely enlarging spleen, a rapid increase in reticulocytes, or a diagnosis of acute splenic sequestration. The hemoglobin increase after amiodarone was noted as an improvement in anemia, but not linked to a sequestration event.\", \"findings\": [], \"present\": false}"
+        },
+        "39": {
+          "outcome_name": "Avascular Necrosis of Joints (AVN)",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 58.0,
+            "avn_on_imaging": true
+          },
+          "accepted_findings": [
+            {
+              "feature": "avn_on_imaging",
+              "value": true,
+              "quote": "avascular necrosis of the humerus and femur",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "cannot_grade",
+            "rule_status": "cannot_grade",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0,
+              "avn_on_imaging": true
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no rule decided; missing adl_limitation, avn_intervention, symptomatic"
+          },
+          "raw_reply": "{\"evidence\": \"The note mentions a history of avascular necrosis of the humerus and femur, which supports the presence of the condition and the finding 'avn_on_imaging' (though the note does not specify the imaging modality). The note does not mention any symptoms related to the severity of the AVN specifically, nor does it mention any limitations in activities of daily living (ADL) or specific interventions for the AVN.\", \"findings\": [{\"feature\": \"avn_on_imaging\", \"value\": true, \"quote\": \"avascular necrosis of the humerus and femur\"}, {\"feature\": \"avn_intervention\", \"value\": \"none\", \"quote\": \"none\"}], \"present\": true, \"present_quote\": \"avascular necrosis of the humerus and femur\" }"
+        },
+        "40": {
+          "outcome_name": "Leg Ulcer",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease and various complications, but it does not mention any skin ulcerations or related findings such as wound depth, exudate, periwound status, or necrotic percentage.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "47": {
+          "outcome_name": "Depression",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease and acute chest syndrome who received treatment for tachycardia and pulmonary issues. There is no mention of mood, depression, or any related psychological symptoms.\", \"findings\": [], \"present\": false}"
+        },
+        "48": {
+          "outcome_name": "Acute Chest Syndrome (ACS)",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 58.0,
+            "death_attributed": false,
+            "resp_support": "invasive_ventilation",
+            "transfusion_type": "simple",
+            "acs_other_support": true
+          },
+          "accepted_findings": [
+            {
+              "feature": "death_attributed",
+              "value": false,
+              "quote": "the patient was discharged two days later",
+              "unit": null
+            },
+            {
+              "feature": "resp_support",
+              "value": "invasive_ventilation",
+              "quote": "He was intubated",
+              "unit": null
+            },
+            {
+              "feature": "transfusion_type",
+              "value": "simple",
+              "quote": "transfused with three units of pRBCs",
+              "unit": null
+            },
+            {
+              "feature": "acs_other_support",
+              "value": true,
+              "quote": "hematologists diagnosed acute chest syndrome",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 4,
+            "features": {
+              "patient_age": 58.0,
+              "death_attributed": false,
+              "resp_support": "invasive_ventilation",
+              "transfusion_type": "simple",
+              "acs_other_support": true
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": null
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who developed acute chest syndrome (ACS) characterized by fever, chest pain, and a new bilateral patchy consolidation on chest X-ray. The patient was intubated and received a red cell transfusion. The note does not mention specific FiO2 percentages, other life support, renal replacement, or vasopressors.\", \"findings\": [\n    {\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"the patient was discharged two days later\"},\n    {\"feature\": \"resp_support\", \"value\": \"invasive_ventilation\", \"quote\": \"He was intubated\"},\n    {\"feature\": \"transfusion_type\", \"value\": \"simple\", \"quote\": \"transfused with three units of pRBCs\"},\n    {\"feature\": \"acs_other_support\", \"value\": true, \"quote\": \"hematologists diagnosed acute chest syndrome\"}\n], \"present\": true, \"present_quote\": \"hematologists diagnosed acute chest syndrome\"}"
+        },
+        "49": {
+          "outcome_name": "Asthma Exacerbation",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 58.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 58.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with a history of pulmonary hypertension and a sickle cell pain crisis who developed acute chest syndrome. There is no mention of asthma or any symptoms specifically related to an asthma exacerbation.\", \"findings\": [], \"present\": false}"
+        }
+      },
+      "patient_context": {
+        "extracted_features": {
+          "patient_age": 58.0
+        },
+        "accepted_findings": [
+          {
+            "feature": "patient_age",
+            "value": 58.0,
+            "quote": "A 58-year-old male",
+            "unit": null
+          }
+        ],
+        "conflicts": {},
+        "raw_reply": "{\"evidence\": \"The note describes a 58-year-old male patient with a history of sickle cell disease.\", \"findings\": [{\"feature\": \"patient_age\", \"value\": 58, \"quote\": \"A 58-year-old male\"}]}"
+      }
+    },
+    {
+      "patient_uid": "PMC10332925_01",
+      "selection": "random",
+      "scd_primary": true,
+      "title": "",
+      "age": null,
+      "gender": null,
+      "patient_note": "A 27-year-old woman with sickle cell disease (HbSC genotype) and a history of migraine presented to our hospital with complaints of intractable headaches. She was diagnosed by our neurologist as having status migrainosus, and the neurologist proceeded to rule out other causes of her headache. Approximately 12 days before her current hospitalization, she received a Pfizer COVID-19 vaccine, following which she developed headaches, chills, shortness of breath, and left arm swelling (at the site of her injection). Except for her headache, the other symptoms had subsided by the time she was evaluated. Subarachnoid hemorrhage (SAH) was ruled out by lumbar puncture (LP), although she was noted to have an elevated CSF opening pressure of 31 cm. Magnetic resonance imaging (MRI) of the brain performed on day 2 revealed small focal areas of increased T2 signals in bilateral frontal and parietal subcortical and deep white matter, consistent with migraine. Magnetic resonance angiography (MRA) was negative for intracranial aneurysms or stenosis. Magnetic resonance venography (MRV) was negative for cerebral venous sinus thrombosis. The patient was tried on various treatments, including prednisone (60 mg x 5 days), valproate, amitriptyline, and topiramate unsuccessfully for status migrainosus; acetazolamide for suspected idiopathic intracranial hypertension was administered.\nThe patient developed acute pain in the neck and shoulders the day following steroid administration, consistent with a sickle vaso-occlusive crisis. The MRI scan of the cervical spine performed subsequently was negative for cervical spondylosis. On day 5, the patient received a sphenopalatine block for her intractable headache, which did not help. Hematology consultation was obtained on day 6 for the sickle vaso-occlusive crisis, which recommended optimizing her pain regimen with ketorolac (dose increased from 15 to 30 mg every 8 hours intravenously), and prednisone was recommended to be discontinued as it was considered a possible causative factor for a sickle cell crisis. Transfusions were not indicated at this time for her uncomplicated pain crisis. On day 7, her pain crisis continued to progress to multiple locations with poor pain control. She was also noted to be tachypneic with a respiratory rate of 30 and subsequently developed type 1 acute hypoxic respiratory failure and was transferred to the intensive care unit (ICU).\nLaboratory parameters revealed a drop in hemoglobin from 11.8 g/dL to 6.6 g/dL, and the platelet count dropped from 238 K/uL to 35 K/uL over a period of 4 days. Hemolytic indicators decreased from 84 mg/dl to <10 mg/dl, and the LDH level increased from 172 U/L to >1800 U/L, while bilirubin elevation (from 0.8 mg/dL to 1.4 mg/dL) did not commensurate with the elevation of LDH. Other salient laboratory abnormalities were elevated levels of aspartate transaminase (AST) (from 9 U/L to a peak of 118 U/L), alkaline phosphatase (ALP) (from 64 U/L to a peak of 288 U/L), and ammonia levels which rose to 46 mmol/L. After these laboratory derangements were noted, amitriptyline and valproate were discontinued which correlated with a partial improvement in liver function enzymes (AST decreased to 41 U/L and ALP to 87 U/L). Prothrombin time (PT) was elevated starting on day 10 (at 18.8 seconds) suggesting multiorgan dysfunction. The ammonia elevation to 46 mmol/L was mild and did not explain the patient's altered mentation. Computed tomography (CT) without contrast was performed on suspicion of stroke which showed a subtle small focus of hypoattenuation in the right corona radiata extending into the basal ganglia, not definitively seen on the prior CT or MRI scan performed one week before. MRI of the brain showed interval development of innumerable numbers of small foci of low signal intensities throughout the cerebral hemispheres, brainstem, and cerebellum most consistent with microhemorrhages, and these were not present in prior MRI performed on day two. These findings suggested that the patient's hypoxic respiratory failure and subsequent acute chest syndrome were likely secondary to FES. The patient received an RBCx with 5 units of packed red cells on day 15, and an HbA level of 74% was achieved. Following RBCx, the hemolytic parameters started improving. The patient's mentation improved, she was noted to be alert and oriented to time, place, and person, and she was subsequently discharged home. The patient had residual mental neuropathy in the form of numb chin syndrome on subsequent clinic follow-up.",
+      "outcomes": {
+        "10": {
+          "outcome_name": "Chronic Pain",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a recent acute pain crisis (sickle vaso-occlusive crisis) and a history of migraine, but it does not provide information regarding the duration of the pain (e.g., over the past 3 months) or specific scores for pain behavior or interference. There is no evidence of chronic pain as defined by the rubric.\", \"findings\": [], \"present\": false}"
+        },
+        "11": {
+          "outcome_name": "Cognitive Dysfunction",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note mentions that the patient's mentation improved and she was noted to be alert and oriented to time, place, and person, but it does not provide any results from validated performance-based tests or IQ scores.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "12": {
+          "outcome_name": "Elevated TCD Ultrasonography Velocity",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note does not mention transcranial doppler (TCD) ultrasound or any specific blood flow velocity measurements in the brain.\", \"findings\": [], \"present\": false}"
+        },
+        "15": {
+          "outcome_name": "Stroke (hemorrhagic or ischemic)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a CT scan performed on suspicion of stroke which showed a small focus of hypoattenuation in the right corona radiata, and an MRI showing new microhemorrhages. However, these findings are not associated with acute neurological symptoms or signs lasting more than 24 hours, and the patient was diagnosed with status migrainosus and sickle cell complications. The MRI findings of microhemorrhages are not described as an acute neurological syndrome.\", \"findings\": [], \"present\": false}"
+        },
+        "17": {
+          "outcome_name": "Sickle Cell Retinopathy (SCR)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease who experienced a vaso-occlusive crisis and acute chest syndrome, but it contains no mention of ophthalmology evaluations, retinal findings, or vision status.\", \"findings\": [], \"present\": false}"
+        },
+        "21": {
+          "outcome_name": "Chronic Kidney Disease (CKD)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease and a vaso-occlusive crisis, but it does not mention any information regarding kidney function, eGFR, or albuminuria.\", \"findings\": [], \"present\": false}"
+        },
+        "24": {
+          "outcome_name": "Priapism",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": "unknown",
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease and status migrainosus, but there is no mention of a painful, persistent, unwanted erection of the penis (priapism).\", \"findings\": [], \"present\": false}"
+        },
+        "28": {
+          "outcome_name": "Acute Sickle Cell Pain Episode",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 27.0,
+            "pain_co_complication": true,
+            "care_setting": "icu"
+          },
+          "accepted_findings": [
+            {
+              "feature": "pain_co_complication",
+              "value": true,
+              "quote": "acute chest syndrome",
+              "unit": null
+            },
+            {
+              "feature": "care_setting",
+              "value": "icu",
+              "quote": "intensive care unit (ICU)",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "grade_set",
+            "rule_status": "grade_set",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0,
+              "pain_co_complication": true,
+              "care_setting": "icu"
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "undetermined evidence could support a higher grade"
+          },
+          "raw_reply": "{\"evidence\": \"The patient, who has sickle cell disease, experienced a sickle vaso-occlusive crisis starting on the day following steroid administration. This crisis progressed to multiple locations and was accompanied by acute hypoxic respiratory failure, leading to a transfer to the ICU. The note mentions 'uncomplicated pain crisis' and 'acute chest syndrome', but does not mention any other complications like DVT, PE, or stroke, nor does it mention specific life support beyond the ICU setting.\", \"findings\": [{\"feature\": \"pain_co_complication\", \"value\": true, \"quote\": \"acute chest syndrome\"}, {\"feature\": \"care_setting\", \"value\": \"icu\", \"quote\": \"intensive care unit (ICU)\"}], \"present\": true, \"present_quote\": \"sickle vaso-occlusive crisis\" }"
+        },
+        "29": {
+          "outcome_name": "Acute Splenic Sequestration",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who experienced a drop in hemoglobin from 11.8 g/dL to 6.6 g/dL and a drop in platelet count. However, there is no mention of an enlarged spleen, increased reticulocyte count, or specific treatment for splenic sequestration.\", \"findings\": [], \"present\": false}"
+        },
+        "39": {
+          "outcome_name": "Avascular Necrosis of Joints (AVN)",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease who experienced a sickle vaso-occlusive crisis and subsequent complications like acute chest syndrome and microhemorrhages. There is no mention of avascular necrosis (AVN) or any related radiological findings, symptoms, or interventions.\", \"findings\": [], \"present\": false}"
+        },
+        "40": {
+          "outcome_name": "Leg Ulcer",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease who experienced a sickle vaso-occlusive crisis and acute chest syndrome. There is no mention of skin ulceration, wound characteristics, or any other findings related to a leg ulcer.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "47": {
+          "outcome_name": "Depression",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The clinical note describes a patient with sickle cell disease and status migrainosus who experienced a sickle vaso-occlusive crisis and respiratory failure. There is no mention of depression, mood disorders, or any related psychological symptoms.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        },
+        "48": {
+          "outcome_name": "Acute Chest Syndrome (ACS)",
+          "present": true,
+          "extracted_features": {
+            "patient_age": 27.0,
+            "transfusion_type": "simple",
+            "death_attributed": false
+          },
+          "accepted_findings": [
+            {
+              "feature": "transfusion_type",
+              "value": "simple",
+              "quote": "5 units of packed red cells",
+              "unit": null
+            },
+            {
+              "feature": "death_attributed",
+              "value": false,
+              "quote": "subsequently discharged home",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "cannot_grade",
+            "rule_status": "cannot_grade",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0,
+              "transfusion_type": "simple",
+              "death_attributed": false
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no rule decided; missing fio2_pct, life_support, resp_support"
+          },
+          "raw_reply": "{\"evidence\": \"The note explicitly mentions 'acute chest syndrome' and describes the patient's progression to 'type 1 acute hypoxic respiratory failure' and transfer to the ICU. The note mentions a transfusion of 5 units of packed red cells on day 15. No specific respiratory support levels or other support measures are detailed beyond the ICU transfer.\", \"findings\": [{\"feature\": \"transfusion_type\", \"value\": \"simple\", \"quote\": \"5 units of packed red cells\"}, {\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"subsequently discharged home\"}], \"present\": true, \"present_quote\": \"subsequent acute chest syndrome\" }"
+        },
+        "49": {
+          "outcome_name": "Asthma Exacerbation",
+          "present": false,
+          "extracted_features": {
+            "patient_age": 27.0
+          },
+          "accepted_findings": [],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {
+              "patient_age": 27.0
+            },
+            "present": false,
+            "applicability": true,
+            "criteria_met": "unknown",
+            "grade_if_present": null,
+            "reason": "no evidence of this outcome in the note"
+          },
+          "raw_reply": "{\"evidence\": \"The note describes a patient with sickle cell disease who developed acute hypoxic respiratory failure and acute chest syndrome, but there is no mention of asthma or any related symptoms like wheezing or chronic airway hyperresponsiveness. The clinical picture is consistent with a sickle cell crisis and subsequent complications, not an asthma exacerbation.\", \"findings\": [], \"present\": false, \"present_quote\": \"\"}"
+        }
+      },
+      "patient_context": {
+        "extracted_features": {
+          "patient_age": 27.0
+        },
+        "accepted_findings": [
+          {
+            "feature": "patient_age",
+            "value": 27.0,
+            "quote": "A 27-year-old woman",
+            "unit": null
+          }
+        ],
+        "conflicts": {},
+        "raw_reply": "{\"evidence\": \"The patient is a 27-year-old woman with sickle cell disease.\", \"findings\": [{\"feature\": \"patient_age\", \"value\": 27, \"quote\": \"A 27-year-old woman\"}]}"
+      }
+    }
+  ]
+}

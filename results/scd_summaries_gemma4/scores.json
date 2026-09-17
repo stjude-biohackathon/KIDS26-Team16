@@ -1,0 +1,367 @@
+{
+  "labels": "data/SCD_summaries.csv",
+  "runs": [
+    {
+      "path": "results/scd_summaries_gemma4/original.json",
+      "run_id": "20260917T195618-77c8dd9c",
+      "note_column": "original_case_text",
+      "notes_scored": 2,
+      "outcomes": [
+        "10",
+        "11",
+        "12",
+        "15",
+        "17",
+        "21",
+        "24",
+        "28",
+        "29",
+        "39",
+        "40",
+        "47",
+        "48",
+        "49"
+      ],
+      "overall": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 1,
+        "tn": 21,
+        "unknown": 0,
+        "precision": 1.0,
+        "recall": 0.8571428571428571,
+        "f1": 0.923076923076923
+      },
+      "by_outcome": {
+        "10": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "11": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "12": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "15": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "tn": 1,
+          "unknown": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null
+        },
+        "17": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "21": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "24": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "28": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "29": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "39": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "40": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "47": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "48": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "49": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "grade_status": {
+        "absent": 22,
+        "cannot_grade": 3,
+        "graded": 2,
+        "grade_set": 1
+      },
+      "notes_without_labels": []
+    },
+    {
+      "path": "results/scd_summaries_gemma4/summary.json",
+      "run_id": "20260917T204401-c1177eb6",
+      "note_column": "summary",
+      "notes_scored": 2,
+      "outcomes": [
+        "10",
+        "11",
+        "12",
+        "15",
+        "17",
+        "21",
+        "24",
+        "28",
+        "29",
+        "39",
+        "40",
+        "47",
+        "48",
+        "49"
+      ],
+      "overall": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 1,
+        "tn": 21,
+        "unknown": 0,
+        "precision": 1.0,
+        "recall": 0.8571428571428571,
+        "f1": 0.923076923076923
+      },
+      "by_outcome": {
+        "10": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "11": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "12": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "15": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "tn": 1,
+          "unknown": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null
+        },
+        "17": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "21": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "24": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "28": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "29": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "39": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "40": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "47": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "48": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0,
+          "unknown": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "49": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 2,
+          "unknown": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "grade_status": {
+        "absent": 22,
+        "cannot_grade": 2,
+        "grade_set": 2,
+        "graded": 2
+      },
+      "notes_without_labels": []
+    }
+  ]
+}

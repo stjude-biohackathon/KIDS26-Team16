@@ -51,13 +51,16 @@ def request_json(host: str, endpoint: str, body: dict | None = None,
     return result
 
 
-def validate_model(info: dict) -> str:
+def validate_model(info: dict, strict: bool = True) -> str:
     """Require measured parameter count and unambiguous 16-bit GGUF metadata.
 
     The 27B label is rounded; Gemma 3 text weights fall in the 26-29B range.
     Metadata cannot prove medical fine-tuning: the operator must verify the source.
+    When strict=False, bypasses the 27B / F16 requirement for experimental models.
     """
     details = info.get("details", {})
+    if not strict:
+        return str(details.get("quantization_level") or "custom")
     metadata = info.get("model_info", {})
     count = metadata.get("general.parameter_count")
     if not isinstance(count, (int, float)) or not 26e9 <= count < 29e9:
@@ -104,9 +107,9 @@ def call_ollama(prompt: str, model: str, host: str, stats: dict | None = None,
 
 
 def preflight(model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
-              timeout: int = 300, num_ctx: int = 16384) -> dict:
+              timeout: int = 300, num_ctx: int = 16384, strict: bool = True) -> dict:
     info = request_json(host, "/api/show", {"model": model}, timeout=timeout)
-    precision = validate_model(info)
+    precision = validate_model(info, strict=strict)
     tags = request_json(host, "/api/tags", timeout=timeout)
     canonical = model if ":" in model.rsplit("/", 1)[-1] else f"{model}:latest"
     entry = next((item for item in tags.get("models", [])

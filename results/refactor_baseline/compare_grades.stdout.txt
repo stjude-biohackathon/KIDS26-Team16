@@ -1,0 +1,47 @@
+outcomes: 53   table-count mismatches: 0
+grade cells compared: 275
+identical after normalization: 266
+differing: 9
+
+=== 40 Leg Ulcer table0 Grade 1  sim 0.88
+    BOOKLET      : pain/itching/burning/ warmth
+    RULES.MD     : pain/itching/burning/warmth
+
+=== 09 Cerebral Vasculopathy table0 Grade 5  sim 0.914
+    BOOKLET      : stenosis/ occlusion
+    RULES.MD     : stenosis/occlusion
+
+=== 53 Sleep Apnea (obstructive or central) table1 Grade 1  sim 0.929
+    BOOKLET      : hb
+    RULES.MD     : hbo
+    BOOKLET      : hb
+    RULES.MD     : hbo
+
+=== 53 Sleep Apnea (obstructive or central) table1 Grade 2  sim 0.929
+    BOOKLET      : hb
+    RULES.MD     : hbo
+    BOOKLET      : hb
+    RULES.MD     : hbo
+
+=== 53 Sleep Apnea (obstructive or central) table1 Grade 3  sim 0.929
+    BOOKLET      : hb
+    RULES.MD     : hbo
+    BOOKLET      : hb
+    RULES.MD     : hbo
+
+=== 53 Sleep Apnea (obstructive or central) table1 Grade 4  sim 0.941
+    BOOKLET      : hb
+    RULES.MD     : hbo
+
+=== 34 Transfusional Iron Overload (Hemochrom table0 Grade 4  sim 0.947
+    BOOKLET ONLY : =
+    BOOKLET      : <20
+    RULES.MD     : < 20
+
+=== 50 Chronic Restrictive Lung Physiology table0 Grade 1  sim 0.952
+    BOOKLET ONLY : %
+
+=== 23 Male Impairments table0 Grade 2  sim 0.957
+    BOOKLET      : and/ or
+    RULES.MD     : and/or
+

@@ -1,8 +1,14 @@
 """Automated unit tests for SCOGS Interactive Dashboard and Backend Bridges."""
+import json
 from pathlib import Path
 import pytest
 
-from dashboard.data import load_csv_notes, load_run_file
+from dashboard.data import (
+    get_available_run_files,
+    is_run_file,
+    load_csv_notes,
+    load_run_file,
+)
 from dashboard.highlight import find_quote_spans, highlight_note_quotes
 from dashboard.interactive_dashboard import app
 
@@ -36,6 +42,55 @@ def test_load_run_file_missing():
     """Test error handling when run file is missing."""
     with pytest.raises(FileNotFoundError):
         load_run_file("results/nonexistent_run_file_12345.json")
+
+
+def test_load_run_file_not_a_dict(tmp_path):
+    """Test error handling when JSON root is not a dictionary (e.g. list)."""
+    list_file = tmp_path / "list_run.json"
+    list_file.write_text(json.dumps([{"item": 1}]), encoding="utf-8")
+    with pytest.raises(ValueError, match="not a valid JSON object"):
+        load_run_file(list_file)
+
+
+def test_is_run_file(tmp_path):
+    """Test identification of valid extraction run files."""
+    valid_run = tmp_path / "valid_run.json"
+    valid_run.write_text(json.dumps({"detailed_records": []}), encoding="utf-8")
+    assert is_run_file(valid_run) is True
+
+    not_run = tmp_path / "not_run.json"
+    not_run.write_text(json.dumps({"grades": {}}), encoding="utf-8")
+    assert is_run_file(not_run) is False
+
+    list_json = tmp_path / "list.json"
+    list_json.write_text(json.dumps([1, 2, 3]), encoding="utf-8")
+    assert is_run_file(list_json) is False
+
+    corrupt = tmp_path / "bad.json"
+    corrupt.write_text("invalid json content", encoding="utf-8")
+    assert is_run_file(corrupt) is False
+
+    assert is_run_file(tmp_path / "nonexistent.json") is False
+
+
+def test_get_available_run_files_discovers_nested(tmp_path, monkeypatch):
+    """Test discovery of run files nested in subdirectories."""
+    res_dir = tmp_path / "results"
+    nested_dir = res_dir / "subfolder"
+    nested_dir.mkdir(parents=True)
+
+    valid_nested = nested_dir / "run.json"
+    valid_nested.write_text(json.dumps({"detailed_records": [{"patient_uid": "p1"}]}), encoding="utf-8")
+
+    # Non-run JSON (e.g. metadata or list)
+    (nested_dir / "metadata.json").write_text(json.dumps({"version": 1}), encoding="utf-8")
+    (nested_dir / "diffs.json").write_text(json.dumps([{"diff": True}]), encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    files = get_available_run_files()
+    assert any(p == "results/subfolder/run.json" for p, _ in files)
+    assert not any("metadata.json" in p for p, _ in files)
+    assert not any("diffs.json" in p for p, _ in files)
 
 
 def test_load_csv_notes_columns():
@@ -103,3 +158,30 @@ def test_layout_inlines_the_theme_assets():
     page = str(app_ui)
     assert "--scogs-canvas" in page                  # dashboard.css
     assert "function applyTheme(theme)" in page      # theme.js
+
+
+def test_layout_ordering_and_summary_card():
+    """Verify that patient outcomes summary is near the top and note context precedes findings table."""
+    from dashboard.layout import app_ui
+    page = str(app_ui)
+    assert "patient_outcomes_summary_ui" in page
+    assert "executive_grade_card" in page
+    # Note context must precede findings table
+    note_pos = page.find("Clinical Note Context &amp; Verified Spans")
+    if note_pos == -1:
+        note_pos = page.find("Clinical Note Context & Verified Spans")
+    findings_pos = page.find("Clinical Findings &amp; Grounding Verification")
+    if findings_pos == -1:
+        findings_pos = page.find("Clinical Findings & Grounding Verification")
+    assert note_pos != -1
+    assert findings_pos != -1
+    assert note_pos < findings_pos, "Note context must appear before findings table"
+
+
+def test_dashboard_css_contains_scroll_classes():
+    """Verify CSS has rules for findings scroll container and outcome summary buttons."""
+    from dashboard.layout import STATIC_DIR
+    css_content = (STATIC_DIR / "dashboard.css").read_text(encoding="utf-8")
+    assert ".findings-scroll-container" in css_content
+    assert ".outcome-summary-btn" in css_content
+

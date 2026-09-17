@@ -1,0 +1,172 @@
+selection: 2 seeded across 14 outcomes + 1 unstratified holdout = 3 notes
+======================================================================
+P11 MedGemma Extraction Test
+weights=none (mock)  served-as=medgemma-27b-f16  backend=mock
+notes=3  outcomes=10,11,12,15,17,21,24,28,29,39,40,47,48,49  repeat=2  concurrency=1
+======================================================================
+  [1/45] UID 8270061-1 context (age, sex)
+  [2/45] UID 7793225-1 context (age, sex)
+  [3/45] UID 11154032-3 context (age, sex)
+  [4/45] UID 8270061-1 outcome 10 (Chronic Pain)
+  [5/45] UID 8270061-1 outcome 11 (Cognitive Dysfunction)
+  [6/45] UID 8270061-1 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [7/45] UID 8270061-1 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [8/45] UID 8270061-1 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [9/45] UID 8270061-1 outcome 21 (Chronic Kidney Disease (CKD))
+  [10/45] UID 8270061-1 outcome 24 (Priapism)
+  [11/45] UID 8270061-1 outcome 28 (Acute Sickle Cell Pain Episode)
+  [12/45] UID 8270061-1 outcome 29 (Acute Splenic Sequestration)
+  [13/45] UID 8270061-1 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [14/45] UID 8270061-1 outcome 40 (Leg Ulcer)
+  [15/45] UID 8270061-1 outcome 47 (Depression)
+  [16/45] UID 8270061-1 outcome 48 (Acute Chest Syndrome (ACS))
+  [17/45] UID 8270061-1 outcome 49 (Asthma Exacerbation)
+  [18/45] UID 7793225-1 outcome 10 (Chronic Pain)
+  [19/45] UID 7793225-1 outcome 11 (Cognitive Dysfunction)
+  [20/45] UID 7793225-1 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [21/45] UID 7793225-1 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [22/45] UID 7793225-1 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [23/45] UID 7793225-1 outcome 21 (Chronic Kidney Disease (CKD))
+  [24/45] UID 7793225-1 outcome 24 (Priapism)
+  [25/45] UID 7793225-1 outcome 28 (Acute Sickle Cell Pain Episode)
+  [26/45] UID 7793225-1 outcome 29 (Acute Splenic Sequestration)
+  [27/45] UID 7793225-1 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [28/45] UID 7793225-1 outcome 40 (Leg Ulcer)
+  [29/45] UID 7793225-1 outcome 47 (Depression)
+  [30/45] UID 7793225-1 outcome 48 (Acute Chest Syndrome (ACS))
+  [31/45] UID 7793225-1 outcome 49 (Asthma Exacerbation)
+  [32/45] UID 11154032-3 outcome 10 (Chronic Pain)
+  [33/45] UID 11154032-3 outcome 11 (Cognitive Dysfunction)
+  [34/45] UID 11154032-3 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [35/45] UID 11154032-3 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [36/45] UID 11154032-3 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [37/45] UID 11154032-3 outcome 21 (Chronic Kidney Disease (CKD))
+  [38/45] UID 11154032-3 outcome 24 (Priapism)
+  [39/45] UID 11154032-3 outcome 28 (Acute Sickle Cell Pain Episode)
+  [40/45] UID 11154032-3 outcome 29 (Acute Splenic Sequestration)
+  [41/45] UID 11154032-3 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [42/45] UID 11154032-3 outcome 40 (Leg Ulcer)
+  [43/45] UID 11154032-3 outcome 47 (Depression)
+  [44/45] UID 11154032-3 outcome 48 (Acute Chest Syndrome (ACS))
+  [45/45] UID 11154032-3 outcome 49 (Asthma Exacerbation)
+
+  Patient context:      3 accepted / 3 proposed (3 verified quotes, 0 unfound)
+  Proposed findings:    42
+    null placeholders:     0    0.0%  (no quote -> prompt not followed)
+    quote verified:       42  100.0% of quoted | 100.0% of all
+    quote not in note:     0    0.0% of quoted | 0.0% of all
+  Accepted findings:    42
+     ^ a verified quote means the words are in the note, NOT that they
+       support the value. Precision needs the hand-check sheet.
+  Invalid values:       0
+    present=true:         25  of which quoted 0 (0.0%), unfound 0, unquoted 25
+    feedback retries:     42  re-prompts with error feedback
+  Unparseable replies:  0
+  Prompt tokens:        8400 (~2800 tok/note)
+  Completion tokens:    4200 (~1400 tok/note)
+  [1/45] UID 8270061-1 context (age, sex)
+  [2/45] UID 7793225-1 context (age, sex)
+  [3/45] UID 11154032-3 context (age, sex)
+  [4/45] UID 8270061-1 outcome 10 (Chronic Pain)
+  [5/45] UID 8270061-1 outcome 11 (Cognitive Dysfunction)
+  [6/45] UID 8270061-1 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [7/45] UID 8270061-1 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [8/45] UID 8270061-1 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [9/45] UID 8270061-1 outcome 21 (Chronic Kidney Disease (CKD))
+  [10/45] UID 8270061-1 outcome 24 (Priapism)
+  [11/45] UID 8270061-1 outcome 28 (Acute Sickle Cell Pain Episode)
+  [12/45] UID 8270061-1 outcome 29 (Acute Splenic Sequestration)
+  [13/45] UID 8270061-1 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [14/45] UID 8270061-1 outcome 40 (Leg Ulcer)
+  [15/45] UID 8270061-1 outcome 47 (Depression)
+  [16/45] UID 8270061-1 outcome 48 (Acute Chest Syndrome (ACS))
+  [17/45] UID 8270061-1 outcome 49 (Asthma Exacerbation)
+  [18/45] UID 7793225-1 outcome 10 (Chronic Pain)
+  [19/45] UID 7793225-1 outcome 11 (Cognitive Dysfunction)
+  [20/45] UID 7793225-1 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [21/45] UID 7793225-1 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [22/45] UID 7793225-1 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [23/45] UID 7793225-1 outcome 21 (Chronic Kidney Disease (CKD))
+  [24/45] UID 7793225-1 outcome 24 (Priapism)
+  [25/45] UID 7793225-1 outcome 28 (Acute Sickle Cell Pain Episode)
+  [26/45] UID 7793225-1 outcome 29 (Acute Splenic Sequestration)
+  [27/45] UID 7793225-1 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [28/45] UID 7793225-1 outcome 40 (Leg Ulcer)
+  [29/45] UID 7793225-1 outcome 47 (Depression)
+  [30/45] UID 7793225-1 outcome 48 (Acute Chest Syndrome (ACS))
+  [31/45] UID 7793225-1 outcome 49 (Asthma Exacerbation)
+  [32/45] UID 11154032-3 outcome 10 (Chronic Pain)
+  [33/45] UID 11154032-3 outcome 11 (Cognitive Dysfunction)
+  [34/45] UID 11154032-3 outcome 12 (Elevated TCD Ultrasonography Velocity)
+  [35/45] UID 11154032-3 outcome 15 (Stroke (hemorrhagic or ischemic))
+  [36/45] UID 11154032-3 outcome 17 (Sickle Cell Retinopathy (SCR))
+  [37/45] UID 11154032-3 outcome 21 (Chronic Kidney Disease (CKD))
+  [38/45] UID 11154032-3 outcome 24 (Priapism)
+  [39/45] UID 11154032-3 outcome 28 (Acute Sickle Cell Pain Episode)
+  [40/45] UID 11154032-3 outcome 29 (Acute Splenic Sequestration)
+  [41/45] UID 11154032-3 outcome 39 (Avascular Necrosis of Joints (AVN))
+  [42/45] UID 11154032-3 outcome 40 (Leg Ulcer)
+  [43/45] UID 11154032-3 outcome 47 (Depression)
+  [44/45] UID 11154032-3 outcome 48 (Acute Chest Syndrome (ACS))
+  [45/45] UID 11154032-3 outcome 49 (Asthma Exacerbation)
+
+  Patient context:      3 accepted / 3 proposed (3 verified quotes, 0 unfound)
+  Proposed findings:    42
+    null placeholders:     0    0.0%  (no quote -> prompt not followed)
+    quote verified:       42  100.0% of quoted | 100.0% of all
+    quote not in note:     0    0.0% of quoted | 0.0% of all
+  Accepted findings:    42
+     ^ a verified quote means the words are in the note, NOT that they
+       support the value. Precision needs the hand-check sheet.
+  Invalid values:       0
+    present=true:         25  of which quoted 0 (0.0%), unfound 0, unquoted 25
+    feedback retries:     42  re-prompts with error feedback
+  Unparseable replies:  0
+  Prompt tokens:        8400 (~2800 tok/note)
+  Completion tokens:    4200 (~1400 tok/note)
+
+Grade status over 3x14 note-outcome pairs:
+   cannot_grade     25 (59.5%)
+   absent           17 (40.5%)
+
+Per outcome (n=3 each) - a pooled number hides this shape:
+       outcome                              graded    grade_set cannot_grade       absent      refuted missed_prese not_applicab
+    10 Chronic Pain                              0            0            3            0            0            0            0
+    11 Cognitive Dysfunction                     0            0            2            1            0            0            0
+    12 Elevated TCD Ultrasonography V            0            0            2            1            0            0            0
+    15 Stroke (hemorrhagic or ischemi            0            0            0            3            0            0            0
+    17 Sickle Cell Retinopathy (SCR)             0            0            3            0            0            0            0
+    21 Chronic Kidney Disease (CKD)              0            0            3            0            0            0            0
+    24 Priapism                                  0            0            2            1            0            0            0
+    28 Acute Sickle Cell Pain Episode            0            0            3            0            0            0            0
+    29 Acute Splenic Sequestration               0            0            0            3            0            0            0
+    39 Avascular Necrosis of Joints (            0            0            1            2            0            0            0
+    40 Leg Ulcer                                 0            0            2            1            0            0            0
+    47 Depression                                0            0            2            1            0            0            0
+    48 Acute Chest Syndrome (ACS)                0            0            1            2            0            0            0
+    49 Asthma Exacerbation                       0            0            1            2            0            0            0
+
+Seeded vs unstratified holdout - the size of the selection bias:
+   seeded   n= 28  cannot_grade=17  absent=11
+   holdout  n= 14  cannot_grade=8  absent=6
+
+Temperature-0 consistency across runs 1-2: 100.0% (42/42 pairs have identical features and presence in every repeat)
+   At --concurrency 1 with greedy decoding this is close to a tautology:
+   100% is the expected result and evidences nothing about the model.
+   It is a smoke test for a nondeterministic serving stack, not a metric.
+
+======================================================================
+Automated Metrics Evaluation (docs/research/extraction_protocol.md):
+  - Quote-verified % (of quoted proposals):  100.0% -> GOOD (≥95%)
+  - Quote-verified % (of ALL proposals):     100.0%
+      NB: quote-verified is a GROUNDING check, not precision. It asks only
+      whether the quoted words appear in the note - a quote that does not
+      support its value passes it. Precision comes from the hand-check sheet.
+  - Null-placeholder rate:   0.0% -> GOOD (≤5%)
+  - Run-to-run consistency:  100.0% -> EXPECTED - greedy and unbatched; a near-tautology, not evidence
+  - Invalid-value rate:      0.0% -> GOOD (≤2%)
+  - Unit conversions:        0 applied, 0 unconvertible, 0 value/quote mismatches
+  - Value conflicts:         0 withheld (several verified values, no aggregation rule)
+  - Unparseable replies:     0 -> GOOD (0)
+======================================================================
+

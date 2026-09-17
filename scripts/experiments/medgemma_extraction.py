@@ -36,7 +36,7 @@ from experiments.ollama_backend import (
     DEFAULT_HOST, DEFAULT_MODEL, call_ollama, preflight,
 )
 from experiments.verification import Tally, precheck, verify
-from experiments.cohort import load_notes, select_notes
+from experiments.cohort import CSV_NOTE_COLUMNS, load_csv_notes, load_notes, select_notes
 from experiments import run_output
 from experiments.run_output import Repeats, ServedModel
 from scogs.definitions import presence_brief
@@ -771,6 +771,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--tier", choices=["full"], default="full", help=argparse.SUPPRESS)
     ap.add_argument("--model", default=DEFAULT_MODEL,
                     help="local Ollama tag for verified F16/BF16 MedGemma 27B weights")
+    ap.add_argument("--force-model", action="store_true",
+                    help="bypass fail-closed 27B/F16 check to experiment with other served models")
     ap.add_argument("--backend", choices=sorted(BACKENDS), default="ollama",
                     help="ollama for inference; mock only checks harness plumbing")
     ap.add_argument("--host", default=os.environ.get("OLLAMA_HOST", DEFAULT_HOST),
@@ -782,6 +784,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--timeout", type=int, default=300,
                     help="per-request timeout in seconds (default 300)")
     ap.add_argument("--notes", type=int, default=20)
+    ap.add_argument("--notes-file", default=None,
+                    help="read notes from this CSV instead of the bundled cache. Every row "
+                         "is a note; --cohort and its gate do not apply. Pair with "
+                         "--no-stratify to run the whole file")
+    ap.add_argument("--note-column", default=CSV_NOTE_COLUMNS[0],
+                    help=f"which --notes-file column holds the note text "
+                         f"(default {CSV_NOTE_COLUMNS[0]!r}); run the file once per column "
+                         f"to compare note forms")
+    ap.add_argument("--id-column", default="case_id",
+                    help="which --notes-file column identifies the row (default 'case_id')")
     ap.add_argument("--cohort", choices=["scd_primary", "loose"], default="loose",
                     help="pool definition. loose (default): any SCD mention - keeps notes "
                          "where outcomes are genuinely absent, which the absence audit needs. "
@@ -836,6 +848,14 @@ def validate_args(ap: argparse.ArgumentParser, args: argparse.Namespace) -> None
         ap.error(f"Output already exists: {args.out}. Choose a new path to preserve prior results.")
     if args.check_model and args.backend != "ollama":
         ap.error("--check-model requires --backend ollama")
+    if args.notes_file:
+        # The cohort gate reads `title` and filters a corpus nobody curated. A
+        # notes file IS the curation, so accepting --cohort here would advertise
+        # a filter that load_csv_notes does not apply.
+        if args.cohort != ap.get_default("cohort"):
+            ap.error("--cohort does not apply to --notes-file; every row is used")
+        if not pathlib.Path(args.notes_file).exists():
+            ap.error(f"--notes-file not found: {args.notes_file}")
 
 
 def parse_outcomes(ap: argparse.ArgumentParser, raw: str) -> list[str]:
@@ -857,7 +877,8 @@ def parse_outcomes(ap: argparse.ArgumentParser, raw: str) -> list[str]:
 def check_served_model(ap: argparse.ArgumentParser, args: argparse.Namespace) -> ServedModel:
     """-> what Ollama is really serving, after the fail-closed 27B / 16-bit preflight."""
     try:
-        checked = preflight(args.model, args.host, timeout=args.timeout, num_ctx=args.num_ctx)
+        strict = not getattr(args, "force_model", False)
+        checked = preflight(args.model, args.host, timeout=args.timeout, num_ctx=args.num_ctx, strict=strict)
     except (RuntimeError, ValueError) as exc:
         ap.error(str(exc))
     served = ServedModel(model_info=checked["model_info"], digest=checked["model_digest"],
@@ -908,11 +929,28 @@ def main(argv: list[str] | None = None) -> int:
         if args.check_model:
             return 0
 
-    pool = load_notes(cohort=args.cohort)
-    notes, selection = select_notes(pool, args.notes, outcomes,
+    if args.notes_file:
+        try:
+            pool = load_csv_notes(args.notes_file, args.note_column, id_column=args.id_column)
+        except (FileNotFoundError, ValueError) as exc:
+            ap.error(str(exc))
+        # `--notes` defaults to 20, which would silently truncate a longer file
+        # while looking like a deliberate sample size. A notes file is an
+        # evaluation set: run all of it unless the operator asked for fewer.
+        want = args.notes if "--notes" in (argv if argv is not None else sys.argv[1:]) else len(pool)
+    else:
+        pool = load_notes(cohort=args.cohort)
+        want = args.notes
+    notes, selection = select_notes(pool, want, outcomes,
                                     holdout_frac=args.holdout_frac, stratify=args.stratify)
     if not notes:
-        ap.error(f"No notes available for cohort {args.cohort}")
+        source = args.notes_file or f"cohort {args.cohort}"
+        ap.error(f"No notes available for {source}")
+    if args.notes_file and len(notes) < len(pool):
+        # Stratified selection seeds on outcome vocabulary and keeps a holdout;
+        # on a small curated file that quietly discards most of the rows.
+        print(f"WARNING: {len(notes)}/{len(pool)} rows selected. Pass --no-stratify "
+              f"to run every row of {args.notes_file}.")
 
     run_output.print_run_banner(args, notes, outcomes)
     if args.concurrency > 1 and args.repeat > 1:

@@ -1,0 +1,72 @@
+=== FREQUENCY CLASSIFICATION ===
+match: 53/53
+
+=== PROSE SECTIONS ===
+
+--- Definition: 43/53 identical, 10 differ
+   32 Hepatopathy                          sim 0.44
+        BOOKLET ONLY : diagnostic criteria abrupt onset of severe right upper quadrant pain and/or marked increase in direct bilirubin > 50% of total compared to baseline and absence of extrahepatic biliary system obstructi
+   08 TRV Elevation on Echocardiogram      sim 0.957
+        BOOKLET  : 2.5m/sec
+        RULES.MD : 2.5 m/sec
+   24 Priapism                             sim 0.96
+        BOOKLET ONLY : .1
+   16 Hearing Loss (in at least one ear)   sim 0.966
+        BOOKLET ONLY : .1 2
+   19 Acute Kidney Injury (AKI)            sim 0.976  [minor] '.1'->''
+   17 Sickle Cell Retinopathy (SCR)        sim 0.988  [minor] 'is'->''; 'is'->''
+   10 Chronic Pain                         sim 0.989  [minor] '1'->''
+   02 Deep Vein Thrombosis (DVT)           sim 0.99  [minor] '.1'->''
+   50 Chronic Restrictive Lung Physiolog   sim 0.99  [minor] '.1'->''
+   18 Cholecystitis/Cholelithiasis (gall   sim 0.991  [minor] '.1'->''
+
+--- Diagnostic Criteria: 35/53 identical, 18 differ
+   32 Hepatopathy                          sim 0.0
+        RULES.MD ONLY: abrupt onset of severe right upper quadrant pain and/or marked increase in direct bilirubin > 50% of total compared to baseline and absence of extrahepatic biliary system obstruction and/or hepatomega
+   35 Transient Aplastic Crisis Secondar   sim 0.945
+        BOOKLET  : 000/ul
+        RULES.MD : 000/ l
+   03 Diastolic Dysfunction                sim 0.949
+        BOOKLET  : range2
+        RULES.MD : range
+        BOOKLET  : 7cm/sec
+        RULES.MD : 7 cm/sec
+        BOOKLET  : 10cm/sec
+        RULES.MD : 10 cm/sec
+        BOOKLET  : 2.8m/sec
+        RULES.MD : 2.8 m/sec
+   23 Male Impairments                     sim 0.956
+        BOOKLET ONLY : reproductive health complications/impairments male impairments chronic
+   19 Acute Kidney Injury (AKI)            sim 0.972  [minor] '26.5x mmol/l'->'26.5 mol/l'
+   34 Transfusional Iron Overload (Hemoc   sim 0.972  [minor] '1000ng/ml'->'1000 ng/ml'
+   29 Acute Splenic Sequestration          sim 0.982  [minor] 'from'->'of'
+   48 Acute Chest Syndrome (ACS)           sim 0.983  [minor] '38.5oc'->'38.5 oc'
+   30 Alloimmunization/ Delayed Hemolyti   sim 0.984  [minor] 'reticuloctyopenia'->'reticulocytopenia'
+   26 Malnutrition Leading to Stunting (   sim 0.985  [minor] 'nchs/ who'->'nchs/who'
+   52 Pulmonary Hypertension               sim 0.986  [minor] '.2'->''
+   21 Chronic Kidney Disease (CKD)         sim 0.987  [minor] '21'->'2'
+   04 Heart Failure Exacerbation           sim 0.988  [minor] 'following2'->'following'
+   07 Systolic Dysfunction                 sim 0.988  [minor] 'used2'->'used'
+   27 Underweight                          sim 0.992  [minor] '.1'->''
+   09 Cerebral Vasculopathy                sim 0.993  [minor] '.1'->''
+   17 Sickle Cell Retinopathy (SCR)        sim 0.993  [minor] '4'->''
+   22 Female Ovarian Dysfunction           sim 0.995  [minor] '.3'->''
+
+--- Methodology: 43/53 identical, 10 differ
+   28 Acute Sickle Cell Pain Episode       sim 0.706
+        RULES.MD ONLY: diagnostic criteria and grading reviewed by expert adult hematology consult
+   22 Female Ovarian Dysfunction           sim 0.8
+        BOOKLET ONLY : reproductive health complications/impairments female ovarian dysfunction chronic
+   06 Systemic Arterial Hypertension       sim 0.943
+        BOOKLET  : pediatrics2
+        RULES.MD : pediatrics
+        BOOKLET  : acc/ aha
+        RULES.MD : acc/aha
+   25 Delayed puberty                      sim 0.97
+        BOOKLET ONLY : .1
+   01 Arrhythmia                           sim 0.971  [minor] '3'->''
+   29 Acute Splenic Sequestration          sim 0.988  [minor] '1'->''
+   52 Pulmonary Hypertension               sim 0.988  [minor] 'v5.1'->'v5.'; 'output/ cardiac'->'output/cardiac'
+   13 Posterior Reversible Encephalopath   sim 0.99  [minor] '2'->''
+   34 Transfusional Iron Overload (Hemoc   sim 0.992  [minor] '.3'->''
+   15 Stroke (hemorrhagic or ischemic)     sim 0.993  [minor] '4.'->''

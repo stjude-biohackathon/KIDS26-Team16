@@ -304,7 +304,12 @@ def build_results(args: argparse.Namespace, st, served: ServedModel, notes: list
         "parameter_count": served.model_info.get("model_info", {}).get("general.parameter_count"),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "notes_count": len(notes),
-        "cohort": args.cohort,
+        # Which file the notes came from, and which of its columns. Two runs of
+        # the same file differing only in note_column are the comparison; the
+        # scorer refuses to diff runs that differ in anything else.
+        "notes_file": getattr(args, "notes_file", None),
+        "note_column": getattr(args, "note_column", None) if getattr(args, "notes_file", None) else None,
+        "cohort": None if getattr(args, "notes_file", None) else args.cohort,
         "stratified": args.stratify,
         "holdout_frac": args.holdout_frac if args.stratify else None,
         "outcomes": outcomes,

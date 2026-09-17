@@ -1,0 +1,1029 @@
+{
+ "01": {
+  "name": "Arrhythmia",
+  "pages": [
+   13,
+   13
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Asymptomatic AND NO intervention indicated",
+     "2": "Symptomatic AND non urgent medical intervention indicated",
+     "3": "Symptomatic AND urgent intervention indicated (ablation, etc)",
+     "4": "Arrhythmia complications requiring cardioversion AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments.2",
+     "5": "Death from arrhythmia"
+    }
+   }
+  ]
+ },
+ "02": {
+  "name": "Deep Vein Thrombosis (DVT)",
+  "pages": [
+   14,
+   14
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Not requiring intervention",
+     "2": "Requiring medical intervention in the form of anticoagulation AND NOT requiring invasive intervention",
+     "3": "Requiring urgent invasive medical intervention in the form of thrombolysis (site directed TPA) AND NO surgical thrombectomy",
+     "4": "Limb or life-threatening consequences OR hemodynamic or neurologic instability with or without surgical thrombectomy",
+     "5": "Death in the setting of DVT"
+    }
+   }
+  ]
+ },
+ "03": {
+  "name": "Diastolic Dysfunction",
+  "pages": [
+   15,
+   16
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "Diastolic Dysfunction Present",
+     "3": "N/A",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "04": {
+  "name": "Heart Failure Exacerbation",
+  "pages": [
+   17,
+   18
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "Heart failure exacerbation AND NOT requiring intervention",
+     "3": "Heart failure exacerbation AND requiring intervention in the form of diuretics and/or nitric oxide containing compounds and/or non-invasive ventilation AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3",
+     "4": "Heart failure exacerbation AND requiring intervention in the form of diuretics and/or nitric oxide containing compounds and/or non-invasive ventilation AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3",
+     "5": "Death from heart failure exacerbation"
+    }
+   }
+  ]
+ },
+ "05": {
+  "name": "Myocardial Infarction",
+  "pages": [
+   19,
+   21
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "Abnormal cardiac enzymes as listed above AND NO severity criteria, essentially non-ST elevation myocardial infarction (NSTEMI)",
+     "3": "Myocardial infarction with ANY of the severity criteria AND NO hemodynamic instability",
+     "4": "Myocardial infarction resulting in significant cardiovascular compromise AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3 (with or without coronary intervention)",
+     "5": "Death from myocardial infarction"
+    }
+   }
+  ]
+ },
+ "06": {
+  "name": "Systemic Arterial Hypertension",
+  "pages": [
+   22,
+   23
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "No medical intervention required (no use of medication for hypertension) AND \u2022 Ages 1-13 years: BP \u2265 90th percentile to < 95th percentile for age; 120/80 mmHg to < 95th percentile (whichever is lower) \u2022 Ages > 13 years: BP 120/< 80 to 129/< 80 mmHg",
+     "2": "Stage 1 Hypertension. Requiring no more than one anti-hypertensive drug OR \u2022 Ages 1-13 years: BP \u2265 95th percentile to < 95th percentile + 12 mmHg; BP range within 130/80 to 139/89 mmHg (whichever is lower) \u2022 Ages > 13 years: BP 130/80 to 139/89 mmHg",
+     "3": "Stage 2 Hypertension. Requiring two or more anti-hypertensives OR \u2022 Ages 1-13 years: BP \u2265 95th percentile + 12 mmHg, or \u2265 140/90 mmHg (whichever is lower) \u2022 Ages > 13 years: \u2265 95th percentile + 12 mmHg; \u2265 140/90 mmHg (whichever is lower)",
+     "4": "Elevated BP resulting in end organ damage (e.g., acute kidney injury, sudden vision loss, stroke, myocardial infarction, pulmonary edema) at any age",
+     "5": "Death from malignant hypertension"
+    }
+   }
+  ]
+ },
+ "07": {
+  "name": "Systolic Dysfunction",
+  "pages": [
+   24,
+   25
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "Mild dysfunction (LVEF 40-49%) with or without the need for medical or surgical intervention",
+     "3": "Moderate dysfunction (LVEF 30-39%) with or without the need for medical or surgical intervention",
+     "4": "Severe dysfunction (LVEF < 30%) with or without the need for medical or surgical intervention",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "08": {
+  "name": "TRV Elevation on Echocardiogram",
+  "pages": [
+   26,
+   28
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "TRV 2.5-2.9 m/second",
+     "4": "TRV \u2265 3.0 m/second",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "09": {
+  "name": "Cerebral Vasculopathy",
+  "pages": [
+   29,
+   30
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Mild stenosis (25-49%) of \u2264 2 arterial segments as per MRA",
+     "2": "Mild stenosis (25-49%) of > 2 arterial segments as per MRA",
+     "3": "Moderate stenosis (50-74%) of \u2264 2 arterial segments as per MRA",
+     "4": "Moderate stenosis (50-74%) of > 2 arterial segments OR Severe stenosis/occlusion (\u2265 75%) of \u2264 2 arterial segments as per MRA",
+     "5": "Severe stenosis/ occlusion (\u2265 75%) of \u2265 3 arterial segments as per MRA OR presence of moyamoya syndrome"
+    }
+   }
+  ]
+ },
+ "10": {
+  "name": "Chronic Pain",
+  "pages": [
+   31,
+   33
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "No unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the below in the past 3 months: \u2022 Pain and Hurt Score \u2265 81 \u2022 PROMIS T-score \u2264 48 on pain interference \u2022 PROMIS T-score \u2264 41 on pain behavior",
+     "2": "1-3 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the below in the past 3 months: \u2022 Pain and Hurt Score 61-80 \u2022 PROMIS T-score > 48 but \u2264 64 on pain interference \u2022 PROMIS T-scores > 41 but \u2264 57 on pain behavior",
+     "3": "4-10 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the below in the past 3 months: \u2022 Pain and Hurt Score < 60 \u2022 PROMIS T-score > 64 on pain interference \u2022 PROMIS T-score > 57 on pain behavior",
+     "4": "> 10 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least two of the below in the past 3 months: \u2022 Pain and Hurt Score < 60 \u2022 PROMIS T-score > 64 on pain interference \u2022 PROMIS T-score > 57 on pain behavior",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "11": {
+  "name": "Cognitive Dysfunction",
+  "pages": [
+   34,
+   35
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "IQ evaluation 1-2 SD below mean",
+     "2": "IQ evaluation 2-3 SD below mean",
+     "3": "IQ evaluation 3 SD or more below mean",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "12": {
+  "name": "Elevated TCD Ultrasonography Velocity",
+  "pages": [
+   36,
+   36
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "TAMV 170-184 cm/s (TCD) [i.e. low conditional]",
+     "2": "TAMV 185-199 cm/s (TCD) [i.e. high conditional]",
+     "3": "TAMV \u2265 200 cm/s (TCD) [i.e. abnormal]",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "13": {
+  "name": "Posterior Reversible Encephalopathy Syndrome (PRES)",
+  "pages": [
+   37,
+   38
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "PRES NOT requiring critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+     "4": "PRES requiring critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+     "5": "Death due to complications of PRES"
+    }
+   }
+  ]
+ },
+ "14": {
+  "name": "Silent Cerebral Infarct",
+  "pages": [
+   39,
+   40
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Evidence of one single silent infarct lesion on brain MRI AND NO cognitive deficits",
+     "2": "Evidence of > 1 silent infarct lesion on brain MRI AND NO cognitive deficits",
+     "3": "Evidence of silent infarct lesion on brain MRI (any number of lesions) AND cognitive deficits",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "15": {
+  "name": "Stroke (hemorrhagic or ischemic)",
+  "pages": [
+   41,
+   44
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Incidental radiographic findings only (ischemia, hemorrhage, encephalomalacia, hemosiderosis) AND NO history of neurologic symptoms of stroke; exclude silent cerebral infarct",
+     "2": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms resolved completely (TIA episode) OR mRS of 0 at discharge",
+     "3": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) AND mRS of 1-3 at discharge",
+     "4": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) AND mRS of 4-5 at discharge",
+     "5": "Death from stroke"
+    }
+   }
+  ]
+ },
+ "16": {
+  "name": "Hearing Loss (in at least one ear)",
+  "pages": [
+   45,
+   45
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "> 20 dB at > 4 kHz loss Note: > 20 dB at 8 kHz ( if 8 kHz is not recorded use 6 kHz)",
+     "2": "> 20 dB at \u2265 4 kHz loss Note: > 20 dB at 4 kHz and higher frequencies",
+     "3": "> 20 dB at 2 or 3 kHz loss Note: > 20 dB at 2 or 3 kHz and higher frequencies (if 2 kHz is recorded, use 2 kHz, if not, use 3 kHz)",
+     "4": "> 40 dB at \u2265 2 kHz, but < 70 dB loss Note: sensorineural hearing loss from 41 to 69 dB at 2 kHz and higher frequencies",
+     "5": "\u2265 70 dB at \u2265 2 kHz loss Note: sensorineural hearing loss greater or equal to 70 dB at 2 kHz and higher frequencies"
+    }
+   }
+  ]
+ },
+ "17": {
+  "name": "Sickle Cell Retinopathy (SCR)",
+  "pages": [
+   46,
+   48
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Stage 1 or Stage 2 SCR without vision loss",
+     "2": "Stage 3 SCR without vision loss OR Stage 1 or Stage 2 SCR with vision loss",
+     "3": "Stage 4 or Stage 5 SCR OR any Stage SCR with legal blindness",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "18": {
+  "name": "Cholecystitis/Cholelithiasis (gallstones)",
+  "pages": [
+   49,
+   52
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Cholelithiasis/ choledocholithiasis AND NOT requiring any medical or surgical intervention (e.g., incidental finding)",
+     "2": "Cholecystitis or cholelithiasis/ choledocholithiasis AND requiring medical intervention (oral or IV pain medication) AND NOT requiring surgical intervention",
+     "3": "Cholecystitis or cholelithiasis/ choledocholithiasis AND requiring surgical intervention in the form of stone retrieval or removal, placement of stent, or cholecystectomy",
+     "4": "Cholecystitis or cholelithiasis/ choledocholithiasis AND complicated with pancreatitis OR resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments.2",
+     "5": "Death from cholecystitis or cholelithiasis/ choledocholithiasis complications"
+    }
+   }
+  ]
+ },
+ "19": {
+  "name": "Acute Kidney Injury (AKI)",
+  "pages": [
+   53,
+   54
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "sCr 1.5-1.9 times baseline OR increase by \u2265 0.3 mg/dL",
+     "2": "sCr 2.0-2.9 times baseline",
+     "3": "sCr 3.0 times baseline OR increase in sCr to \u2265 4 mg/dL OR initiation of renal replacement therapy OR (in patients < 18 years) decrease in eGFR to < 35 mL/min per 1.73 m2 AND NO progression to permanent end stage renal disease",
+     "4": "sCr 3.0 times baseline OR increase in sCr to \u2265 4 mg/dL OR initiation of renal replacement therapy OR (in patients < 18 years) decrease in eGFR to < 35 mL/min per 1.73 m2 AND progression to end stage renal disease",
+     "5": "Death due to AKI"
+    }
+   }
+  ]
+ },
+ "20": {
+  "name": "Acute Papillary Necrosis",
+  "pages": [
+   55,
+   56
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Acute papillary necrosis requiring a visit to medical facility AND NOT requiring treatment AND NOT requiring admission",
+     "2": "Acute papillary necrosis requiring a visit to a medical facility AND requiring any treatment (e.g., erythrocyte transfusion, IVF, etc.) AND NOT requiring admission",
+     "3": "Acute papillary necrosis requiring admission AND treatment (e.g., interventional procedure to remove RBC\u2019s, intubation, mechanical ventilation, erythrocyte transfusions; vaso-pressors) AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "4": "Acute papillary necrosis resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to acute papillary necrosis"
+    }
+   }
+  ]
+ },
+ "21": {
+  "name": "Chronic Kidney Disease (CKD)",
+  "pages": [
+   57,
+   58
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "eGFR 60-89 mL/min/1.73 m2 AND albuminuria < 30 mg/g",
+     "2": "eGFR 45-59 mL/min/1.73 m2 AND albuminuria < 30 mg/g OR eGFR \u2265 60 mL/min/1.73 m2 AND albuminuria 30-300 mg/g",
+     "3": "eGFR 30-44 mL/min/1.73 m2 AND albuminuria < 30 mg/g OR eGFR 45-59 mL/min/1.73 m2 AND albuminuria 30-300 mg/g OR eGFR 60-89 mL/min/1.73 m2 AND albuminuria > 300 mg/g",
+     "4": "eGFR 45-59 mL/min/1.73 m2 AND albuminuria > 300 mg/g OR eGFR 30-44 mL/min/1.73 m2 AND albuminuria > 30 mg/g OR eGFR 15-29 mL/min/1.73 m2",
+     "5": "eGFR < 15 mL/min/1.73 m2 OR Death due to CKD"
+    }
+   }
+  ]
+ },
+ "22": {
+  "name": "Female Ovarian Dysfunction",
+  "pages": [
+   59,
+   60
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Diminished ovarian reserve AND NO evidence of premature ovarian insufficiency",
+     "2": "Premature ovarian insufficiency",
+     "3": "Infertility",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "23": {
+  "name": "Male Impairments",
+  "pages": [
+   61,
+   62
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Intervention not indicated AND infertility despite normal semen parameters AND NO evidence of decreased testicular function (FSH < 7.6 mIU/mL)",
+     "2": "Impaired Spermatogenesis (oligospermia or severe oligospermia or Cryptozoospermia) AND evidence of decreased testicular function (FSH level \u2265 7.6 mIU/mL) Comment: Might necessitate Intrauterine Insemination (IUI) and/ or in vitro fertilization (IVF) + intracytoplasmic sperm injection (ICSI)",
+     "3": "Azoospermia AND evidence of decreased testicular function (FSH \u2265 7.6 mIU/mL) Comment: Necessitates surgical sperm extraction and IVF + ICSI",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "24": {
+  "name": "Priapism",
+  "pages": [
+   63,
+   64
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Priapism episode with or without the use of medications at home AND NOT requiring a visit to a medical facility",
+     "2": "Priapism episode requiring visit to a medical facility AND requiring treatment (e.g., medication) AND NO shunt",
+     "3": "Priapism episode requiring a visit to a medical facility AND requiring aspiration/irrigation AND NO shunt",
+     "4": "Priapism episode requiring a visit to a medical facility AND requiring shunt surgical intervention",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "25": {
+  "name": "Delayed puberty",
+  "pages": [
+   65,
+   65
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "No breast development by age 13 years for females OR testes volume of < 3 cc development by age 14 years for males",
+     "3": "No breast development by age 14 years OR no menses by age 16 years or within 4 years of breast development for females OR no increase in testes volume by age 16 years for males OR hormone replacement indicated in either sex",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "26": {
+  "name": "Malnutrition Leading to Stunting (Decreased Height Velocity)",
+  "pages": [
+   66,
+   67
+  ],
+  "tables": [
+   {
+    "stratum": "If there is only one data point",
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "N/A",
+     "4": "Z-score for height-for-age < -3 below mean population",
+     "5": "Death"
+    }
+   },
+   {
+    "stratum": "If there are at least 2 data points",
+    "grades": {
+     "1": "N/A",
+     "2": "Decline of 1 z-score for height-for-age",
+     "3": "Decline of 2 z-score for height-for-age",
+     "4": "Decline of 3 z-score for height-for-age",
+     "5": "Death"
+    }
+   }
+  ]
+ },
+ "27": {
+  "name": "Underweight",
+  "pages": [
+   68,
+   70
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "Z-score for weight-for-length or BMI (based on age in diagnostic criteria) 1-1.99 standard deviations below mean population",
+     "3": "Z-score for weight-for-length or BMI (based on age in diagnostic criteria) 2-2.99 standard deviations below mean population",
+     "4": "Z-score for weight-for-length or BMI (based on age in diagnostic criteria) 3 standard deviations below mean population",
+     "5": "Death"
+    }
+   }
+  ]
+ },
+ "28": {
+  "name": "Acute Sickle Cell Pain Episode",
+  "pages": [
+   71,
+   72
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Acute pain episode requiring pain treatment at home for pain exacerbation",
+     "2": "Acute pain episode requiring a visit to a medical facility (including Day Hospital) for any type of treatment for pain AND NOT requiring admission",
+     "3": "Acute pain episode requiring admission AND NO evidence of organ failure or any of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis",
+     "4": "Acute pain episode complicated with organ failure OR one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis OR resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2",
+     "5": "Death in the setting of acute pain episode"
+    }
+   }
+  ]
+ },
+ "29": {
+  "name": "Acute Splenic Sequestration",
+  "pages": [
+   73,
+   74
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Splenic sequestration not requiring any treatment",
+     "2": "N/A",
+     "3": "Splenic sequestration requiring treatment (i.e. erythrocyte transfusion, IV fluids, etc.) AND NO hemodynamic instability AND NOT requiring splenectomy, fluids, etc.",
+     "4": "Splenic sequestration AND hemodynamic instability OR requiring splenectomy",
+     "5": "Death due to splenic sequestration"
+    }
+   }
+  ]
+ },
+ "30": {
+  "name": "Alloimmunization/ Delayed Hemolytic Transfusion Reaction",
+  "pages": [
+   75,
+   76
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "NOT requiring intervention for immune-mediated hemolysis",
+     "2": "Decline in Hb < 20% from baseline AND NOT requiring intervention for immune-mediated hemolysis (including no erythrocyte transfusions, steroids, IVIG, or immunosuppressors)",
+     "3": "Decline in hemoglobin \u2265 20% from baseline OR requiring intervention for immune-mediated hemolysis (including erythrocyte transfusions, steroids, IVIG, or immunosuppressors",
+     "4": "Decline in Hb \u2265 20% from baseline AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to alloantibody or autoantibody immune-mediated hemolysis"
+    }
+   }
+  ]
+ },
+ "31": {
+  "name": "Chronic Hypersplenism",
+  "pages": [
+   77,
+   78
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Hypersplenism with isolated thrombocytopenia AND NOT requiring splenectomy",
+     "2": "Hypersplenism with 2 cytopenias AND NOT requiring splenectomy",
+     "3": "Hypersplenism with all 3 cytopenias OR Hypersplenism leading to splenectomy",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "32": {
+  "name": "Hepatopathy",
+  "pages": [
+   79,
+   80
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "MELD score \u2264 29 AND NOT requiring treatment (e.g., erythrocyte transfusion or drugs for cholestasis)",
+     "2": "MELD score \u2264 29 AND requiring treatment (e.g., simple erythrocyte transfusion, cholestatic agents, exchange transfusions AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments5",
+     "3": "MELD score 30-39 AND requiring treatment (e.g., simple erythrocyte transfusion, cholestatic agents, or exchange transfusions AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments5",
+     "4": "MELD \u2265 40 OR resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments5",
+     "5": "Death due to liver failure from sickle cell hepatopathy"
+    }
+   }
+  ]
+ },
+ "33": {
+  "name": "Splenic Infarction",
+  "pages": [
+   81,
+   82
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Incidental finding on radiologic imaging AND NOT requiring treatment",
+     "2": "Requiring acute care visit to a medical facility AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "3": "Requiring admission for treatment AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "4": "Resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2 OR Requiring splenectomy",
+     "5": "Death due to acute splenic infarction"
+    }
+   }
+  ]
+ },
+ "34": {
+  "name": "Transfusional Iron Overload (Hemochromatosis or Hemosiderosis)",
+  "pages": [
+   83,
+   84
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "LIC 2.5-6.9 mg Fe/100 g dry weight liver OR Serum ferritin 1000-1999 ng/mL (at steady state) irrespective of iron chelation AND MRI T2* \u2265 20 msec AND NO evidence of organ dysfunction",
+     "2": "LIC 7-14.9 mg Fe/100 g dry weight liver OR Serum ferritin 2000-4999 ng/mL (at steady state) irrespective of iron chelation AND MRI T2* \u2265 20 msec AND NO evidence of organ dysfunction",
+     "3": "LIC \u2265 15 mg Fe/100 g dry weight liver OR serum ferritin 5000-10,000 ng/mL (at steady state) irrespective of iron chelation AND MRI T2* \u2265 20 msec AND NO evidence of organ dysfunction",
+     "4": "LIC \u2265 15 mg Fe/100 g dry weight liver AND serum ferritin > 10,000 ng/mL (at steady state) = irrespective of iron chelation OR MRI T2* <20 msec OR evidence of organ dysfunction due to iron overload",
+     "5": "Death due to iron overload"
+    }
+   }
+  ]
+ },
+ "35": {
+  "name": "Transient Aplastic Crisis Secondary to Parvovirus B19 Infection",
+  "pages": [
+   85,
+   88
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Transient aplastic crisis AND NOT requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+     "2": "Transient aplastic crisis with Hb nadir \u2265 5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+     "3": "Transient aplastic crisis with Hb nadir < 5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+     "4": "Transient aplastic crisis with Hb nadir < 5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin) AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to transient aplastic crisis"
+    }
+   }
+  ]
+ },
+ "36": {
+  "name": "Fever",
+  "pages": [
+   89,
+   89
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Temperature 38.0 \u2013 38.4 degrees Celsius (100.4 - 101.2 degrees Fahrenheit)",
+     "2": "Temperature > 38.5 Celsius (101.3 degrees Fahrenheit)",
+     "3": "N/A",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "37": {
+  "name": "Sepsis",
+  "pages": [
+   90,
+   92
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "Blood culture positive (bacteremia) AND signs or symptoms of organ dysfunction OR treatment indicated",
+     "4": "Life-threatening consequences of sepsis (e.g., hemodynamic instability, respiratory failure) AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to sepsis"
+    }
+   }
+  ]
+ },
+ "38": {
+  "name": "Malignant Neoplasms",
+  "pages": [
+   93,
+   96
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Asymptomatic or mild symptoms: Clinical or diagnostic observations only OR low-grade neoplasms where intervention is not indicated (e.g., cervical intraepithelial neoplasia/ cervical dysplasia/ CIN, and teratoma incidentally identified on imaging)",
+     "2": "Moderate symptoms: Minimal, local, or noninvasive intervention indicated OR limiting age-appropriate instrumental Activities of Daily Life OR low grade, non-metastatic neoplasms (e.g., cervical carcinoma in-situ, cervical lymph node paraganglioma, basal cell carcinoma, squamous cell carcinoma, parotid carcinoma)",
+     "3": "Severe or medically significant but not immediately life-threatening: Hospitalization or prolongation of existing hospitalization indicated OR disabling or limiting self-care Activities of Daily Life OR high-grade neoplasms requiring single treatment therapy (surgery, radiation with or without chemotherapeutic agent) (e.g., breast cancer if in-situ, prostate cancer, bladder carcinoma, thyroid cancer, carcinoid, squamous cell carcinoma cervix, glioma, astrocytoma, gastrointestinal stromal tumor/GIST)",
+     "4": "Life-threatening consequences: Urgent intervention indicated OR high-grade neoplasms requiring multimodal therapy OR more than one chemotherapy agent used (e.g., MDS, AML, ALL, Hodgkin lymphoma, non-Hodgkin lymphoma, non in-situ/ invasive breast cancer, osteosarcoma, Ewing sarcoma, primitive neuroectodermal tumor/ PNET, soft tissue sarcoma, renal cancer, anaplastic CNS tumor, glioblastoma, carcinoma of head/neck, liver cancer, lung cancer, mesothelioma, melanoma)",
+     "5": "Death due to cancer complications in a person with SCD"
+    }
+   }
+  ]
+ },
+ "39": {
+  "name": "Avascular Necrosis of Joints (AVN)",
+  "pages": [
+   97,
+   98
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Radiological findings of AVN AND NOT symptomatic",
+     "2": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND NO intervention",
+     "3": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND intervention with physical therapy, analgesics, bone remodeling agents OR invasive intervention with steroid injection or core decompression",
+     "4": "Radiological findings of AVN AND limiting instrumental activities of daily living AND invasive intervention with total joint replacement",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "40": {
+  "name": "Leg Ulcer",
+  "pages": [
+   99,
+   100
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Intact skin with skin induration AND hyperpigmentation associated with pain/itching/burning/ warmth, possibly edema",
+     "2": "Partial thickness skin loss AND Less than 8 cm2 AND Minimal exudate AND Periwound intact",
+     "3": "Full thickness skin loss involving subcutaneous tissue AND Greater than 8 cm2 < 50% wound bed with necrotic tissue AND Moderate exudate AND Periwound intact",
+     "4": "Full thickness skin loss involving damage or necrosis extending to the fascia AND Greater than 8 cm2 \u2265 50% wound bed with necrotic tissue AND Heavy exudate, possibly malodorous AND Periwound erythema, maceration + clinical signs of infection",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "41": {
+  "name": "Osteomyelitis",
+  "pages": [
+   101,
+   102
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Osteomyelitis AND NOT requiring parenteral antibiotics AND NOT requiring invasive treatments (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+     "2": "Osteomyelitis AND requiring parenteral antibiotics AND NOT requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+     "3": "Osteomyelitis AND requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+     "4": "Osteomyelitis AND requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND multifocal osteomyelitis",
+     "5": "Death from complications of osteomyelitis (e.g. sepsis)"
+    }
+   }
+  ]
+ },
+ "42": {
+  "name": "Osteoporosis",
+  "pages": [
+   103,
+   106
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Adult: Radiologic evidence of osteoporosis or Bone Mineral Density (BMD) t-score -1 to - 2.5 (osteopenia) Pediatric: Radiologic evidence of low BMD with z score of \u2264 -2.0 AND NO history of significant fractures for both pediatrics and adults",
+     "2": "Adult: BMD t-score < -2.5 OR loss of height < 2 cm or therapy to improve BMD indicated OR limiting instrumental ADL Pediatric: Low BMD (z-score \u2264 -2.0) AND significant fracture history (defined as a long bone fracture of the lower extremity, vertebral compression, 2 or more long bone fractures of the upper extremities) for both pediatrics and adults OR therapy to improve BMD indicated for both pediatrics and adults",
+     "3": "Adult: Loss of height \u2265 2 cm OR hospitalization indicated OR limiting self-care ADL Pediatric: Limiting self-care ADL",
+     "4": "N/A",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "43": {
+  "name": "Acute Multiorgan Failure",
+  "pages": [
+   107,
+   110
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "Acute multiorgan failure AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "4": "Acute multiorgan failure AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to multiorgan failure"
+    }
+   }
+  ]
+ },
+ "44": {
+  "name": "Fetal Growth Restriction",
+  "pages": [
+   111,
+   111
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "< 10% percentile of weight for gestational age",
+     "3": "< 5% percentile of weight for gestational age",
+     "4": "< 1% percentile of weight for gestational age",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "45": {
+  "name": "Pregnancy Loss",
+  "pages": [
+   112,
+   112
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "N/A",
+     "2": "N/A",
+     "3": "N/A",
+     "4": "Fetal loss at any gestational age",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "46": {
+  "name": "Premature Delivery",
+  "pages": [
+   113,
+   114
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Delivery of a liveborn infant at > 34 to 37 weeks gestation",
+     "2": "Delivery of a liveborn infant at > 28 to 34 weeks gestation",
+     "3": "Delivery of a liveborn infant at > 24 to 28 weeks gestation",
+     "4": "Delivery of a liveborn infant at 24 weeks of gestation or less",
+     "5": "N/A"
+    }
+   }
+  ]
+ },
+ "47": {
+  "name": "Depression",
+  "pages": [
+   115,
+   118
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Mild depressive symptoms OR PHQ-9 score 5-9 AND treatment not recommended",
+     "2": "Moderate depressive symptoms OR PHQ-9 score 10 to 14 AND limiting instrumental activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+     "3": "Severe depressive symptoms OR PHQ-9 score 15-19 AND limiting activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+     "4": "PHQ-9 score 20-27 OR life-threatening consequences (i.e., attempted suicide) OR threats of harm to self or others AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+     "5": "Death due directly to depressive symptoms (e.g., suicide)"
+    }
+   }
+  ]
+ },
+ "48": {
+  "name": "Acute Chest Syndrome (ACS)",
+  "pages": [
+   119,
+   120
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Requiring none of the below: \u2022 Supplemental oxygen \u2022 Simple or exchange erythrocyte transfusion \u2022 Erythropoietin \u2022 BiPAP \u2022 Any other supportive treatment, other than antibiotics",
+     "2": "Requiring FiO2 > 21% to < 50% OR simple erythrocyte transfusion AND none of the below: \u2022 BiPAP \u2022 High flow O2 \u2022 Exchange transfusion",
+     "3": "Requiring \u2265 50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion",
+     "4": "Requiring \u2265 50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion AND critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+     "5": "Death from ACS complications"
+    }
+   }
+  ]
+ },
+ "49": {
+  "name": "Asthma Exacerbation",
+  "pages": [
+   121,
+   122
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Mild symptoms AND NO medical intervention indicated",
+     "2": "Symptomatic AND medical intervention sought (but NO supplemental oxygen) OR limiting instrumental activities of daily living (ADL) OR intermittent asthma requiring short-acting beta-agonists as needed AND NOT status asthmaticus",
+     "3": "Limiting self-care ADL OR supplemental oxygen indicated OR status asthmaticus",
+     "4": "Life-threatening respiratory or hemodynamic compromise (i.e., requiring intubation, pressors, invasive or non-invasive ventilation)",
+     "5": "Death due to asthma complications"
+    }
+   }
+  ]
+ },
+ "50": {
+  "name": "Chronic Restrictive Lung Physiology",
+  "pages": [
+   123,
+   124
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "TLC > 70% and TLC \u2264 80% %; mild restrictive disease",
+     "2": "TLC > 60% and TLC \u2264 70%; moderate restrictive disease",
+     "3": "TLC \u2265 50% and TLC \u2264 60%; moderately severe restrictive disease",
+     "4": "TLC < 50% predicted; severe restrictive lung disease",
+     "5": "Death due to restrictive lung disease"
+    }
+   }
+  ]
+ },
+ "51": {
+  "name": "Pulmonary Embolism (PE)",
+  "pages": [
+   125,
+   126
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "An incidental finding of PE or diagnosis of PE AND NO symptoms",
+     "2": "Finding of PE on imaging AND symptoms AND NO cardiac function compromise AND NO hemodynamic instability",
+     "3": "Finding of PE requiring admission AND symptoms AND cardiac function compromise, including evidence of right heart strain by ECHO, EKG, or elevated BNP (from baseline) AND NO hemodynamic instability AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "4": "Finding of PE requiring ICU admission AND symptoms AND cardiac function compromise, including evidence of right heart strain by ECHO, EKG, or elevated BNP (from baseline) OR hemodynamic instability AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+     "5": "Death due to PE"
+    }
+   }
+  ]
+ },
+ "52": {
+  "name": "Pulmonary Hypertension",
+  "pages": [
+   127,
+   128
+  ],
+  "tables": [
+   {
+    "stratum": null,
+    "grades": {
+     "1": "Right heart catheterization mPAP 20-25 mmHg AND NYHA Class I-II dyspnea AND NO evidence of right sided congestive heart failure or syncope",
+     "2": "Right heart catheterization mPAP 25-35 mmHg AND NYHA Class II-III dyspnea and/or persistent cough AND NO evidence of right sided congestive heart failure or syncope",
+     "3": "Right heart catheterization mPAP > 35 mmHg AND NYHA Class III dyspnea and/or hypoxia requiring nocturnal or constant oxygen AND NO evidence of right sided congestive heart failure on physical exam",
+     "4": "Right heart catheterization mPAP > 35 mmHg AND NYHA Class IV dyspnea (syncope and/or dyspnea at rest) AND right sided congestive heart failure on physical exam AND severely reduced cardiac output/cardiac index or respiratory failure requiring ventilatory support",
+     "5": "Death in the setting of pulmonary hypertension"
+    }
+   }
+  ]
+ },
+ "53": {
+  "name": "Sleep Apnea (obstructive or central)",
+  "pages": [
+   129,
+   131
+  ],
+  "tables": [
+   {
+    "stratum": "Adults (age \u2265 18)",
+    "grades": {
+     "1": "Polysomnography AHI 5-15 AND NO treatment indicated",
+     "2": "Polysomnography AHI 5-15 AND treatment indicated (i.e. CPAP, tonsillectomy)",
+     "3": "Polysomnography AHI > 15-30 with or without treatment (i.e. CPAP, tonsillectomy) indicated",
+     "4": "Polysomnography AHI > 30 with or without treatment indicated (i.e. CPAP, tonsillectomy)",
+     "5": "N/A"
+    }
+   },
+   {
+    "stratum": "Children (age < 18 yrs)",
+    "grades": {
+     "1": "AHI 0 \u2013 3 AND Hb02 sat < 90% for > 3 min overnight OR AHI 3.1 \u2013 7.9 AND NO Hb02 sat < 90% for > 3 min overnight",
+     "2": "AHI 3.1 \u2013 7.9 AND Hb02 sat < 90% for > 3 min overnight OR AHI 8.0 \u2013 15.0 AND NO Hb02 sat < 90% for > 3 min overnight",
+     "3": "AHI 8.0 \u2013 15.0 AND Hb02 sat < 90% for > 3 min overnight OR AHI 15.1 \u2013 24.9 AND NO Hb02 sat < 90% for > 3 min overnight",
+     "4": "AHI 15.1 \u2013 24.9 AND Hb02 sat < 90% for > 3 min overnight OR AHI \u2265 25",
+     "5": "N/A"
+    }
+   }
+  ]
+ }
+}

@@ -7,6 +7,7 @@ from typing import Any
 import pandas as pd
 from htmltools import HTML
 from shiny import reactive, render, ui
+from shiny.types import SilentException
 
 from dashboard.data import get_available_run_files, load_csv_notes, load_run_file
 from dashboard.evaluation import (
@@ -17,7 +18,32 @@ from dashboard.evaluation import (
     is_ollama_available,
 )
 from dashboard.highlight import highlight_note_quotes
-from dashboard.view_state import explore_view_state, grade_details, live_view_state
+from dashboard.view_state import (
+    ABSENT,
+    BUCKET_LABELS,
+    CANNOT_GRADE,
+    OUTCOME_BUCKETS,
+    PRESENT,
+    explore_view_state,
+    grade_details,
+    live_view_state,
+    outcome_bucket,
+    outcome_rank,
+    outcome_status,
+)
+
+#: Colour of each group heading in the overview, matching its pills.
+BUCKET_HEADING_CLASS = {
+    PRESENT: "text-success",
+    CANNOT_GRADE: "text-warning",
+    ABSENT: "text-muted",
+}
+#: Pill style per group.
+BUCKET_PILL_CLASS = {
+    PRESENT: "outcome-btn-graded",
+    CANNOT_GRADE: "outcome-btn-cannot",
+    ABSENT: "outcome-btn-absent",
+}
 
 
 # ==============================================================================
@@ -27,14 +53,28 @@ from dashboard.view_state import explore_view_state, grade_details, live_view_st
 def server(input, output, session):
     # Reactive state
     current_run_cache = reactive.value(None)
-    csv_data_cache = reactive.value(None)
     live_eval_result = reactive.value(None)
 
-    # Initial loading of CSV dataset
-    @reactive.effect
-    def _load_csv():
-        csv_df = load_csv_notes("data/clinical_notes.csv")
-        csv_data_cache.set(csv_df)
+    def current(name: str, default: Any = None) -> Any:
+        """-> input `name`'s value, or `default` until the client has sent one.
+
+        `reactive.Value.get()` registers the dependency *before* raising
+        SilentException for an unset value, so the fallback keeps the caller
+        reactive. The selectors below render the very inputs they read: without
+        this they cancel their own render, the `<select>` is never sent, the
+        input is therefore never set, and explore mode stays blank forever.
+        """
+        try:
+            return input[name]()
+        except SilentException:
+            return default
+
+    # The clinical-notes CSV is tens of megabytes and only the live evaluator
+    # reads it, so it loads on first use rather than at session start: an
+    # explore-only session never touches it.
+    @reactive.calc
+    def csv_notes():
+        return load_csv_notes("data/clinical_notes.csv")
 
     @output
     @render.ui
@@ -69,7 +109,7 @@ def server(input, output, session):
                 else ui.span("Ollama Offline (Deterministic Mode)", class_="badge bg-secondary mb-2")
             )
 
-            df = csv_data_cache.get()
+            df = csv_notes()
             csv_choices = {}
             if df is not None and not df.empty:
                 for idx, row in df.head(50).iterrows():
@@ -131,7 +171,7 @@ def server(input, output, session):
     def _sync_csv_selection():
         if input.app_mode() != "live" or input.live_source() != "csv":
             return
-        df = csv_data_cache.get()
+        df = csv_notes()
         if df is None or df.empty or not input.csv_patient_idx():
             return
         try:
@@ -172,33 +212,62 @@ def server(input, output, session):
         records = data["records_by_uid"]
         choices = {}
         for uid, rec in records.items():
-            title = rec.get("title") or "Case Report"
-            choices[uid] = f"{uid} - {title[:40]}..."
+            title = rec.get("title")
+            if not title:
+                present_names = [
+                    o.get("outcome_name") or f"Outcome #{k}"
+                    for k, o in rec.get("outcomes", {}).items()
+                    if o.get("present")
+                ]
+                title = ", ".join(present_names[:2]) if present_names else "Case Report"
+            choices[uid] = f"{uid} - {title[:40]}"
 
-        first_uid = next(iter(choices.keys())) if choices else None
-        return ui.input_select("selected_patient_uid", "Select Patient Case:", choices=choices, selected=first_uid)
+        current_uid = current("selected_patient_uid")
+        selected_uid = current_uid if (current_uid in choices) else next(iter(choices.keys()))
+        return ui.input_select("selected_patient_uid", "Select Patient Case:", choices=choices, selected=selected_uid)
 
     # Mode 1 Outcome Selector UI
     @output
     @render.ui
     def run_outcome_selector_ui():
         data = current_run_cache.get()
-        uid = input.selected_patient_uid()
-        if not data or not uid or uid not in data["records_by_uid"]:
+        records = (data or {}).get("records_by_uid", {})
+        if not records:
             return ui.div()
 
-        rec = data["records_by_uid"][uid]
+        uid = current("selected_patient_uid")
+        if uid not in records:
+            uid = next(iter(records.keys()))
+
+        rec = records[uid]
         outcomes = rec.get("outcomes", {})
         choices = {}
+
+        best_default = None
+        if outcomes:
+            best_default = sorted(outcomes.items(), key=outcome_rank)[0][0]
+
         for k, o_data in outcomes.items():
             name = o_data.get("outcome_name") or FOCUS_OUTCOMES.get(k, {}).get("name") or f"Outcome {k}"
-            choices[k] = f"#{k} {name}"
+            gr = o_data.get("grade_result") or {}
+            st = outcome_status(o_data)
+            g = gr.get("grade")
+            if st in ("graded", "grade_set") and g is not None:
+                tag = f"[Grade {g}]"
+            elif st == "cannot_grade":
+                tag = "[Cannot Grade]"
+            elif o_data.get("present"):
+                tag = "[Present]"
+            else:
+                tag = "[Absent]"
+            choices[k] = f"#{k} {name} {tag}"
 
         if not choices:
             choices = {k: f"#{k} {v['name']}" for k, v in FOCUS_OUTCOMES.items()}
 
-        first_k = next(iter(choices.keys())) if choices else None
-        return ui.input_select("selected_outcome_num", "Select Outcome:", choices=choices, selected=first_k)
+        current_sel = current("selected_outcome_num")
+        selected_k = current_sel if (current_sel in choices) else (best_default or next(iter(choices.keys()), None))
+        return ui.input_select("selected_outcome_num", "Select Outcome:", choices=choices, selected=selected_k)
 
     # Trigger Live Note Evaluation
     @reactive.effect
@@ -238,8 +307,21 @@ def server(input, output, session):
                 # Before a file loads, the case selectors do not exist yet; reading
                 # them would cancel the render.
                 return {}
-            return explore_view_state(run_data, input.selected_patient_uid(),
-                                      input.selected_outcome_num())
+            records = run_data.get("records_by_uid", {})
+            if not records:
+                return {}
+            uid = current("selected_patient_uid")
+            if uid not in records:
+                uid = next(iter(records.keys()))
+            rec = records.get(uid, {})
+            outcomes = rec.get("outcomes", {})
+            outcome_num = current("selected_outcome_num")
+            if outcome_num not in outcomes:
+                if outcomes:
+                    outcome_num = sorted(outcomes.items(), key=outcome_rank)[0][0]
+                else:
+                    outcome_num = "28"
+            return explore_view_state(run_data, uid, str(outcome_num))
         return live_view_state(live_eval_result.get(), input.live_outcome() or "28",
                                input.live_note_text() or "", input.patient_age_input(),
                                input.patient_sex_input())
@@ -247,6 +329,103 @@ def server(input, output, session):
     # ==========================================================================
     # 4. Renderers: Cards, Tables, Inspector
     # ==========================================================================
+
+    @output
+    @render.ui
+    def outcomes_card_title():
+        """The overview card's heading; the card shell and its filter are static."""
+        state = get_current_view_state()
+        records = (current_run_cache.get() or {}).get("records_by_uid", {})
+        uid = state.get("patient_uid")
+        rec = records.get(uid) if uid else None
+        if not rec:
+            return ui.span("Encounter Outcomes & Severity Overview", class_="card-header-title")
+        return ui.div(
+            ui.span(f"Encounter Outcomes & Severity Overview: {uid}", class_="card-header-title"),
+            ui.span(rec.get("title") or "Clinical Encounter",
+                    class_="badge bg-light text-secondary border fw-normal ms-2",
+                    style="font-size: 0.78rem;"),
+            class_="d-flex align-items-center flex-wrap gap-1",
+        )
+
+    @output
+    @render.ui
+    def patient_outcomes_summary_ui():
+        """Every outcome of the selected case, grouped by state and filterable.
+
+        This is the answer to "what has this patient got?". Picking one outcome
+        from the sidebar is the follow-up question, not the way in, so the
+        overview never depends on that selection - only on the case.
+        """
+        state = get_current_view_state()
+        if input.app_mode() != "explore":
+            return ui.div()
+
+        records = (current_run_cache.get() or {}).get("records_by_uid", {})
+        uid = state.get("patient_uid")
+        outcomes = (records.get(uid) or {}).get("outcomes", {}) if uid else {}
+        if not outcomes:
+            return ui.p(
+                "Choose a saved run and a patient case in the sidebar to list this patient's outcomes.",
+                class_="text-muted p-3 mb-0",
+            )
+
+        # Unset (the page has not reported the boxes yet) means all three; the
+        # client sends None once the clinician unticks the last one.
+        shown = set(current("outcome_filter", OUTCOME_BUCKETS) or ())
+        selected_outcome = str(state.get("outcome_num"))
+
+        groups: dict[str, list] = {bucket: [] for bucket in OUTCOME_BUCKETS}
+        for k, o_data in sorted(outcomes.items(), key=outcome_rank):
+            groups[outcome_bucket(o_data)].append(_outcome_pill(k, o_data, selected_outcome))
+
+        sections = []
+        for bucket in OUTCOME_BUCKETS:
+            pills = groups[bucket]
+            if not pills or bucket not in shown:
+                continue
+            sections.append(
+                ui.div(
+                    ui.span(f"{BUCKET_LABELS[bucket]} ({len(pills)}):",
+                            class_=f"sidebar-section-label mb-2 d-block {BUCKET_HEADING_CLASS[bucket]}"),
+                    ui.div(*pills, class_="d-flex flex-wrap gap-2 mb-3"),
+                )
+            )
+
+        if not sections:
+            hint = ("Tick a category above to list this patient's outcomes."
+                    if not shown
+                    else "This patient has no outcomes in the ticked categories.")
+            return ui.p(hint, class_="text-muted p-3 mb-0")
+
+        return ui.div(*sections, class_="p-3 pb-1")
+
+    def _outcome_pill(num: str, outcome: dict, selected_outcome: str):
+        """One clickable outcome chip; clicking it drives the rest of the page."""
+        bucket = outcome_bucket(outcome)
+        name = (outcome.get("outcome_name")
+                or FOCUS_OUTCOMES.get(num, {}).get("name")
+                or f"Outcome {num}")
+        grade_result = outcome.get("grade_result") or {}
+        active = "outcome-pill-active" if str(num) == selected_outcome else ""
+
+        label = [ui.span(f"#{num} {name}",
+                         class_="text-muted" if bucket == ABSENT else "fw-semibold me-2")]
+        if bucket != ABSENT:
+            badge_css, badge_txt = grade_badge(
+                outcome_status(outcome), grade_result.get("grade"),
+                tuple(grade_result.get("grades") or ()),
+            )
+            label.append(ui.span(badge_txt, class_=f"badge {badge_css} px-2 py-1"))
+
+        return ui.tags.button(
+            *label,
+            type="button",
+            class_=f"outcome-summary-btn {BUCKET_PILL_CLASS[bucket]} {active}",
+            onclick=f"Shiny.setInputValue('selected_outcome_num', '{num}', {{priority: 'event'}})",
+            title=f"Click to inspect Outcome #{num}",
+        )
+
 
     @output
     @render.ui
@@ -392,12 +571,14 @@ def server(input, output, session):
                         ui.tags.th("Unit"),
                         ui.tags.th("Verbatim Quote Grounding"),
                         ui.tags.th("Verification"),
-                    )
+                    ),
+                    class_="sticky-top",
                 ),
                 ui.tags.tbody(*rows),
                 class_="table table-sm findings-table mb-0",
             ),
-            class_="table-responsive p-0",
+            class_="table-responsive p-0 findings-scroll-container",
+            style="max-height: 420px; overflow-y: auto;",
         )
 
     @output
@@ -445,20 +626,20 @@ def server(input, output, session):
                     ui.layout_columns(
                         ui.div(
                             ui.span("Model Architecture", class_="sidebar-section-label"),
-                            ui.h5(prov.get("weights", "MedGemma 27B"), class_="fw-bold mb-0 text-dark"),
-                            ui.span(f"Prompt Stage: {prov.get('prompt_stage', 'N/A')} ({prov.get('quant', 'F16')})", class_="fs-7 text-secondary mt-1"),
+                            ui.h5(prov.get("weights") or "MedGemma 27B", class_="fw-bold mb-0 text-dark"),
+                            ui.span(f"Prompt Stage: {prov.get('prompt_stage', 'N/A')} ({prov.get('quant') or 'F16'})", class_="fs-7 text-secondary mt-1"),
                             class_="metric-box",
                         ),
                         ui.div(
                             ui.span("Generation Speed", class_="sidebar-section-label"),
-                            ui.h5(f"{prof.get('completion_tokens_per_sec', 0.0)} tok/s", class_="fw-bold mb-0 text-primary metric-val-tabular"),
-                            ui.span(f"Latency: {prof.get('sec_per_note', 0.0)}s / note", class_="fs-7 text-secondary mt-1 metric-val-tabular"),
+                            ui.h5(f"{(prof.get('completion_tokens_per_sec') or 0.0)} tok/s", class_="fw-bold mb-0 text-primary metric-val-tabular"),
+                            ui.span(f"Latency: {(prof.get('sec_per_note') or 0.0)}s / note", class_="fs-7 text-secondary mt-1 metric-val-tabular"),
                             class_="metric-box",
                         ),
                         ui.div(
                             ui.span("Grounding Accuracy", class_="sidebar-section-label"),
-                            ui.h5(f"{auto.get('quote_verified_pct', 0.0):.1f}% Verified", class_="fw-bold mb-0 text-success metric-val-tabular"),
-                            ui.span(f"Hallucination: {auto.get('hallucinated_quote_pct', 0.0):.1f}%", class_="fs-7 text-danger mt-1 metric-val-tabular"),
+                            ui.h5(f"{(auto.get('quote_verified_pct') or 0.0):.1f}% Verified", class_="fw-bold mb-0 text-success metric-val-tabular"),
+                            ui.span(f"Hallucination: {(auto.get('hallucinated_quote_pct') or 0.0):.1f}%", class_="fs-7 text-danger mt-1 metric-val-tabular"),
                             class_="metric-box",
                         ),
                         ui.div(

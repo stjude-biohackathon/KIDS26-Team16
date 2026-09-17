@@ -1,0 +1,58 @@
+parsed 53 outcomes
+  01 Arrhythmia                                   p 13- 13 tables=1 grades=12345
+  02 Deep Vein Thrombosis (DVT)                   p 14- 14 tables=1 grades=12345
+  03 Diastolic Dysfunction                        p 15- 16 tables=1 grades=12345
+  04 Heart Failure Exacerbation                   p 17- 18 tables=1 grades=12345
+  05 Myocardial Infarction                        p 19- 21 tables=1 grades=12345
+  06 Systemic Arterial Hypertension               p 22- 23 tables=1 grades=12345
+  07 Systolic Dysfunction                         p 24- 25 tables=1 grades=12345
+  08 TRV Elevation on Echocardiogram              p 26- 28 tables=1 grades=12345
+  09 Cerebral Vasculopathy                        p 29- 30 tables=1 grades=12345
+  10 Chronic Pain                                 p 31- 33 tables=1 grades=12345
+  11 Cognitive Dysfunction                        p 34- 35 tables=1 grades=12345
+  12 Elevated TCD Ultrasonography Velocity        p 36- 36 tables=1 grades=12345
+  13 Posterior Reversible Encephalopathy Syndro   p 37- 38 tables=1 grades=12345
+  14 Silent Cerebral Infarct                      p 39- 40 tables=1 grades=12345
+  15 Stroke (hemorrhagic or ischemic)             p 41- 44 tables=1 grades=12345
+  16 Hearing Loss (in at least one ear)           p 45- 45 tables=1 grades=12345
+  17 Sickle Cell Retinopathy (SCR)                p 46- 48 tables=1 grades=12345
+  18 Cholecystitis/Cholelithiasis (gallstones)    p 49- 52 tables=1 grades=12345
+  19 Acute Kidney Injury (AKI)                    p 53- 54 tables=1 grades=12345
+  20 Acute Papillary Necrosis                     p 55- 56 tables=1 grades=12345
+  21 Chronic Kidney Disease (CKD)                 p 57- 58 tables=1 grades=12345
+  22 Female Ovarian Dysfunction                   p 59- 60 tables=1 grades=12345
+  23 Male Impairments                             p 61- 62 tables=1 grades=12345
+  24 Priapism                                     p 63- 64 tables=1 grades=12345
+  25 Delayed puberty                              p 65- 65 tables=1 grades=12345
+  26 Malnutrition Leading to Stunting (Decrease   p 66- 67 tables=2 grades=12345/12345  <-- MULTI-TABLE
+        stratum: If there is only one data point
+        stratum: If there are at least 2 data points
+  27 Underweight                                  p 68- 70 tables=1 grades=12345
+  28 Acute Sickle Cell Pain Episode               p 71- 72 tables=1 grades=12345
+  29 Acute Splenic Sequestration                  p 73- 74 tables=1 grades=12345
+  30 Alloimmunization/ Delayed Hemolytic Transf   p 75- 76 tables=1 grades=12345
+  31 Chronic Hypersplenism                        p 77- 78 tables=1 grades=12345
+  32 Hepatopathy                                  p 79- 80 tables=1 grades=12345
+  33 Splenic Infarction                           p 81- 82 tables=1 grades=12345
+  34 Transfusional Iron Overload (Hemochromatos   p 83- 84 tables=1 grades=12345
+  35 Transient Aplastic Crisis Secondary to Par   p 85- 88 tables=1 grades=12345
+  36 Fever                                        p 89- 89 tables=1 grades=12345
+  37 Sepsis                                       p 90- 92 tables=1 grades=12345
+  38 Malignant Neoplasms                          p 93- 96 tables=1 grades=12345
+  39 Avascular Necrosis of Joints (AVN)           p 97- 98 tables=1 grades=12345
+  40 Leg Ulcer                                    p 99-100 tables=1 grades=12345
+  41 Osteomyelitis                                p101-102 tables=1 grades=12345
+  42 Osteoporosis                                 p103-106 tables=1 grades=12345
+  43 Acute Multiorgan Failure                     p107-110 tables=1 grades=12345
+  44 Fetal Growth Restriction                     p111-111 tables=1 grades=12345
+  45 Pregnancy Loss                               p112-112 tables=1 grades=12345
+  46 Premature Delivery                           p113-114 tables=1 grades=12345
+  47 Depression                                   p115-118 tables=1 grades=12345
+  48 Acute Chest Syndrome (ACS)                   p119-120 tables=1 grades=12345
+  49 Asthma Exacerbation                          p121-122 tables=1 grades=12345
+  50 Chronic Restrictive Lung Physiology          p123-124 tables=1 grades=12345
+  51 Pulmonary Embolism (PE)                      p125-126 tables=1 grades=12345
+  52 Pulmonary Hypertension                       p127-128 tables=1 grades=12345
+  53 Sleep Apnea (obstructive or central)         p129-131 tables=2 grades=12345/12345  <-- MULTI-TABLE
+        stratum: Adults (age ≥ 18)
+        stratum: Children (age < 18 yrs)

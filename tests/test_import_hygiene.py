@@ -18,6 +18,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PACKAGE_MEMBERS = [
     "medgemma_extraction", "ollama_backend", "review_results", "grading",
     "verification", "cohort", "run_output", "evaluation", "view_state",
+    "score_presence",
     "data", "highlight", "layout", "server",
     "extract_booklet", "compare_grades", "compare_prose",
 ]

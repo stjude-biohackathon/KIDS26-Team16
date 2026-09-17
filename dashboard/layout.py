@@ -4,7 +4,37 @@ from __future__ import annotations
 from pathlib import Path
 from shiny import ui
 
+from dashboard.view_state import FILTER_LABELS, OUTCOME_BUCKETS
+
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+# The overview's card shell lives here rather than in the renderer so its filter
+# is a static control: a checkbox group re-created on every render would lose the
+# clinician's ticks, and could not be read by the render that creates it.
+outcomes_overview_card = ui.panel_conditional(
+    "input.app_mode === 'explore'",
+    ui.card(
+        ui.card_header(
+            ui.div(
+                ui.output_ui("outcomes_card_title"),
+                ui.div(
+                    ui.span("SHOW", class_="sidebar-section-label me-2"),
+                    ui.input_checkbox_group(
+                        "outcome_filter",
+                        label="",
+                        choices={b: FILTER_LABELS[b] for b in OUTCOME_BUCKETS},
+                        selected=list(OUTCOME_BUCKETS),
+                        inline=True,
+                    ),
+                    class_="d-flex align-items-center outcome-filter",
+                ),
+                class_="d-flex justify-content-between align-items-center flex-wrap gap-2",
+            ),
+        ),
+        ui.output_ui("patient_outcomes_summary_ui"),
+        class_="mb-3 shadow-xs",
+    ),
+)
 
 app_ui = ui.page_sidebar(
     ui.sidebar(
@@ -59,20 +89,19 @@ app_ui = ui.page_sidebar(
             ),
             class_="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom",
         ),
+        outcomes_overview_card,
         ui.output_ui("executive_grade_card"),
         ui.div(class_="my-3"),
-        ui.layout_columns(
-            ui.card(
-                ui.card_header(ui.span("Clinical Findings & Grounding Verification", class_="card-header-title")),
-                ui.output_ui("findings_table_ui"),
-            ),
-            ui.card(
-                ui.card_header(ui.span("Clinical Note Context & Verified Spans", class_="card-header-title")),
-                ui.output_ui("note_inspector_ui"),
-            ),
-            col_widths=[6, 6],
+        ui.card(
+            ui.card_header(ui.span("Clinical Note Context & Verified Spans", class_="card-header-title")),
+            ui.output_ui("note_inspector_ui"),
+            class_="mb-3 shadow-xs",
         ),
-        ui.div(class_="my-3"),
+        ui.card(
+            ui.card_header(ui.span("Clinical Findings & Grounding Verification", class_="card-header-title")),
+            ui.output_ui("findings_table_ui"),
+            class_="mb-3 shadow-xs",
+        ),
         ui.output_ui("profiling_card"),
         class_="container-fluid py-2",
     ),

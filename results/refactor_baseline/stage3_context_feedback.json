@@ -1,0 +1,1699 @@
+{
+ "provenance": {
+  "tier": "mock",
+  "weights": null,
+  "served_as": null,
+  "backend": "mock",
+  "quant": null,
+  "model_digest": null,
+  "parameter_count": null,
+  "notes_count": 3,
+  "cohort": "loose",
+  "stratified": true,
+  "holdout_frac": 0.25,
+  "outcomes": [
+   "10",
+   "11",
+   "12",
+   "15",
+   "17",
+   "21",
+   "24",
+   "28",
+   "29",
+   "39",
+   "40",
+   "47",
+   "48",
+   "49"
+  ],
+  "repeat": 2,
+  "concurrency": 1,
+  "num_ctx": 16384,
+  "num_predict": 2048,
+  "temperature": 0.0,
+  "initial_seed": 0,
+  "repeat_penalty": 1.0,
+  "consistency_definition": "features and presence identical across all repeats",
+  "prompt_stage": "3",
+  "prompt_stage_flags": {
+   "schema": true,
+   "structure": true,
+   "flat_penalty": true,
+   "retry": true,
+   "presence": true,
+   "death_both": true,
+   "cot": true,
+   "precision": true,
+   "patient_context": true,
+   "feedback_retry": true
+  },
+  "consistency_confounded_by_batching": false
+ },
+ "automated_metrics": {
+  "proposed": 42,
+  "quoted": 42,
+  "quote_verified": 42,
+  "quote_unfound": 0,
+  "null_placeholder": 0,
+  "null_placeholder_pct": 0.0,
+  "quote_verified_pct": 100.0,
+  "quote_verified_pct_of_quoted": 100.0,
+  "hallucinated_quote_pct": 0.0,
+  "hallucinated_pct_of_quoted": 0.0,
+  "tokenizer_artifacts": 0,
+  "invalid_value_count": 0,
+  "invalid_value_pct": 0.0,
+  "unit_converted": 0,
+  "unit_ambiguous": 0,
+  "unit_mismatch": 0,
+  "quote_value_mismatch": 0,
+  "value_conflicts": 0,
+  "accepted": 42,
+  "unknown_feature": 0,
+  "present_true": 25,
+  "present_quoted": 0,
+  "present_quote_unfound": 0,
+  "present_unquoted": 25,
+  "presence_contradicted": 0,
+  "present_quoted_pct": 0.0,
+  "content_retries": 0,
+  "unusable_replies": 0,
+  "feedback_retries": 42,
+  "quote_verified_measures": "quote presence in the note, not value support",
+  "unparseable_replies": 0,
+  "run_to_run_consistency_pct": 100.0
+ },
+ "runs": [
+  {
+   "proposed": 42,
+   "accepted": 42,
+   "quoted": 42,
+   "quote_verified": 42,
+   "quote_unfound": 0,
+   "null_placeholder": 0,
+   "null_placeholder_pct": 0.0,
+   "quote_verified_pct": 100.0,
+   "quote_verified_pct_of_quoted": 100.0,
+   "hallucinated_quote_pct": 0.0,
+   "hallucinated_pct_of_quoted": 0.0,
+   "tokenizer_artifacts": 0,
+   "unit_converted": 0,
+   "unit_ambiguous": 0,
+   "unit_mismatch": 0,
+   "quote_value_mismatch": 0,
+   "value_conflicts": 0,
+   "present_true": 25,
+   "present_quoted": 0,
+   "present_quote_unfound": 0,
+   "present_unquoted": 25,
+   "presence_contradicted": 0,
+   "present_quoted_pct": 0.0,
+   "content_retries": 0,
+   "unusable_replies": 0,
+   "feedback_retries": 42,
+   "missing_quote": 0,
+   "invalid_value": 0,
+   "unknown_feature": 0,
+   "unparseable_replies": 0,
+   "prompt_tokens": 8400,
+   "completion_tokens": 4200
+  },
+  {
+   "proposed": 42,
+   "accepted": 42,
+   "quoted": 42,
+   "quote_verified": 42,
+   "quote_unfound": 0,
+   "null_placeholder": 0,
+   "null_placeholder_pct": 0.0,
+   "quote_verified_pct": 100.0,
+   "quote_verified_pct_of_quoted": 100.0,
+   "hallucinated_quote_pct": 0.0,
+   "hallucinated_pct_of_quoted": 0.0,
+   "tokenizer_artifacts": 0,
+   "unit_converted": 0,
+   "unit_ambiguous": 0,
+   "unit_mismatch": 0,
+   "quote_value_mismatch": 0,
+   "value_conflicts": 0,
+   "present_true": 25,
+   "present_quoted": 0,
+   "present_quote_unfound": 0,
+   "present_unquoted": 25,
+   "presence_contradicted": 0,
+   "present_quoted_pct": 0.0,
+   "content_retries": 0,
+   "unusable_replies": 0,
+   "feedback_retries": 42,
+   "missing_quote": 0,
+   "invalid_value": 0,
+   "unknown_feature": 0,
+   "unparseable_replies": 0,
+   "prompt_tokens": 8400,
+   "completion_tokens": 4200
+  }
+ ],
+ "patient_context_tally": {
+  "proposed": 3,
+  "accepted": 3,
+  "quoted": 3,
+  "quote_verified": 3,
+  "quote_unfound": 0,
+  "null_placeholder": 0,
+  "null_placeholder_pct": 0.0,
+  "quote_verified_pct": 100.0,
+  "quote_verified_pct_of_quoted": 100.0,
+  "hallucinated_quote_pct": 0.0,
+  "hallucinated_pct_of_quoted": 0.0,
+  "tokenizer_artifacts": 0,
+  "unit_converted": 0,
+  "unit_ambiguous": 0,
+  "unit_mismatch": 0,
+  "quote_value_mismatch": 0,
+  "value_conflicts": 0,
+  "present_true": 0,
+  "present_quoted": 0,
+  "present_quote_unfound": 0,
+  "present_unquoted": 0,
+  "presence_contradicted": 0,
+  "present_quoted_pct": 0.0,
+  "content_retries": 0,
+  "unusable_replies": 0,
+  "feedback_retries": 3,
+  "missing_quote": 0,
+  "invalid_value": 0,
+  "unknown_feature": 0,
+  "unparseable_replies": 0,
+  "prompt_tokens": 600,
+  "completion_tokens": 300
+ },
+ "grade_status": {
+  "cannot_grade": 25,
+  "absent": 17
+ },
+ "grade_status_by_outcome": {
+  "10": {
+   "cannot_grade": 3
+  },
+  "11": {
+   "cannot_grade": 2,
+   "absent": 1
+  },
+  "12": {
+   "cannot_grade": 2,
+   "absent": 1
+  },
+  "15": {
+   "absent": 3
+  },
+  "17": {
+   "cannot_grade": 3
+  },
+  "21": {
+   "cannot_grade": 3
+  },
+  "24": {
+   "absent": 1,
+   "cannot_grade": 2
+  },
+  "28": {
+   "cannot_grade": 3
+  },
+  "29": {
+   "absent": 3
+  },
+  "39": {
+   "cannot_grade": 1,
+   "absent": 2
+  },
+  "40": {
+   "cannot_grade": 2,
+   "absent": 1
+  },
+  "47": {
+   "absent": 1,
+   "cannot_grade": 2
+  },
+  "48": {
+   "cannot_grade": 1,
+   "absent": 2
+  },
+  "49": {
+   "absent": 2,
+   "cannot_grade": 1
+  }
+ },
+ "grade_status_by_selection": {
+  "seeded": {
+   "cannot_grade": 17,
+   "absent": 11
+  },
+  "holdout": {
+   "cannot_grade": 8,
+   "absent": 6
+  }
+ },
+ "features_extracted": {
+  "death_attributed": 42
+ },
+ "detailed_records": [
+  {
+   "patient_uid": "8270061-1",
+   "selection": "seeded:10",
+   "scd_primary": true,
+   "title": "Opioid-Induced Psychosis in a Patient With Sickle Cell Disease",
+   "age": [
+    [
+     36.0,
+     "year"
+    ]
+   ],
+   "gender": "M",
+   "patient_note": "A 36-year-old male patient with no prior past psychiatric history, was admitted to the hospital in the context of sickle cell pain crisis. His past medical history was significant for SCD (HbSS), with complications including priapism, deep venous thrombosis, and pulmonary embolism. His past surgical history included penile implant and cholecystectomy. His home medication regimen was hydromorphone 4mg by mouth every four hours as needed; hydroxyurea 500mg by mouth twice daily; cyclobenzaprine 5mg by mouth three times a day; apixaban 5mg by mouth twice daily; gabapentin 400mg by mouth three times a day; oxycodone/paracetamol 10/325mg by mouth every four hours; folic acid; and multivitamins. On admission, routine laboratory tests were clinically significant for a hemoglobin level of 7.3 g/dl, leukocytosis at 18,600/ul, and low vitamin D level at 5.9L. His urine toxicology screen was positive for cannabis and opiates.\nUpon admission, patient received 8mg of hydromorphone intramuscularly (IM) in two divided doses of 4mg each, five hours apart. He was then placed on hydromorphone 4mg IM every four hours as needed, receiving an additional 8mg over eight hours, making a total of 16mg of hydromorphone in less than 15 hours. However, the patient complained of persistent pain and hydromorphone was adjusted to 6mg IM every three hours. He was given a total of 48mg of hydromorphone every 24 hours thereon until the third day of admission. In total, the patient received 160mg of hydromorphone in 85 hours 15 minutes (3.55 days). On the third day of hospitalization, the patient was reportedly intrusive and hostile towards his roommate. He physically attacked his roommate unprovoked. Psychiatry was consulted as the patient was reportedly talking to himself and stating that his roommate was playing with his mind.\nOn psychiatric evaluation, patient was preoccupied with his relationship with his girlfriend and exhibited persecutory delusions about people trying to hurt him. He reported that his girlfriend and her family were stealing his property, trying to get him through the hospital phones, and said that they came to the hospital to hurt him. Capgras delusion was elicited as patient believed that his roommate impersonated his girlfriend and he repeatedly asked staff to check the monitoring cameras. He denied auditory, visual, and tactile hallucinations. His thought process was linear, logical, and goal-directed, though he perseverated about his girlfriend trying to hurt him. He denied suicidal or homicidal ideation, intent, or plan.\nThe team considered the possibility of delirium. However, the Confusion Assessment Method score was negative, and he was fully alert and oriented. Based on patient’s history, the high dose of hydromorphone, the time sequence of his symptomatology, his mental status examination, and a Naranjo score of 7, a diagnosis of hydromorphone-induced psychosis was considered. He was given haloperidol 5mg intramuscularly to prevent further agitation. Hydromorphone was reduced to 2mg by mouth every four hours as needed and he was started on oxycodone 300mg by mouth every four hours as needed, for pain management.\nThe next day, the patient was re-evaluated by the psychiatry team. He was still irritable and continued to express themes of mistrust and persecutory delusions of being followed and threatened by his girlfriend and her family. He received haloperidol 5mg IM for agitation and another 5mg by mouth after 12 hours.\nOver the next 48 hours, he became less agitated, and his delusions were improving. Hydromorphone was discontinued. Three days after the onset of his symptoms, oxycodone was down titrated to 20mg by mouth every four hours as needed. His persecutory delusions continued to improve until discharge.",
+   "outcomes": {
+    "10": {
+     "outcome_name": "Chronic Pain",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing pain_hurt_score, pro_severe_count, promis_behavior_t, promis_interference_t, unplanned_visits_12mo"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "11": {
+     "outcome_name": "Cognitive Dysfunction",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing iq_sd_below_mean"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "12": {
+     "outcome_name": "Elevated TCD Ultrasonography Velocity",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing tcd_velocity"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "15": {
+     "outcome_name": "Stroke (hemorrhagic or ischemic)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "17": {
+     "outcome_name": "Sickle Cell Retinopathy (SCR)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing goldberg_stage, vision_loss"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "21": {
+     "outcome_name": "Chronic Kidney Disease (CKD)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing albuminuria, egfr"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "24": {
+     "outcome_name": "Priapism",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": "unknown",
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "28": {
+     "outcome_name": "Acute Sickle Cell Pain Episode",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing care_setting, life_support, pain_co_complication"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "29": {
+     "outcome_name": "Acute Splenic Sequestration",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "39": {
+     "outcome_name": "Avascular Necrosis of Joints (AVN)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing adl_limitation, avn_intervention, avn_on_imaging, symptomatic"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "40": {
+     "outcome_name": "Leg Ulcer",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing exudate, necrotic_pct, periwound_status, wound_area_cm2, wound_depth"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "47": {
+     "outcome_name": "Depression",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "48": {
+     "outcome_name": "Acute Chest Syndrome (ACS)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing acs_other_support, fio2_pct, life_support, resp_support, transfusion_type"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    },
+    "49": {
+     "outcome_name": "Asthma Exacerbation",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "patient",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"patient\"}]}"
+    }
+   },
+   "patient_context": {
+    "extracted_features": {
+     "patient_age": 14.0
+    },
+    "accepted_findings": [
+     {
+      "feature": "patient_age",
+      "value": 14.0,
+      "quote": "patient",
+      "unit": null
+     }
+    ],
+    "conflicts": {},
+    "raw_reply": "{\"findings\": [{\"feature\": \"patient_age\", \"value\": 14.0, \"quote\": \"patient\"}]}"
+   }
+  },
+  {
+   "patient_uid": "7793225-1",
+   "selection": "seeded:11",
+   "scd_primary": false,
+   "title": "Two zebras and a cardiac arrest: a case report of concomitant Brugada syndrome and an anomalous coronary artery",
+   "age": [
+    [
+     55.0,
+     "year"
+    ]
+   ],
+   "gender": "M",
+   "patient_note": "A 55-year-old man with hypertension suffered an out of hospital cardiac arrest whilst sitting watching the England vs. Panama football match during the 2018 World Cup. He had no preceding symptoms. There was no family history of SCD. His wife provided immediate cardiopulmonary resuscitation. His cardiac rhythm was ventricular fibrillation (VF) and he received two shocks before achieving spontaneous circulation. He was intubated at the scene before transfer to our centre.\nPhysical examination was unremarkable.\nInitial investigations included a potassium of 3.1 mmol/L (3.5–5.3 mmol/L), but no other electrolyte abnormalities. This was replaced intravenously. Serial troponin I taken on admission and at 12 h measured 573 and 303 ng/L, respectively (<21 ng/L). A computed tomography (CT) Head was unremarkable. Echocardiography showed mild left ventricular hypertrophy but no regional wall motion abnormalities, pericardial effusion, or valvular pathology.\nHis electrocardiogram (ECG) showed sinus tachycardia, a QTc of 490 ms, and 1 mm ST depression in II, III, aVF, and V6. There was subtle ST-elevation of <0.5 mm that varied between QRS complexes in aVR (). On a subsequent ECG, the inferolateral ST changes and QTc prolongation had resolved, however, new subtle down-sloping ST-elevation of 1 mm was present in V1 ().\nCoronary angiography revealed unobstructed coronary arteries, however, an R-ACAOS was identified ().\nAt this stage, the primary diagnosis was unclear and further investigation was required to delineate contributing factors. The differential diagnosis included a primary arrhythmia from long QT syndrome, BrS, hypertrophic cardiomyopathy, or an inferior myocardial infarction associated with a malignant course of the R-ACAOS.\nCardiac magnetic resonance imaging (MRI) revealed borderline left ventricular hypertrophy, normal systolic function, and no scar on late gadolinium enhancement. The findings were consistent with hypertensive heart disease rather than hypertrophic cardiomyopathy or myocardial infarction.\nA CT coronary angiogram confirmed the course of the R-ACAOS leaving the left sinus acutely with an intramural path before travelling between the aorta and pulmonary artery (). Consequently, a functional test with exercise stress echocardiography was performed and completed with no symptoms, ECG changes, arrhythmia, or regional wall motion abnormalities. QT analysis was also normal.\nAjmaline testing occurred the following day and revealed classic down-sloping ST-elevation in V1, V2, high V1, and high V2, consistent with type 1 BrS ().\nExtensive discussion at the joint cardiology/cardiac surgery multi-disciplinary meeting took place. There was clear indication for an ICD reflecting the diagnosis of BrS. However, the significance of the R-ACAOS was debated. Ultimately, with the cardiac arrest occurring at rest, no evidence of myocardial infarction on CMRI, nor evidence of inducible ischaemia or arrhythmia on functional testing, the R-ACAOS was felt to be incidental, and its correction unnecessary.\nOur case was discharged the day after successful ICD implantation. At follow-up at 3, 12, and 24 months, he was asymptomatic and received no device therapies. Aside from minor memory loss he has excellent neurological function, has returned to work and regained his driving licence.\nGenetic screening for 17 genes associated with BrS returned negative.",
+   "outcomes": {
+    "10": {
+     "outcome_name": "Chronic Pain",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing pain_hurt_score, pro_severe_count, promis_behavior_t, promis_interference_t, unplanned_visits_12mo"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "11": {
+     "outcome_name": "Cognitive Dysfunction",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "12": {
+     "outcome_name": "Elevated TCD Ultrasonography Velocity",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing tcd_velocity"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "15": {
+     "outcome_name": "Stroke (hemorrhagic or ischemic)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "17": {
+     "outcome_name": "Sickle Cell Retinopathy (SCR)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing goldberg_stage, vision_loss"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "21": {
+     "outcome_name": "Chronic Kidney Disease (CKD)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing albuminuria, egfr"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "24": {
+     "outcome_name": "Priapism",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": "unknown",
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing priapism_intervention"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "28": {
+     "outcome_name": "Acute Sickle Cell Pain Episode",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing care_setting, life_support, pain_co_complication"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "29": {
+     "outcome_name": "Acute Splenic Sequestration",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "39": {
+     "outcome_name": "Avascular Necrosis of Joints (AVN)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "40": {
+     "outcome_name": "Leg Ulcer",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing exudate, necrotic_pct, periwound_status, wound_area_cm2, wound_depth"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "47": {
+     "outcome_name": "Depression",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing adl_limitation, depression_severity, phq9, suicide_attempt, threat_of_harm, treatment_recommended"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "48": {
+     "outcome_name": "Acute Chest Syndrome (ACS)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    },
+    "49": {
+     "outcome_name": "Asthma Exacerbation",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "hypertension",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"hypertension\"}]}"
+    }
+   },
+   "patient_context": {
+    "extracted_features": {
+     "patient_age": 14.0
+    },
+    "accepted_findings": [
+     {
+      "feature": "patient_age",
+      "value": 14.0,
+      "quote": "hypertension",
+      "unit": null
+     }
+    ],
+    "conflicts": {},
+    "raw_reply": "{\"findings\": [{\"feature\": \"patient_age\", \"value\": 14.0, \"quote\": \"hypertension\"}]}"
+   }
+  },
+  {
+   "patient_uid": "11154032-3",
+   "selection": "holdout",
+   "scd_primary": false,
+   "title": "Case Report: Obstetric and COVID-19-Related Morbidity and Mortality in Three Patients with Sickle Hemoglobinopathy",
+   "age": [
+    [
+     23.0,
+     "year"
+    ]
+   ],
+   "gender": "F",
+   "patient_note": "A 23-year-old primigravida (hemoglobin SS disease [HbSS]; steady-state hemoglobin, 6 g/dL) at gestational age 28 weeks and 6 days was transferred from a rural hospital for chest pain, fever, and worsening dyspnea. Her last sickle crisis was in childhood, requiring blood transfusion. At the referral center, she was febrile at 40.5°C and tachypneic at 40 breaths per minute with an SpO2 of 88% on room air, which improved with 5 L/minute of oxygen. She became hypotensive, requiring noradrenaline infusion, and commenced ceftriaxone, which was switched to piperacillin/tazobactam. Upon transfer, frank hematuria was noted with occasional hypoglycemic episodes. The urea was elevated at 9.2 mmol/L with a deranged coagulation profile and transaminases. Her oxygen requirements increased to 10 L/minute via face mask. She was transfused fresh-frozen plasma to correct her coagulopathy and dextrose infusion to maintain normoglycemia. She was assessed as having acute fatty liver in pregnancy (AFLP) and was delivered via emergency Cesarean section under general anesthesia at 29 weeks. Intraoperatively, the blood loss was 350 mL, and she continued to bleed postoperatively despite uterotonic agents, bimanual uterine compression, and intrauterine balloon tamponade. After an estimated blood loss of 1.15 L with ongoing hemorrhage unresponsive to conservative management, an emergency subtotal hysterectomy was performed. She was transferred to the ICU and extubated on day 2 postoperatively. Antibiotics were changed to meropenem, and packed red blood cells were transfused. She was discharged from the ICU on day 4 postoperatively. Urine, vaginal, and blood cultures were sterile. On day 11 postdelivery, she was transferred to the referral center to complete parenteral antibiotics (see ).",
+   "outcomes": {
+    "10": {
+     "outcome_name": "Chronic Pain",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing pain_hurt_score, pro_severe_count, promis_behavior_t, promis_interference_t, unplanned_visits_12mo"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "11": {
+     "outcome_name": "Cognitive Dysfunction",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing iq_sd_below_mean"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "12": {
+     "outcome_name": "Elevated TCD Ultrasonography Velocity",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "15": {
+     "outcome_name": "Stroke (hemorrhagic or ischemic)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "17": {
+     "outcome_name": "Sickle Cell Retinopathy (SCR)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing goldberg_stage, vision_loss"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "21": {
+     "outcome_name": "Chronic Kidney Disease (CKD)",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing albuminuria, egfr"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "24": {
+     "outcome_name": "Priapism",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": "unknown",
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing priapism_intervention"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "28": {
+     "outcome_name": "Acute Sickle Cell Pain Episode",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing care_setting, life_support, pain_co_complication"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "29": {
+     "outcome_name": "Acute Splenic Sequestration",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "39": {
+     "outcome_name": "Avascular Necrosis of Joints (AVN)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "40": {
+     "outcome_name": "Leg Ulcer",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "47": {
+     "outcome_name": "Depression",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing adl_limitation, depression_severity, phq9, suicide_attempt, threat_of_harm, treatment_recommended"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "48": {
+     "outcome_name": "Acute Chest Syndrome (ACS)",
+     "present": false,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "absent",
+      "rule_status": "absent",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": false,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no evidence of this outcome in the note"
+     },
+     "raw_reply": "{\"present\": false, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    },
+    "49": {
+     "outcome_name": "Asthma Exacerbation",
+     "present": true,
+     "extracted_features": {
+      "patient_age": 14.0,
+      "death_attributed": false
+     },
+     "accepted_findings": [
+      {
+       "feature": "death_attributed",
+       "value": false,
+       "quote": "primigravida",
+       "unit": null
+      }
+     ],
+     "conflicts": {},
+     "grade_result": {
+      "status": "cannot_grade",
+      "rule_status": "cannot_grade",
+      "grade": null,
+      "features": {
+       "patient_age": 14.0,
+       "death_attributed": false
+      },
+      "present": true,
+      "applicability": true,
+      "criteria_met": "unknown",
+      "grade_if_present": null,
+      "reason": "no rule decided; missing adl_limitation, asthma_medical_intervention, asthma_mild_symptoms, life_support, resp_support, saba_prn, status_asthmaticus, symptomatic"
+     },
+     "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"death_attributed\", \"value\": false, \"quote\": \"primigravida\"}]}"
+    }
+   },
+   "patient_context": {
+    "extracted_features": {
+     "patient_age": 14.0
+    },
+    "accepted_findings": [
+     {
+      "feature": "patient_age",
+      "value": 14.0,
+      "quote": "primigravida",
+      "unit": null
+     }
+    ],
+    "conflicts": {},
+    "raw_reply": "{\"findings\": [{\"feature\": \"patient_age\", \"value\": 14.0, \"quote\": \"primigravida\"}]}"
+   }
+  }
+ ]
+}

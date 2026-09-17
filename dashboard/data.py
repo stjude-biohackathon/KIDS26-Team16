@@ -13,6 +13,19 @@ from typing import Any
 import pandas as pd
 
 
+def is_run_file(filepath: str | Path) -> bool:
+    """Returns True if the file exists, is JSON, and contains detailed_records."""
+    path = Path(filepath)
+    if not path.is_file() or path.suffix.lower() != ".json":
+        return False
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        return isinstance(data, dict) and "detailed_records" in data
+    except Exception:
+        return False
+
+
 def load_run_file(filepath: str | Path) -> dict[str, Any]:
     """Reads structured run JSON and formats records indexed by patient_uid."""
     path = Path(filepath)
@@ -21,6 +34,9 @@ def load_run_file(filepath: str | Path) -> dict[str, Any]:
 
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Run file is not a valid JSON object: {filepath}")
 
     detailed = data.get("detailed_records", [])
     records_by_uid: dict[str, dict] = {}
@@ -94,10 +110,15 @@ def load_csv_notes(filepath: str | Path = "data/clinical_notes.csv") -> pd.DataF
 def get_available_run_files() -> list[tuple[str, str]]:
     """Discovers available run JSON files or defaults to bundled test fixtures."""
     files: list[tuple[str, str]] = []
-    for p in sorted(glob.glob("results/*.json")):
-        files.append((p, f"results/{Path(p).name}"))
+    results_dir = Path("results")
+    if results_dir.is_dir():
+        for p in sorted(results_dir.rglob("*.json")):
+            if is_run_file(p):
+                posix_path = p.as_posix()
+                files.append((posix_path, posix_path))
     for p in sorted(glob.glob("tests/fixtures/*.json")):
-        files.append((p, f"fixture: {Path(p).name}"))
+        if is_run_file(p):
+            files.append((p, f"fixture: {Path(p).name}"))
     if not files:
         files.append(("tests/fixtures/sample_run.json", "tests/fixtures/sample_run.json (Sample)"))
     return files

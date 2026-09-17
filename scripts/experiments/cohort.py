@@ -1,12 +1,15 @@
 """Which notes an extraction run reads: the SCD cohort gate and note selection.
 
-`load_notes()` returns the candidate pool from the bundled PMC case cache.
+`load_notes()` returns the candidate pool from the bundled PMC case cache;
+`load_csv_notes()` reads a labelled CSV instead, one record per row.
 `select_notes()` picks the run's notes: stratified so every target outcome is
 represented, plus a random holdout that measures how biased that stratification
 is. Pure Python and deterministic for a fixed seed; no model calls.
 """
 from __future__ import annotations
 
+import collections
+import csv
 import json
 import pathlib
 import random
@@ -190,3 +193,87 @@ def select_notes(pool: list[dict], n: int, outcomes: list[str], *, seed: int = 2
     print(f"selection: {seeded_n} seeded across {len(outcomes)} outcomes + "
           f"{len(hold)} unstratified holdout = {len(picked)} notes")
     return picked, selection
+
+
+# ------------------------------------------------------------- CSV note source
+#
+# A labelled CSV is a different kind of input from the bundled cache: it is a
+# small, hand-curated evaluation set where every row is meant to be run, and
+# where one note may exist in several forms (full text and summary) so the two
+# can be compared. `load_csv_notes` adapts it to the record shape the rest of
+# the pipeline already reads, and adds nothing the pipeline does not use.
+#
+# It deliberately does NOT apply the cohort gate. The gate exists to keep
+# lexical false positives out of a 978-case corpus nobody curated by hand; on a
+# CSV somebody chose row by row, silently dropping rows would destroy the very
+# denominator the run is trying to measure.
+
+CSV_NOTE_COLUMNS = ("original_case_text", "summary")
+
+
+def load_csv_notes(path: str | pathlib.Path, column: str = "original_case_text",
+                   *, id_column: str = "case_id") -> list[dict]:
+    """-> cache-shaped records read from a labelled CSV, one per row.
+
+    `column` selects which text of the row becomes the note, so the same file can
+    be run as full text and as summaries and the two runs compared. Rows whose
+    chosen column is empty are dropped and reported, because an empty note would
+    score as a whole-row absence indistinguishable from a real one.
+
+    The records carry `age`/`gender` as None: a CSV of note text has no patient
+    metadata, and inventing it would put ungrounded values into the results file.
+    Use --patient-context to have the model read age and sex out of the note.
+    """
+    src = pathlib.Path(path)
+    if not src.exists():
+        raise FileNotFoundError(f"notes file not found: {src}")
+
+    # Excel writes UTF-8 with a BOM; utf-8-sig strips it so the first header
+    # name is `case_id` and not `﻿case_id`.
+    with src.open(newline="", encoding="utf-8-sig") as handle:
+        # Case texts run to thousands of characters; the default field cap is
+        # 128 KiB and a long note would abort the read mid-file.
+        limit = csv.field_size_limit()
+        csv.field_size_limit(2**31 - 1)
+        try:
+            rows = list(csv.DictReader(handle))
+        finally:
+            csv.field_size_limit(limit)
+
+    if not rows:
+        raise ValueError(f"{src} has no data rows")
+    header = rows[0].keys()
+    if column not in header:
+        raise ValueError(f"{src}: no column {column!r}; available: "
+                         f"{', '.join(sorted(n for n in header if n))}")
+    if id_column not in header:
+        raise ValueError(f"{src}: no id column {id_column!r}")
+
+    notes, empty = [], []
+    for i, row in enumerate(rows, start=1):
+        text = (row.get(column) or "").strip()
+        uid = (row.get(id_column) or "").strip() or f"row{i}"
+        if not text:
+            empty.append(uid)
+            continue
+        notes.append({
+            "patient_id": uid,
+            "patient_uid": uid,
+            "patient": text,
+            "title": (row.get("title") or "").strip(),
+            "age": None,
+            "gender": None,
+            "source_file": str(src),
+            "source_column": column,
+        })
+
+    seen = collections.Counter(r["patient_uid"] for r in notes)
+    dupes = sorted(uid for uid, n in seen.items() if n > 1)
+    if dupes:
+        # Results are keyed by patient_uid throughout; duplicates would silently
+        # overwrite each other and shrink the run without any warning.
+        raise ValueError(f"{src}: duplicate {id_column} values: {', '.join(dupes)}")
+    if empty:
+        print(f"  {len(empty)} row(s) dropped: {column} is empty ({', '.join(empty)})")
+    print(f"notes file: {len(notes)}/{len(rows)} rows from {src.name} column {column!r}")
+    return notes

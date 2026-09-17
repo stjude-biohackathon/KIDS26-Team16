@@ -1,0 +1,166 @@
+[
+ {
+  "num": "09",
+  "name": "Cerebral Vasculopathy",
+  "table": 0,
+  "grade": "5",
+  "ratio": 0.914,
+  "ops": [
+   [
+    "replace",
+    "stenosis/ occlusion",
+    "stenosis/occlusion"
+   ]
+  ],
+  "booklet": "Severe stenosis/ occlusion (\u2265 75%) of \u2265 3 arterial segments as per MRA OR presence of moyamoya syndrome",
+  "rules": "**Severe stenosis/occlusion (\u2265 75%) of \u2265 3 arterial segments as per MRA** `OR` **presence of moyamoya syndrome**"
+ },
+ {
+  "num": "23",
+  "name": "Male Impairments",
+  "table": 0,
+  "grade": "2",
+  "ratio": 0.957,
+  "ops": [
+   [
+    "replace",
+    "and/ or",
+    "and/or"
+   ]
+  ],
+  "booklet": "Impaired Spermatogenesis (oligospermia or severe oligospermia or Cryptozoospermia) AND evidence of decreased testicular function (FSH level \u2265 7.6 mIU/mL) Comment: Might necessitate Intrauterine Insemination (IUI) and/ or in vitro fertilization (IVF) + intracytoplasmic sperm injection (ICSI)",
+  "rules": "**Impaired Spermatogenesis** (oligospermia or severe oligospermia or Cryptozoospermia) `AND` **evidence of decreased testicular function (FSH level \u2265 7.6 mIU/mL)**<br>*Comment: Might necessitate Intrauterine Insemination (IUI) and/or in vitro fertilization (IVF) + intracytoplasmic sperm injection (ICSI)*"
+ },
+ {
+  "num": "34",
+  "name": "Transfusional Iron Overload (Hemochromatosis or Hemosiderosis)",
+  "table": 0,
+  "grade": "4",
+  "ratio": 0.947,
+  "ops": [
+   [
+    "delete",
+    "=",
+    ""
+   ],
+   [
+    "replace",
+    "<20",
+    "< 20"
+   ]
+  ],
+  "booklet": "LIC \u2265 15 mg Fe/100 g dry weight liver AND serum ferritin > 10,000 ng/mL (at steady state) = irrespective of iron chelation OR MRI T2* <20 msec OR evidence of organ dysfunction due to iron overload",
+  "rules": "**LIC \u2265 15 mg Fe/100 g dry weight liver** `AND` **serum ferritin > 10,000 ng/mL** (at steady state) irrespective of iron chelation<br>`OR` **MRI T2* < 20 msec**<br>`OR` **evidence of organ dysfunction due to iron overload**"
+ },
+ {
+  "num": "40",
+  "name": "Leg Ulcer",
+  "table": 0,
+  "grade": "1",
+  "ratio": 0.88,
+  "ops": [
+   [
+    "replace",
+    "pain/itching/burning/ warmth",
+    "pain/itching/burning/warmth"
+   ]
+  ],
+  "booklet": "Intact skin with skin induration AND hyperpigmentation associated with pain/itching/burning/ warmth, possibly edema",
+  "rules": "**Intact skin with skin induration** `AND` **hyperpigmentation associated with pain/itching/burning/warmth, possibly edema**"
+ },
+ {
+  "num": "50",
+  "name": "Chronic Restrictive Lung Physiology",
+  "table": 0,
+  "grade": "1",
+  "ratio": 0.952,
+  "ops": [
+   [
+    "delete",
+    "%",
+    ""
+   ]
+  ],
+  "booklet": "TLC > 70% and TLC \u2264 80% %; mild restrictive disease",
+  "rules": "**TLC > 70% and TLC \u2264 80%**; *mild restrictive disease*"
+ },
+ {
+  "num": "53",
+  "name": "Sleep Apnea (obstructive or central)",
+  "table": 1,
+  "grade": "1",
+  "ratio": 0.929,
+  "ops": [
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ],
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ]
+  ],
+  "booklet": "AHI 0 \u2013 3 AND Hb02 sat < 90% for > 3 min overnight OR AHI 3.1 \u2013 7.9 AND NO Hb02 sat < 90% for > 3 min overnight",
+  "rules": "**AHI 0 \u2013 3** `AND` **HbO2 sat < 90% for > 3 min overnight**<br>`OR`<br>**AHI 3.1 \u2013 7.9** `AND NO` **HbO2 sat < 90% for > 3 min overnight**"
+ },
+ {
+  "num": "53",
+  "name": "Sleep Apnea (obstructive or central)",
+  "table": 1,
+  "grade": "2",
+  "ratio": 0.929,
+  "ops": [
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ],
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ]
+  ],
+  "booklet": "AHI 3.1 \u2013 7.9 AND Hb02 sat < 90% for > 3 min overnight OR AHI 8.0 \u2013 15.0 AND NO Hb02 sat < 90% for > 3 min overnight",
+  "rules": "**AHI 3.1 \u2013 7.9** `AND` **HbO2 sat < 90% for > 3 min overnight**<br>`OR`<br>**AHI 8.0 \u2013 15.0** `AND NO` **HbO2 sat < 90% for > 3 min overnight**"
+ },
+ {
+  "num": "53",
+  "name": "Sleep Apnea (obstructive or central)",
+  "table": 1,
+  "grade": "3",
+  "ratio": 0.929,
+  "ops": [
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ],
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ]
+  ],
+  "booklet": "AHI 8.0 \u2013 15.0 AND Hb02 sat < 90% for > 3 min overnight OR AHI 15.1 \u2013 24.9 AND NO Hb02 sat < 90% for > 3 min overnight",
+  "rules": "**AHI 8.0 \u2013 15.0** `AND` **HbO2 sat < 90% for > 3 min overnight**<br>`OR`<br>**AHI 15.1 \u2013 24.9** `AND NO` **HbO2 sat < 90% for > 3 min overnight**"
+ },
+ {
+  "num": "53",
+  "name": "Sleep Apnea (obstructive or central)",
+  "table": 1,
+  "grade": "4",
+  "ratio": 0.941,
+  "ops": [
+   [
+    "replace",
+    "hb",
+    "hbo"
+   ]
+  ],
+  "booklet": "AHI 15.1 \u2013 24.9 AND Hb02 sat < 90% for > 3 min overnight OR AHI \u2265 25",
+  "rules": "**AHI 15.1 \u2013 24.9** `AND` **HbO2 sat < 90% for > 3 min overnight**<br>`OR`<br>**AHI \u2265 25**"
+ }
+]
