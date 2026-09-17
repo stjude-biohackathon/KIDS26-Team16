@@ -13,9 +13,7 @@ from shiny.types import SilentException
 from dashboard.data import get_available_run_files, load_csv_notes, load_run_file
 from dashboard.evaluation import (
     DEFAULT_LIVE_MODEL,
-    DEFAULT_MODEL,
     FOCUS_OUTCOMES,
-    LIVE_CONCURRENCY,
     check_ollama_status,
     extract_and_grade_note,
     get_live_concurrency,
@@ -99,7 +97,7 @@ def server(input, output, session):
             return ui.span(f"Ollama Online ({selected_model})", class_="badge badge-grade-1", style="font-size: 0.76rem;")
         elif status == "not_installed":
             return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
-        return ui.span(f"Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
+        return ui.span("Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
 
     @output
     @render.ui
@@ -201,20 +199,40 @@ def server(input, output, session):
                     ),
                     col_widths=[6, 6],
                 ),
-                ui.input_checkbox("outcome_present_input",
-                                  "Outcomes explicitly present in note (deterministic mode only)",
-                                  value=True),
                 ui.input_text_area(
                     "live_note_text",
                     "Clinical Narrative:",
                     rows=7,
                     placeholder="Enter or review clinical note text...",
                 ),
-                ui.input_text_area(
-                    "manual_features_json",
-                    "Feature Values (JSON, graded against every selected outcome):",
-                    rows=4,
-                    value='{"care_setting": "inpatient", "pain_co_complication": false, "death_attributed": false, "life_support": false}',
+                ui.div(
+                    ui.span("DETERMINISTIC FALLBACK & SIMULATION", class_="sidebar-section-label mt-2"),
+                    ui.p(
+                        "Active when Ollama is offline, or to test CTCAE rules directly without LLM extraction:",
+                        class_="small text-muted mb-2",
+                    ),
+                    ui.input_checkbox(
+                        "outcome_present_input",
+                        "Assume outcomes are clinically present",
+                        value=True,
+                    ),
+                    ui.div(
+                        "When unchecked, outcomes evaluate as Absent (Grade 0). In online mode, the LLM extracts presence from text.",
+                        class_="small text-muted mb-2 ms-4",
+                        style="font-size: 0.76rem;",
+                    ),
+                    ui.input_text_area(
+                        "manual_features_json",
+                        "Simulated Feature Values (JSON):",
+                        rows=4,
+                        value='{"care_setting": "inpatient", "pain_co_complication": false, "death_attributed": false, "life_support": false}',
+                    ),
+                    ui.div(
+                        "Key-value features evaluated directly by CTCAE rules across all selected outcomes when Ollama is offline.",
+                        class_="small text-muted mb-1",
+                        style="font-size: 0.76rem;",
+                    ),
+                    class_="p-2 rounded border bg-light-subtle mb-2 mt-2",
                 ),
                 ui.input_action_button("btn_analyze", "Analyze & Grade Note", class_="btn btn-clinical-primary w-100 mt-2"),
             )

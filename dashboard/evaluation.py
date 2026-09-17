@@ -11,11 +11,12 @@ directly (tests/test_dashboard_evaluation.py).
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from experiments.grading import OutcomeGrade, grade_outcome
 from experiments.medgemma_extraction import DEFAULT_PROMPT_STAGE, run, stage
-from experiments.ollama_backend import DEFAULT_HOST, DEFAULT_MODEL, preflight
+from experiments.ollama_backend import DEFAULT_HOST, preflight
 from experiments.verification import Tally
 from scogs import ABSENT, CANNOT_GRADE, GRADE_SET, GRADED, NOT_APPLICABLE, TABLES, GradeResult
 from scogs.features import FEATURES
@@ -365,7 +366,6 @@ def save_live_run_results(
     import json
     from dataclasses import asdict
     from datetime import datetime, timezone
-    from pathlib import Path
 
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
