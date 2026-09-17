@@ -30,52 +30,14 @@ from shiny import App, reactive, render, ui
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scogs import (
-    ABSENT,
-    CANNOT_GRADE,
-    GRADE_SET,
-    GRADED,
-    NOT_APPLICABLE,
-    TABLES,
-    GradeResult,
-    grade,
+from dashboard.evaluation import (
+    FOCUS_OUTCOMES,
+    extract_and_grade_note,
+    grade_badge,
+    is_derived,
+    is_ollama_available,
 )
-from scogs.evaluate import resolve_derived
-from scogs.features import FEATURES
-from experiments.ollama_backend import (
-    DEFAULT_HOST,
-    DEFAULT_MODEL,
-    call_ollama,
-    preflight,
-)
-
-# 14 Focus Outcomes supported natively
-FOCUS_OUTCOMES: dict[str, dict[str, str]] = {
-    "10": {"name": "Chronic Sickle Pain", "organ_system": "Pain / Neurological", "acuity": "Chronic"},
-    "11": {"name": "Cognitive Dysfunction", "organ_system": "Neurological", "acuity": "Chronic"},
-    "12": {"name": "Elevated Transcranial Doppler (TCD) Velocity", "organ_system": "Neurological", "acuity": "Chronic / Screening"},
-    "15": {"name": "Stroke", "organ_system": "Neurological", "acuity": "Acute"},
-    "17": {"name": "Sickle Cell Retinopathy", "organ_system": "Ophthalmologic", "acuity": "Chronic"},
-    "21": {"name": "Chronic Kidney Disease (CKD)", "organ_system": "Renal", "acuity": "Chronic"},
-    "24": {"name": "Acute Ischemic Priapism", "organ_system": "Genitourinary (Male)", "acuity": "Acute"},
-    "28": {"name": "Acute Sickle Cell Pain Episode (VOC)", "organ_system": "Pain / Vascular", "acuity": "Acute"},
-    "29": {"name": "Splenic Sequestration", "organ_system": "Hematologic", "acuity": "Acute"},
-    "39": {"name": "Avascular Necrosis (AVN)", "organ_system": "Musculoskeletal", "acuity": "Chronic"},
-    "40": {"name": "Chronic Leg Ulcer", "organ_system": "Dermatologic", "acuity": "Chronic"},
-    "47": {"name": "Depression", "organ_system": "Psychiatric", "acuity": "Chronic"},
-    "48": {"name": "Acute Chest Syndrome (ACS)", "organ_system": "Pulmonary", "acuity": "Acute"},
-    "49": {"name": "Asthma", "organ_system": "Pulmonary", "acuity": "Chronic"},
-}
-
-KNOWN_DERIVED_FEATURES = {
-    "creatinine_x_baseline",
-    "hb_decline_pct",
-    "bp_stage",
-    "bmi",
-    "age_stratum",
-    "life_support",
-    "pro_severe_count",
-}
+from dashboard.view_state import explore_view_state, grade_details, live_view_state
 
 
 # ==============================================================================
@@ -140,7 +102,7 @@ def load_csv_notes(filepath: str | Path = "data/clinical_notes.csv") -> pd.DataF
 
     # Gender mapping
     if "gender" in df.columns:
-        df["patient_sex"] = df["gender"].map({"Female": "F", "Male": "M"}).fillna("unknown")
+        df["patient_sex"] = df["gender"].map({"Female": "female", "Male": "male"}).fillna("unknown")
     else:
         df["patient_sex"] = "unknown"
 
@@ -158,53 +120,6 @@ def load_csv_notes(filepath: str | Path = "data/clinical_notes.csv") -> pd.DataF
         df["patient_age"] = None
 
     return df
-
-
-def evaluate_clinical_features(
-    outcome_num: str | int,
-    feature_dict: dict[str, Any],
-    patient_sex: str = "unknown",
-    patient_age: float | None = None,
-    present: bool = True,
-) -> GradeResult:
-    """Passes validated feature dictionary through SCOGS deterministic decision tables."""
-    outcome_str = f"{int(outcome_num):02d}" if str(outcome_num).isdigit() else str(outcome_num)
-
-    enriched = dict(feature_dict)
-    if patient_sex:
-        enriched["patient_sex"] = patient_sex
-    if patient_age is not None:
-        try:
-            enriched["patient_age"] = float(patient_age)
-        except (ValueError, TypeError):
-            pass
-
-    # Resolve computed and derived features
-    enriched = resolve_derived(enriched)
-
-    try:
-        return grade(outcome_str, enriched, present=present)
-    except KeyError:
-        return GradeResult(
-            outcome=outcome_str,
-            status=CANNOT_GRADE,
-            reason=f"Unknown outcome number {outcome_str}",
-        )
-    except ValueError as e:
-        return GradeResult(
-            outcome=outcome_str,
-            status=CANNOT_GRADE,
-            reason=f"Evaluation error: {e}",
-        )
-
-
-def is_ollama_available(model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST) -> bool:
-    """Checks whether local Ollama server is reachable and model is available."""
-    try:
-        preflight(model=model, host=host, timeout=3)
-        return True
-    except Exception:
-        return False
 
 
 def find_quote_spans(note_text: str, quotes: list[str]) -> list[tuple[int, int, str]]:
@@ -280,112 +195,7 @@ def highlight_note_quotes(note_text: str, findings: list[dict[str, Any]]) -> str
     )
 
 
-def extract_and_grade_note(
-    note_text: str,
-    outcomes: list[str],
-    patient_context: dict[str, Any] | None = None,
-    use_ollama: bool = False,
-    manual_features: dict[str, Any] | None = None,
-    model: str = DEFAULT_MODEL,
-    host: str = DEFAULT_HOST,
-) -> dict[str, Any]:
-    """Coordinates extraction (via Ollama or manual entry) and deterministic grading."""
-    results: dict[str, Any] = {}
-    ctx = patient_context or {}
-    patient_sex = ctx.get("patient_sex", "unknown")
-    patient_age = ctx.get("patient_age")
 
-    for raw_outcome in outcomes:
-        outcome_str = f"{int(raw_outcome):02d}" if str(raw_outcome).isdigit() else str(raw_outcome)
-        table = TABLES.get(outcome_str)
-        outcome_meta = FOCUS_OUTCOMES.get(outcome_str, {})
-        outcome_name = outcome_meta.get("name") or getattr(table, "name", f"Outcome {outcome_str}")
-
-        if use_ollama and is_ollama_available(model=model, host=host):
-            outcome_feats = [
-                f for f, spec in FEATURES.items() if outcome_str in spec.get("outcomes", [])
-            ]
-            prompt = (
-                f"You are a clinical NLP extractor for Sickle Cell Disease evaluation.\n"
-                f"Outcome: {outcome_name} (ID: {outcome_str})\n"
-                f"Features to extract: {', '.join(outcome_feats)}\n"
-                f"Clinical Note:\n{note_text}\n\n"
-                f"Return ONLY a JSON object with this exact structure:\n"
-                f'{{"present": true/false, "findings": [{{"feature": "name", "value": val, "quote": "verbatim span", "unit": "unit or null"}}]}}'
-            )
-            try:
-                response_str = call_ollama(
-                    prompt,
-                    model=model,
-                    host=host,
-                    fmt="json",
-                    temperature=0.0,
-                    num_predict=1024,
-                )
-                parsed = json.loads(response_str)
-                present = bool(parsed.get("present", False))
-                findings = parsed.get("findings", [])
-                extracted_features = {
-                    item["feature"]: item["value"]
-                    for item in findings
-                    if isinstance(item, dict) and "feature" in item and "value" in item
-                }
-                grade_res = evaluate_clinical_features(
-                    outcome_str,
-                    extracted_features,
-                    patient_sex=patient_sex,
-                    patient_age=patient_age,
-                    present=present,
-                )
-                results[outcome_str] = {
-                    "outcome_name": outcome_name,
-                    "present": present,
-                    "extracted_features": extracted_features,
-                    "accepted_findings": findings,
-                    "grade_result": grade_res,
-                }
-            except Exception as e:
-                results[outcome_str] = {
-                    "outcome_name": outcome_name,
-                    "present": False,
-                    "extracted_features": {},
-                    "accepted_findings": [],
-                    "grade_result": GradeResult(
-                        outcome=outcome_str,
-                        status=CANNOT_GRADE,
-                        reason=f"Inference error: {e}",
-                    ),
-                    "error": str(e),
-                }
-        else:
-            # Deterministic / manual feature mode
-            feats = dict(manual_features.get(outcome_str, {})) if manual_features else {}
-            present = feats.pop("present", True) if "present" in feats else True
-            findings = [
-                {
-                    "feature": k,
-                    "value": v,
-                    "quote": None,
-                    "unit": FEATURES.get(k, {}).get("unit"),
-                }
-                for k, v in feats.items()
-            ]
-            grade_res = evaluate_clinical_features(
-                outcome_str,
-                feats,
-                patient_sex=patient_sex,
-                patient_age=patient_age,
-                present=present,
-            )
-            results[outcome_str] = {
-                "outcome_name": outcome_name,
-                "present": present,
-                "extracted_features": feats,
-                "accepted_findings": findings,
-                "grade_result": grade_res,
-            }
-
-    return results
 
 
 # ==============================================================================
@@ -919,7 +729,7 @@ def server(input, output, session):
                 ),
                 ui.layout_columns(
                     ui.input_numeric("patient_age_input", "Age (years):", value=25.0, min=0.0, max=120.0, step=0.5),
-                    ui.input_select("patient_sex_input", "Sex:", choices={"M": "Male (M)", "F": "Female (F)", "unknown": "Unknown"}, selected="M"),
+                    ui.input_select("patient_sex_input", "Sex:", choices={"male": "Male", "female": "Female", "unknown": "Unknown"}, selected="male"),
                     col_widths=[6, 6],
                 ),
                 ui.input_checkbox("outcome_present_input", "Outcome explicitly present in note", value=True),
@@ -952,7 +762,7 @@ def server(input, output, session):
             row = df.iloc[row_idx]
             ui.update_text_area("live_note_text", value=str(row.get("clinical_note", "")))
             sex_val = str(row.get("patient_sex", "unknown"))
-            if sex_val in ("M", "F", "unknown"):
+            if sex_val in ("male", "female", "unknown"):
                 ui.update_select("patient_sex_input", selected=sex_val)
             age_val = row.get("patient_age")
             if pd.notna(age_val):
@@ -1045,68 +855,17 @@ def server(input, output, session):
 
     # Helper: resolve active state data
     def get_current_view_state() -> dict[str, Any]:
-        mode = input.app_mode()
-        if mode == "explore":
+        if input.app_mode() == "explore":
             run_data = current_run_cache.get()
             if not run_data:
+                # Before a file loads, the case selectors do not exist yet; reading
+                # them would cancel the render.
                 return {}
-            uid = input.selected_patient_uid()
-            outcome_num = input.selected_outcome_num()
-            rec = run_data["records_by_uid"].get(uid, {})
-            outcomes = rec.get("outcomes", {})
-            outcome_data = outcomes.get(outcome_num, {})
-
-            age_list = rec.get("age", [])
-            age_val = age_list[0][0] if (isinstance(age_list, list) and age_list and isinstance(age_list[0], list)) else None
-            gender = rec.get("gender")
-
-            return {
-                "mode": "explore",
-                "patient_uid": uid,
-                "title": rec.get("title", ""),
-                "note_text": rec.get("patient_note", ""),
-                "outcome_num": outcome_num,
-                "outcome_name": outcome_data.get("outcome_name") or FOCUS_OUTCOMES.get(str(outcome_num), {}).get("name", ""),
-                "present": outcome_data.get("present", False),
-                "grade_result": outcome_data.get("grade_result", {}),
-                "accepted_findings": outcome_data.get("accepted_findings", []),
-                "extracted_features": outcome_data.get("extracted_features", {}),
-                "patient_age": age_val,
-                "patient_sex": gender,
-            }
-        else:
-            res = live_eval_result.get()
-            outcome_id = input.live_outcome() or "28"
-            if not res or outcome_id not in res:
-                return {
-                    "mode": "live",
-                    "patient_uid": "LIVE-CASE",
-                    "title": "Interactive Live Case",
-                    "note_text": input.live_note_text() or "",
-                    "outcome_num": outcome_id,
-                    "outcome_name": FOCUS_OUTCOMES.get(outcome_id, {}).get("name", ""),
-                    "present": True,
-                    "grade_result": None,
-                    "accepted_findings": [],
-                    "extracted_features": {},
-                    "patient_age": input.patient_age_input(),
-                    "patient_sex": input.patient_sex_input(),
-                }
-            item = res[outcome_id]
-            return {
-                "mode": "live",
-                "patient_uid": "LIVE-CASE",
-                "title": "Live Note Evaluation",
-                "note_text": input.live_note_text() or "",
-                "outcome_num": outcome_id,
-                "outcome_name": item.get("outcome_name", ""),
-                "present": item.get("present", True),
-                "grade_result": item.get("grade_result"),
-                "accepted_findings": item.get("accepted_findings", []),
-                "extracted_features": item.get("extracted_features", {}),
-                "patient_age": input.patient_age_input(),
-                "patient_sex": input.patient_sex_input(),
-            }
+            return explore_view_state(run_data, input.selected_patient_uid(),
+                                      input.selected_outcome_num())
+        return live_view_state(live_eval_result.get(), input.live_outcome() or "28",
+                               input.live_note_text() or "", input.patient_age_input(),
+                               input.patient_sex_input())
 
     # ==========================================================================
     # 4. Renderers: Cards, Tables, Inspector
@@ -1119,64 +878,15 @@ def server(input, output, session):
         if not state:
             return ui.card(ui.p("Select a run file and case in the sidebar to begin inspection.", class_="text-muted p-3"))
 
-        gr = state.get("grade_result")
-        if isinstance(gr, GradeResult):
-            status = gr.status
-            grade_val = gr.grade
-            matched = gr.matched
-            reason = gr.reason
-            needs_review = gr.needs_review
-            missing = gr.missing
-            grades = gr.grades
-            undecided = gr.undecided
-        elif isinstance(gr, dict):
-            status = gr.get("status", "absent" if not state.get("present") else "graded")
-            grade_val = gr.get("grade")
-            matched = gr.get("matched")
-            reason = gr.get("reason")
-            needs_review = status in ("grade_set", "cannot_grade")
-            missing = gr.get("missing", ())
-            grades = gr.get("grades", ())
-            undecided = gr.get("undecided", ())
-        else:
-            status = "pending"
-            grade_val = None
-            matched = None
-            reason = "Click 'Analyze & Grade Note' to compute deterministic SCOGS grade."
-            needs_review = False
-            missing = ()
-            grades = ()
-            undecided = ()
-
-        if state.get("present") is False and state.get("extracted_features"):
-            status = "refuted"
-
-        badge_class = "badge-not-applicable"
-        badge_label = status.upper()
-
-        if status == GRADED:
-            if grade_val == 1:
-                badge_class = "badge-grade-1"
-            elif grade_val == 2:
-                badge_class = "badge-grade-2"
-            else:
-                badge_class = "badge-grade-3"
-            badge_label = f"GRADE {int(grade_val)}" if grade_val is not None else "GRADED"
-        elif status == GRADE_SET:
-            badge_class = "badge-grade-set"
-            badge_label = f"GRADE SET: {grades}" if grades else "GRADE SET"
-        elif status == CANNOT_GRADE:
-            badge_class = "badge-cannot-grade"
-            badge_label = "CANNOT GRADE"
-        elif status == NOT_APPLICABLE:
-            badge_class = "badge-not-applicable"
-            badge_label = "NOT APPLICABLE"
-        elif status == ABSENT:
-            badge_class = "badge-absent"
-            badge_label = "ABSENT"
-        elif status == "refuted":
-            badge_class = "badge-refuted"
-            badge_label = "REFUTED (CONTRADICTED)"
+        # The harness status (experiments/grading.py) decides the badge. The card
+        # never re-derives it from `present` or the features.
+        status = state.get("status") or "pending"
+        details = grade_details(state.get("grade_result"))
+        grade_val, grades = details["grade"], details["grades"]
+        matched, reason = details["matched"], details["reason"]
+        missing, undecided = details["missing"], details["undecided"]
+        needs_review = details["needs_review"]
+        badge_class, badge_label = grade_badge(status, grade_val, grades)
 
         review_alert = None
         if needs_review:
@@ -1259,7 +969,6 @@ def server(input, output, session):
             return ui.p("No case selected.", class_="text-muted p-3")
 
         findings = state.get("accepted_findings", [])
-        note_text = state.get("note_text", "").lower()
 
         if not findings:
             return ui.p("No extracted findings or features recorded for this outcome.", class_="text-muted p-3")
@@ -1271,13 +980,15 @@ def server(input, output, session):
             unit = item.get("unit") or "N/A"
             quote = item.get("quote")
 
-            # Determine verification status
-            if feat in KNOWN_DERIVED_FEATURES or FEATURES.get(feat, {}).get("derived"):
+            # Every finding in a results file or a live result already passed quote
+            # grounding in experiments/verification.py. Re-checking it here with a
+            # looser test is how this table and the grade used to disagree.
+            if is_derived(feat):
                 status_icon = ui.span("Derived", class_="badge-status badge-status-derived")
-            elif quote and str(quote).strip().lower() in note_text:
-                status_icon = ui.span("Verified", class_="badge-status badge-status-verified")
+            elif item.get("source") == "manual":
+                status_icon = ui.span("Manual entry", class_="badge-status badge-status-derived")
             else:
-                status_icon = ui.span("Unfound", class_="badge-status badge-status-unfound")
+                status_icon = ui.span("Verified", class_="badge-status badge-status-verified")
 
             quote_display = (
                 ui.span(f'"{quote}"', class_="fst-italic text-secondary", style="font-size: 0.82rem;")

@@ -2,27 +2,13 @@
 from pathlib import Path
 import pytest
 
-from scogs import GradeResult
 from dashboard.interactive_dashboard import (
-    load_run_file,
-    load_csv_notes,
-    evaluate_clinical_features,
-    is_ollama_available,
-    highlight_note_quotes,
-    find_quote_spans,
-    FOCUS_OUTCOMES,
     app,
+    find_quote_spans,
+    highlight_note_quotes,
+    load_csv_notes,
+    load_run_file,
 )
-
-
-def test_focus_outcomes_structure():
-    """Verify that all 14 focus outcomes are registered with proper metadata."""
-    expected_ids = {"10", "11", "12", "15", "17", "21", "24", "28", "29", "39", "40", "47", "48", "49"}
-    assert set(FOCUS_OUTCOMES.keys()) == expected_ids
-    for outcome_id, meta in FOCUS_OUTCOMES.items():
-        assert "name" in meta
-        assert "organ_system" in meta
-        assert "acuity" in meta
 
 
 def test_load_run_file_with_fixture():
@@ -56,64 +42,6 @@ def test_load_run_file_missing():
         load_run_file("results/nonexistent_run_file_12345.json")
 
 
-def test_evaluate_clinical_features_voc():
-    """Test deterministic grading of outcome 28 (VOC) with demographic enrichment."""
-    # Outcome 28: care_setting >= inpatient and not pain_co_complication -> Grade 3
-    features = {
-        "care_setting": "inpatient",
-        "pain_co_complication": False,
-        "death_attributed": False,
-        "life_support": False,
-    }
-    result = evaluate_clinical_features(
-        outcome_num="28",
-        feature_dict=features,
-        patient_sex="M",
-        patient_age=33.0,
-        present=True,
-    )
-    assert isinstance(result, GradeResult)
-    assert result.status == "graded"
-    assert result.grade == 3
-    assert result.matched is not None
-    assert "care_setting >= inpatient" in result.matched
-
-
-def test_evaluate_clinical_features_derived_resolution():
-    """Test that evaluate_clinical_features passes features through resolve_derived."""
-    # Outcome 19 (AKI): creatinine baseline ratio derived
-    features = {
-        "creatinine": 3.0,
-        "creatinine_baseline": 1.0,
-        "creatinine_increase_mg_dl": 2.0,
-        "death_attributed": False,
-        "renal_replacement_therapy": False,
-        "renal_replacement": False,
-        "esrd": False,
-        "esrd_progression": False,
-        "patient_age": 25.0,
-    }
-    result = evaluate_clinical_features(
-        outcome_num="19",
-        feature_dict=features,
-        patient_sex="female",
-        patient_age=25.0,
-        present=True,
-    )
-    assert isinstance(result, GradeResult)
-    # With ratio 3.0, AKI stage 3
-    assert result.status == "graded"
-    assert result.grade == 3
-
-
-def test_evaluate_clinical_features_unknown_outcome():
-    """Test graceful handling of invalid outcome number."""
-    result = evaluate_clinical_features("999", {}, patient_sex="unknown")
-    assert isinstance(result, GradeResult)
-    assert result.status == "cannot_grade"
-    assert "Unknown outcome" in (result.reason or "")
-
-
 def test_load_csv_notes_columns():
     """Test loading data/clinical_notes.csv and mapping columns."""
     csv_path = Path("data/clinical_notes.csv")
@@ -129,7 +57,7 @@ def test_load_csv_notes_columns():
     assert "encounter_id" not in df.columns
 
     # Verify sex mapping
-    valid_sexes = {"F", "M", "unknown"}
+    valid_sexes = {"female", "male", "unknown"}
     assert set(df["patient_sex"].dropna().unique()).issubset(valid_sexes)
 
     # Verify age computation is positive
@@ -164,12 +92,6 @@ def test_highlight_note_quotes_html():
     # Check that <abnormal> was escaped to prevent HTML injection
     assert "&lt;abnormal&gt;" in html_out
     assert "<abnormal>" not in html_out
-
-
-def test_is_ollama_available_offline():
-    """Test is_ollama_available returns False when Ollama server is offline."""
-    # When host points to a closed port, is_ollama_available should return False without raising
-    assert is_ollama_available(host="http://localhost:59999") is False
 
 
 def test_shiny_app_instance():
