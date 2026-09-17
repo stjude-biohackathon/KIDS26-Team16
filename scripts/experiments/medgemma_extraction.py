@@ -844,6 +844,45 @@ def age_guard(value: float, q: str):
     return UNIT_CONVERTED, truth, f"{hits[0].text} -> {truth} years"
 
 
+TLC_VOL_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*(liters?|litres?|l(?![a-z/])|ml\b)", re.I)
+TLC_PCT_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*(%|percent(?:age)?\b|pct\b)", re.I)
+
+
+def tlc_guard(value: float, q: str):
+    """Reconcile tlc_pct_pred against its verified quote.
+
+    Total Lung Capacity (Outcome 50) is graded on TLC % predicted, not raw gas
+    volume in Liters. Notes commonly state both: 'TLC 3.2 L (78% predicted)'. If the
+    model extracts the 3.2, evaluating without a guard tests '3.2 < 50' and grades
+    a mild patient as Grade 4 Life-Threatening.
+    - If value matches any % in the quote, it is accepted (UNIT_OK).
+    - If value matches a volume in L/mL and a % is present, it rescues to that % (UNIT_CONVERTED).
+    - If the quote contains only volume, it is rejected (UNIT_BAD).
+    """
+    vol_entries = [(float(n), u.strip()) for n, u in TLC_VOL_PATTERN.findall(q)]
+    pct_entries = [(float(n), u.strip()) for n, u in TLC_PCT_PATTERN.findall(q)]
+
+    for p, _ in pct_entries:
+        if _agrees(value, p):
+            return UNIT_OK, p, None
+
+    for v, u in vol_entries:
+        if _agrees(value, v):
+            unit_str = "L" if u.lower() == "l" else ("mL" if u.lower() == "ml" else u)
+            if len(pct_entries) == 1:
+                truth = pct_entries[0][0]
+                return UNIT_CONVERTED, truth, f"{v} {unit_str} -> {truth}% predicted"
+            if len(pct_entries) > 1:
+                return UNIT_AMBIGUOUS, value, "/".join(str(p) for p, _ in pct_entries)
+            return UNIT_BAD, None, f"{v} {unit_str} is a lung volume, not percent predicted"
+
+    if not vol_entries and not pct_entries:
+        return UNIT_OK, value, None
+    if pct_entries:
+        return UNIT_VALUE_MISMATCH, None, f"value {value} does not match quote percentage ({pct_entries[0][0]}%)"
+    return UNIT_BAD, None, "quote contains lung volume in liters, not percent predicted"
+
+
 def unit_guard(name: str, value: float, quote: str):
     """-> (status, value, detail). Reconcile a number against its own verified quote.
 
@@ -859,6 +898,8 @@ def unit_guard(name: str, value: float, quote: str):
     declared = FEATURES[name].get("unit")
     if declared == "years":
         return age_guard(value, normalize(quote))
+    if name == "tlc_pct_pred":
+        return tlc_guard(value, normalize(quote))
     table = UNIT_CONVERSIONS.get(declared)
     if not table:
         return UNIT_OK, value, None       # no unit declared, or no family for it

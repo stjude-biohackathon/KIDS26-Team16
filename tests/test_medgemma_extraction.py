@@ -485,6 +485,48 @@ def test_ferritin_converts_from_pmol_per_l():
     )
 
 
+def test_tlc_pct_pred_guards_against_lung_volume_in_liters():
+    # Model extracted raw volume in Liters from a volume-only quote -> rejected as bad
+    assert unit_guard("tlc_pct_pred", 3.2, "TLC 3.2 L") == (
+        "bad", None, "3.2 L is a lung volume, not percent predicted"
+    )
+    assert unit_guard("tlc_pct_pred", 3.5, "TLC was 3.5 liters") == (
+        "bad", None, "3.5 liters is a lung volume, not percent predicted"
+    )
+    assert unit_guard("tlc_pct_pred", 3200.0, "TLC 3200 mL") == (
+        "bad", None, "3200.0 mL is a lung volume, not percent predicted"
+    )
+
+    # Model extracted raw volume in Liters when % is also in quote -> rescued to percent predicted
+    assert unit_guard("tlc_pct_pred", 3.2, "TLC 3.2 L (78% predicted)") == (
+        "converted", 78.0, "3.2 L -> 78.0% predicted"
+    )
+    assert unit_guard("tlc_pct_pred", 3.2, "FEV1 2.1 L, FVC 2.6 L, TLC 3.2 L (78% predicted)") == (
+        "converted", 78.0, "3.2 L -> 78.0% predicted"
+    )
+
+    # Model correctly extracted percent predicted -> ok
+    assert unit_guard("tlc_pct_pred", 78.0, "TLC 3.2 L (78% predicted)") == ("ok", 78.0, None)
+    assert unit_guard("tlc_pct_pred", 78.0, "TLC 78% predicted") == ("ok", 78.0, None)
+    assert unit_guard("tlc_pct_pred", 78.0, "TLC 78%") == ("ok", 78.0, None)
+    assert unit_guard("tlc_pct_pred", 75.0, "TLC was 75") == ("ok", 75.0, None)
+
+
+def test_tlc_pct_pred_run_verify_prevents_catastrophic_grade4():
+    pft_note = "Pulmonary function test showed TLC 3.2 L (78% predicted)."
+    # If the model extracts 3.2, run_verify converts to 78.0 rather than letting 3.2 grade as < 50
+    feats, _, t = run_verify([{"feature": "tlc_pct_pred", "value": 3.2,
+                               "quote": "TLC 3.2 L (78% predicted)"}],
+                             note=pft_note)
+    assert feats == {"tlc_pct_pred": 78.0} and t.unit_converted == 1
+
+    # If the quote only contains the raw volume, it is rejected
+    feats_raw, _, t_raw = run_verify([{"feature": "tlc_pct_pred", "value": 3.2,
+                                       "quote": "TLC 3.2 L"}],
+                                     note=pft_note)
+    assert feats_raw == {} and t_raw.unit_mismatch == 1
+
+
 # ------------------------------------------------------------------ patient age
 #
 # The schema holds age in years; notes write "10-day-old", "18-month-old" and
