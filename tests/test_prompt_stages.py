@@ -8,20 +8,15 @@ number can be attributed to the change that produced it.
 import dataclasses
 import hashlib
 import json
-import pathlib
-import sys
 
 import pytest
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "scripts" / "experiments"))
-sys.path.insert(0, str(ROOT / "scripts"))
-from medgemma_extraction import (  # noqa: E402
+from experiments.medgemma_extraction import (
     STAGES, Tally, build_prompt, call_mock, feature_brief, grade_weight,
-    order_features, prompt_features, reply_is_usable, reply_schema, stage, verify,
+    prompt_features, reply_is_usable, reply_schema, stage, verify,
 )
-from scogs.definitions import outcome_definition, presence_brief  # noqa: E402
-from scogs.tables import TABLES  # noqa: E402
+from scogs.definitions import outcome_definition, presence_brief
+from scogs.tables import TABLES
 
 NOTE = ("A 14-year-old with HbSS presented with chest pain. FiO2 was escalated to 60%. "
         "He received a simple transfusion of 2 units and was started on norepinephrine.")

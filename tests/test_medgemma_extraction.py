@@ -1,17 +1,15 @@
 """The MedGemma extraction check's verification layer - the §2 rule that turns a hallucinated quote
 into a counted rejection rather than a silent wrong answer."""
 import json
-import pathlib
-import sys
 
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "scripts" / "experiments"))
-from medgemma_extraction import (  # noqa: E402
-    Tally, build_prompt, coerce, harness_status, is_scd_primary, normalize,
-    outcome_seed, call_mock, reconcile, reduce_policy, scd_mentions,
-    select_notes, unit_guard, verify, GGUF_FILE_TYPES, DEFAULT_OUTCOMES,
+from experiments.medgemma_extraction import (
+    DEFAULT_OUTCOMES, Tally, build_prompt, call_mock, coerce, harness_status,
+    is_scd_primary, outcome_seed, reconcile, reduce_policy, scd_mentions,
+    select_notes, unit_guard, verify,
 )
+from experiments.ollama_backend import GGUF_FILE_TYPES
 
 NOTE = ("A 14-year-old with HbSS presented with chest pain. FiO2 was escalated to 60%. "
         "He received a simple transfusion of 2 units and was started on norepinephrine.")
@@ -790,7 +788,7 @@ def test_default_outcomes_are_the_14_focus_conditions():
 # ------------------------------------------------------------ patient context
 
 def test_context_schema_and_prompt():
-    from medgemma_extraction import stage, build_context_prompt, context_schema, CONTEXT_FEATURES
+    from experiments.medgemma_extraction import stage, build_context_prompt, context_schema, CONTEXT_FEATURES
     st = stage("2b", patient_context=True)
     schema = context_schema(st)
     assert "present" not in schema.get("required", [])
@@ -814,7 +812,7 @@ def test_patient_context_merge_precedence():
 
 
 def test_patient_context_tallies_stay_separate():
-    from medgemma_extraction import stage, run
+    from experiments.medgemma_extraction import stage, run
     notes = [{"patient_uid": "test-1", "patient": NOTE, "selection": "seeded:36", "gender": "M"}]
     t = Tally()
     ct = Tally()
@@ -833,7 +831,7 @@ def test_patient_context_tallies_stay_separate():
 
 
 def test_expand_derived_with_computed_from(monkeypatch):
-    from medgemma_extraction import expand_derived
+    from experiments.medgemma_extraction import expand_derived
     from scogs.features import FEATURES
     fake_features = dict(FEATURES)
     fake_features["mock_base_a"] = {"type": "num", "derived": None, "computed_from": None}
@@ -841,7 +839,7 @@ def test_expand_derived_with_computed_from(monkeypatch):
     fake_features["mock_computed"] = {
         "type": "ord", "derived": None, "computed_from": ["mock_base_a", "mock_base_b"]
     }
-    monkeypatch.setattr("medgemma_extraction.FEATURES", fake_features)
+    monkeypatch.setattr("experiments.medgemma_extraction.FEATURES", fake_features)
     expanded = expand_derived({"mock_computed"})
     assert expanded == {"mock_computed", "mock_base_a", "mock_base_b"}
 
@@ -849,7 +847,7 @@ def test_expand_derived_with_computed_from(monkeypatch):
 # ---------------------------------------------------------------- Phase E: Feedback Retry
 
 def test_precheck_clean_reply_has_no_issues():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     reply = json.dumps({
         "present": True,
         "present_quote": "chest pain",
@@ -863,7 +861,7 @@ def test_precheck_clean_reply_has_no_issues():
 
 
 def test_precheck_flags_unfound_quotes():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     reply = json.dumps({
         "present": True,
         "findings": [
@@ -876,7 +874,7 @@ def test_precheck_flags_unfound_quotes():
 
 
 def test_precheck_flags_missing_quote():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     reply = json.dumps({
         "present": True,
         "findings": [
@@ -889,7 +887,7 @@ def test_precheck_flags_missing_quote():
 
 
 def test_precheck_flags_unknown_and_disallowed_features():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     reply = json.dumps({
         "findings": [
             {"feature": "non_existent_feature_123", "value": 5, "quote": "chest pain"},
@@ -906,7 +904,7 @@ def test_precheck_flags_unknown_and_disallowed_features():
 
 
 def test_precheck_flags_quote_value_mismatch():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     temp_note = "Patient had a temperature of 38.0 °C on admission."
     reply = json.dumps({
         "findings": [
@@ -919,7 +917,7 @@ def test_precheck_flags_quote_value_mismatch():
 
 
 def test_precheck_flags_unfound_present_quote():
-    from medgemma_extraction import precheck
+    from experiments.medgemma_extraction import precheck
     reply = json.dumps({
         "present": True,
         "present_quote": "hallucinated diagnosis statement",
@@ -931,7 +929,7 @@ def test_precheck_flags_unfound_present_quote():
 
 
 def test_feedback_retry_end_to_end_mock():
-    from medgemma_extraction import stage, run
+    from experiments.medgemma_extraction import stage, run
     notes = [{"patient_uid": "uid-100", "patient": NOTE, "selection": "seeded:28", "gender": "M"}]
     
     # Without feedback retry: mock backend produces 1 unfound quote and 0 feedback retries

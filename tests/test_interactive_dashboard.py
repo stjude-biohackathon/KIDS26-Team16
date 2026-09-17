@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import pandas as pd
 
-from scripts.scogs import GradeResult
+from scogs import GradeResult
 from dashboard.interactive_dashboard import (
     load_run_file,
     load_csv_notes,

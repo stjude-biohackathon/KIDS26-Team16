@@ -15,6 +15,7 @@ from __future__ import annotations
 import glob
 import html
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,14 @@ import pandas as pd
 from htmltools import HTML, Tag, TagList, tags
 from shiny import App, reactive, render, ui
 
-from scripts.scogs import (
+# `shiny run dashboard/interactive_dashboard.py` imports this file by path, so
+# only `dashboard/` is on sys.path. Add `scripts/` (for `scogs.…` and
+# `experiments.…`) and the repository root (for `dashboard.…`): the same two
+# roots pyproject.toml gives the tests.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from scogs import (
     ABSENT,
     CANNOT_GRADE,
     GRADE_SET,
@@ -32,9 +40,9 @@ from scripts.scogs import (
     GradeResult,
     grade,
 )
-from scripts.scogs.evaluate import resolve_derived
-from scripts.scogs.features import FEATURES
-from scripts.experiments.ollama_backend import (
+from scogs.evaluate import resolve_derived
+from scogs.features import FEATURES
+from experiments.ollama_backend import (
     DEFAULT_HOST,
     DEFAULT_MODEL,
     call_ollama,

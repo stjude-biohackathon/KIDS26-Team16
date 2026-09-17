@@ -1,0 +1,9 @@
+# Tool configuration only. Nothing here is installed: the scripts run directly
+# (see README.md), so this file just tells pytest and ruff where the code is.
+
+[tool.pytest.ini_options]
+# Import roots: `scripts/` for scogs / experiments / audit, and the repository
+# root for `dashboard`. Configured here - not with sys.path hacks in tests - so
+# bare `pytest` and `python -m pytest` behave the same.
+pythonpath = [".", "scripts"]
+testpaths = ["tests"]
