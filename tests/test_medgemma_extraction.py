@@ -5,10 +5,11 @@ import json
 import pytest
 
 from experiments.grading import harness_status
+from experiments.cohort import (
+    is_scd_primary, outcome_seed, scd_mentions, select_notes,
+)
 from experiments.medgemma_extraction import (
     DEFAULT_OUTCOMES, build_prompt, call_mock,
-    is_scd_primary, outcome_seed, scd_mentions,
-    select_notes,
 )
 from experiments.ollama_backend import GGUF_FILE_TYPES
 from experiments.verification import (
