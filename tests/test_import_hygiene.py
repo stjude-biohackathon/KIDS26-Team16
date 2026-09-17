@@ -19,6 +19,7 @@ PACKAGE_MEMBERS = [
     "medgemma_extraction", "ollama_backend", "review_results", "grading",
     "verification", "cohort", "run_output", "evaluation", "view_state",
     "data", "highlight", "layout", "server",
+    "extract_booklet", "compare_grades", "compare_prose",
 ]
 
 MEMBERS = "|".join(PACKAGE_MEMBERS)
