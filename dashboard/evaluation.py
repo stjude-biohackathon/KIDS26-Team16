@@ -42,6 +42,12 @@ FOCUS_OUTCOMES: dict[str, dict[str, str]] = {
 # The patient id a pasted note gets inside the harness; it never leaves this module.
 LIVE_NOTE_UID = "LIVE-CASE"
 
+#: How many of the live evaluator's outcome calls run at once. Grading one note
+#: against all 14 focus outcomes is 14 generations, and serially that is minutes
+#: of waiting. Batching only confounds *repeated* runs of the same outcome
+#: (experiments/run_output.py); the dashboard grades each outcome once.
+LIVE_CONCURRENCY = 4
+
 # Dashboard and CSV sex codes -> the schema's `patient_sex` values (scogs/features.py).
 # Anything else ("unknown", blank) is left out so the rules see it as UNKNOWN.
 SEX_TO_SCHEMA = {"m": "male", "male": "male", "f": "female", "female": "female"}
@@ -104,7 +110,7 @@ def cannot_grade(outcome: str, reason: str) -> OutcomeGrade:
 def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = "ollama",
                          model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
                          prompt_stage: str = DEFAULT_PROMPT_STAGE, patient_sex: str = "unknown",
-                         patient_age: Any = None) -> dict[str, dict[str, Any]]:
+                         patient_age: Any = None, concurrency: int = 1) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for one pasted note, extracted exactly as the CLI does.
 
     Runs the note as a one-note batch through `run()`: the CLI's prompt stage,
@@ -114,7 +120,8 @@ def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = 
     """
     outcome_ids = [normalize_outcome_id(outcome) for outcome in outcomes]
     note = {"patient_uid": LIVE_NOTE_UID, "patient": note_text}
-    results, _ = run([note], outcome_ids, backend, model, host, Tally(), st=stage(prompt_stage))
+    results, _ = run([note], outcome_ids, backend, model, host, Tally(),
+                     concurrency=concurrency, st=stage(prompt_stage))
     context = clinician_context(patient_sex, patient_age)
 
     items = {}
@@ -138,7 +145,8 @@ def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = 
 def extract_and_grade_note(note_text: str, outcomes: list[str],
                            patient_context: dict[str, Any] | None = None, use_ollama: bool = False,
                            manual_features: dict[str, dict[str, Any]] | None = None,
-                           model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST) -> dict[str, dict[str, Any]]:
+                           model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
+                           concurrency: int = LIVE_CONCURRENCY) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for the live evaluator, from the model or from typed values.
 
     Every item has the same keys in both modes, so the UI renders them identically.
@@ -149,7 +157,8 @@ def extract_and_grade_note(note_text: str, outcomes: list[str],
     if use_ollama:
         try:
             return extract_with_harness(note_text, outcome_ids, model=model, host=host,
-                                        patient_sex=sex, patient_age=age)
+                                        patient_sex=sex, patient_age=age,
+                                        concurrency=min(len(outcome_ids), concurrency))
         except Exception as exc:
             # Any backend failure is shown on the card; it must not crash the session.
             return {outcome: failed_item(outcome, exc) for outcome in outcome_ids}

@@ -50,6 +50,12 @@ def _reported_values(html: str) -> dict[str, Any]:
     values: dict[str, Any] = {}
     for match in _SELECT.finditer(html):
         select_id, body = match.group(1), match.group(2)
+        # A multi-select reports every selected option as a list, the way the
+        # browser's binding does; reporting only the first would hide a default
+        # that spans several outcomes.
+        if "multiple" in body.split(">", 1)[0]:
+            values[select_id] = _SELECTED_OPTION.findall(body)
+            continue
         chosen = _SELECTED_OPTION.search(body) or _FIRST_OPTION.search(body)
         if chosen:
             values[select_id] = chosen.group(1)
@@ -156,3 +162,27 @@ def explore(run_file: str, **inputs: Any) -> dict[str, str]:
 def live(**inputs: Any) -> dict[str, str]:
     """-> {output id: rendered HTML} for the live note evaluator, before analysis."""
     return _render(mode="live", then=None, inputs=inputs)
+
+
+def analyze_live_note(note: str = "Patient admitted with a severe vaso-occlusive pain crisis.",
+                      **inputs: Any) -> dict[str, str]:
+    """-> {output id: rendered HTML} after clicking "Analyze & Grade Note".
+
+    Ollama is forced offline, so the note is graded from the sidebar's typed
+    feature values: the test never depends on a model being installed, and never
+    fires 14 generations at whatever server happens to be running.
+
+    The note and the click are sent together *after* the first settle, because
+    the sidebar's textarea renders empty and the echo would otherwise overwrite
+    a note passed at init.
+    """
+    import dashboard.server as server
+
+    online = server.is_ollama_available
+    server.is_ollama_available = lambda *args, **kwargs: False
+    try:
+        return _render(mode="live",
+                       then={"live_note_text": note, "btn_analyze": 1, **inputs},
+                       inputs={"outcome_present_input": True})
+    finally:
+        server.is_ollama_available = online

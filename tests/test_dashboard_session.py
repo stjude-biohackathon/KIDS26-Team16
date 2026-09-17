@@ -6,10 +6,12 @@ their own render, so the selector never appears and every card below it goes
 blank. Only a session that echoes inputs back the way a browser does shows it.
 """
 import json
+import re
 from html import escape
 
+from dashboard.evaluation import FOCUS_OUTCOMES
 from dashboard.view_state import PENDING_REASON
-from tests.shiny_session import explore, live
+from tests.shiny_session import analyze_live_note, explore, live
 
 FIXTURE = "tests/fixtures/sample_run.json"
 
@@ -145,6 +147,37 @@ def test_live_mode_renders_its_cards_once_the_sidebar_reports_its_inputs():
     assert escape(PENDING_REASON, quote=False) in out["executive_grade_card"]
 
 
-def test_live_mode_hides_the_saved_run_overview():
-    """The overview describes a saved case; a live note has no case to overview."""
-    assert live()["patient_outcomes_summary_ui"].strip() in ("", "<div></div>")
+def test_live_mode_defaults_to_every_focus_outcome():
+    """A custom note is graded against all 14 focus outcomes without any picking."""
+    sidebar = live()["sidebar_controls"]
+    picker = re.search(r'<select[^>]*id="live_outcome".*?</select>', sidebar, re.S).group(0)
+    assert set(re.findall(r'<option value="(\d+)" selected=""', picker)) == set(FOCUS_OUTCOMES)
+
+
+def test_live_mode_overview_waits_for_the_analysis():
+    """Before the button is clicked there is nothing graded to list."""
+    assert escape("Analyze & Grade Note") in live()["patient_outcomes_summary_ui"]
+
+
+def test_live_analysis_grades_every_focus_outcome():
+    """Clicking Analyze grades all 14 and lists them, without narrowing first."""
+    out = analyze_live_note()
+    summary = out["patient_outcomes_summary_ui"]
+    for num, meta in FOCUS_OUTCOMES.items():
+        assert meta["name"] in summary, num
+    assert "14 outcomes graded" in out["outcomes_card_title"]
+
+
+def test_live_analysis_lands_on_a_graded_outcome():
+    """The cards below the overview open on a result, not on a pending card."""
+    out = analyze_live_note()
+    assert escape(PENDING_REASON, quote=False) not in out["executive_grade_card"]
+    assert "GRADE" in out["executive_grade_card"]
+
+
+def test_live_analysis_can_be_narrowed_to_one_outcome():
+    """Deselecting is still how a clinician runs a single outcome."""
+    out = analyze_live_note(live_outcome=["48"])
+    summary = out["patient_outcomes_summary_ui"]
+    assert "Acute Chest Syndrome (ACS)" in summary
+    assert "Chronic Leg Ulcer" not in summary

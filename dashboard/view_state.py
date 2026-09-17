@@ -36,11 +36,24 @@ FILTER_LABELS = {
 }
 
 
+def grade_result_dict(outcome: dict) -> dict[str, Any]:
+    """-> one outcome's grade result as a plain dict.
+
+    A saved run holds it as JSON; a live evaluation holds the `GradeResult`
+    itself. The overview lists both, so it reads them through here.
+    """
+    result = outcome.get("grade_result")
+    if isinstance(result, GradeResult):
+        return {"status": result.status, "grade": result.grade, "grades": result.grades,
+                "matched": result.matched, "reason": result.reason,
+                "missing": result.missing, "undecided": result.undecided}
+    return result or {}
+
+
 def outcome_status(outcome: dict) -> str:
-    """-> one saved outcome's harness status; results files written before
+    """-> one outcome's harness status; results files written before
     `status` existed fall back to their presence flag."""
-    grade_result = outcome.get("grade_result") or {}
-    return grade_result.get("status") or (GRADED if outcome.get("present") else ABSENT)
+    return grade_result_dict(outcome).get("status") or (GRADED if outcome.get("present") else ABSENT)
 
 
 def outcome_bucket(outcome: dict) -> str:
@@ -61,7 +74,7 @@ def outcome_rank(item: tuple[str, dict]) -> tuple[int, int]:
     whichever key happens to come first in the file.
     """
     _, outcome = item
-    grade_result = outcome.get("grade_result") or {}
+    grade_result = grade_result_dict(outcome)
     findings = len(outcome.get("accepted_findings") or [])
     if grade_result.get("status") in (GRADED, GRADE_SET) and grade_result.get("grade") is not None:
         return (0, -findings)

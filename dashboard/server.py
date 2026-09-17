@@ -12,6 +12,7 @@ from shiny.types import SilentException
 from dashboard.data import get_available_run_files, load_csv_notes, load_run_file
 from dashboard.evaluation import (
     FOCUS_OUTCOMES,
+    LIVE_CONCURRENCY,
     extract_and_grade_note,
     grade_badge,
     is_derived,
@@ -26,6 +27,7 @@ from dashboard.view_state import (
     PRESENT,
     explore_view_state,
     grade_details,
+    grade_result_dict,
     live_view_state,
     outcome_bucket,
     outcome_rank,
@@ -138,18 +140,25 @@ def server(input, output, session):
                         selected=next(iter(csv_choices.keys())) if csv_choices else None,
                     ),
                 ),
-                ui.input_select(
+                # All 14 focus outcomes by default: the clinical question is
+                # "what has this patient got?", which one outcome cannot answer.
+                # Narrowing the list is the way to a faster run, not the way in.
+                ui.input_selectize(
                     "live_outcome",
-                    "Target Focus Outcome:",
+                    "Target Focus Outcomes:",
                     choices=outcome_choices,
-                    selected="28",
+                    selected=list(FOCUS_OUTCOMES),
+                    multiple=True,
+                    options={"plugins": ["remove_button"]},
                 ),
                 ui.layout_columns(
                     ui.input_numeric("patient_age_input", "Age (years):", value=25.0, min=0.0, max=120.0, step=0.5),
                     ui.input_select("patient_sex_input", "Sex:", choices={"male": "Male", "female": "Female", "unknown": "Unknown"}, selected="male"),
                     col_widths=[6, 6],
                 ),
-                ui.input_checkbox("outcome_present_input", "Outcome explicitly present in note", value=True),
+                ui.input_checkbox("outcome_present_input",
+                                  "Outcomes explicitly present in note (deterministic mode only)",
+                                  value=True),
                 ui.input_text_area(
                     "live_note_text",
                     "Clinical Narrative:",
@@ -158,7 +167,7 @@ def server(input, output, session):
                 ),
                 ui.input_text_area(
                     "manual_features_json",
-                    "Feature Values (JSON format for grading):",
+                    "Feature Values (JSON, graded against every selected outcome):",
                     rows=4,
                     value='{"care_setting": "inpatient", "pain_co_complication": false, "death_attributed": false, "life_support": false}',
                 ),
@@ -269,12 +278,31 @@ def server(input, output, session):
         selected_k = current_sel if (current_sel in choices) else (best_default or next(iter(choices.keys()), None))
         return ui.input_select("selected_outcome_num", "Select Outcome:", choices=choices, selected=selected_k)
 
+    def selected_live_outcomes() -> list[str]:
+        """-> the outcomes the live evaluator grades: the sidebar's picks, or all
+        14 focus outcomes while it has not reported them or the clinician has
+        cleared the box."""
+        picked = current("live_outcome") or ()
+        if isinstance(picked, str):
+            picked = (picked,)
+        chosen = [str(num) for num in picked if str(num) in FOCUS_OUTCOMES]
+        return chosen or list(FOCUS_OUTCOMES)
+
+    def live_outcome_num(results: dict | None) -> str:
+        """-> the outcome the live cards below the overview show: the pill the
+        clinician clicked when it was graded, else the most informative result."""
+        clicked = str(current("selected_outcome_num") or "")
+        if results:
+            return clicked if clicked in results else sorted(results.items(), key=outcome_rank)[0][0]
+        chosen = selected_live_outcomes()
+        return clicked if clicked in chosen else chosen[0]
+
     # Trigger Live Note Evaluation
     @reactive.effect
     @reactive.event(input.btn_analyze)
     def _perform_live_eval():
         note_text = input.live_note_text() or ""
-        outcome_id = input.live_outcome() or "28"
+        outcome_ids = selected_live_outcomes()
         patient_sex = input.patient_sex_input() or "unknown"
         patient_age = input.patient_age_input()
         present = bool(input.outcome_present_input())
@@ -291,13 +319,16 @@ def server(input, output, session):
 
         res = extract_and_grade_note(
             note_text=note_text,
-            outcomes=[outcome_id],
+            outcomes=outcome_ids,
             patient_context={"patient_sex": patient_sex, "patient_age": patient_age},
             use_ollama=is_ollama_available(),
-            manual_features={outcome_id: manual_dict},
+            # Deterministic mode has one set of typed values; every selected
+            # outcome is graded against it.
+            manual_features={num: dict(manual_dict) for num in outcome_ids},
+            concurrency=LIVE_CONCURRENCY,
         )
         live_eval_result.set(res)
-        ui.notification_show("Analysis and grading complete", type="message")
+        ui.notification_show(f"Analysis and grading complete: {len(res)} outcomes", type="message")
 
     # Helper: resolve active state data
     def get_current_view_state() -> dict[str, Any]:
@@ -322,7 +353,8 @@ def server(input, output, session):
                 else:
                     outcome_num = "28"
             return explore_view_state(run_data, uid, str(outcome_num))
-        return live_view_state(live_eval_result.get(), input.live_outcome() or "28",
+        results = live_eval_result.get()
+        return live_view_state(results, live_outcome_num(results),
                                input.live_note_text() or "", input.patient_age_input(),
                                input.patient_sex_input())
 
@@ -334,6 +366,19 @@ def server(input, output, session):
     @render.ui
     def outcomes_card_title():
         """The overview card's heading; the card shell and its filter are static."""
+        if input.app_mode() == "live":
+            title = ui.span("Live Note Outcomes & Severity Overview", class_="card-header-title")
+            graded = len(live_eval_result.get() or {})
+            if not graded:
+                return title
+            return ui.div(
+                title,
+                ui.span(f"{graded} outcomes graded" if graded != 1 else "1 outcome graded",
+                        class_="badge bg-light text-secondary border fw-normal ms-2",
+                        style="font-size: 0.78rem;"),
+                class_="d-flex align-items-center flex-wrap gap-1",
+            )
+
         state = get_current_view_state()
         records = (current_run_cache.get() or {}).get("records_by_uid", {})
         uid = state.get("patient_uid")
@@ -354,21 +399,22 @@ def server(input, output, session):
         """Every outcome of the selected case, grouped by state and filterable.
 
         This is the answer to "what has this patient got?". Picking one outcome
-        from the sidebar is the follow-up question, not the way in, so the
-        overview never depends on that selection - only on the case.
+        is the follow-up question, not the way in, so the overview never depends
+        on that selection - only on the case, saved or live.
         """
         state = get_current_view_state()
-        if input.app_mode() != "explore":
-            return ui.div()
-
-        records = (current_run_cache.get() or {}).get("records_by_uid", {})
-        uid = state.get("patient_uid")
-        outcomes = (records.get(uid) or {}).get("outcomes", {}) if uid else {}
+        if input.app_mode() == "live":
+            outcomes = live_eval_result.get() or {}
+            empty_hint = ("Click 'Analyze & Grade Note' to grade this note against every "
+                          "focus outcome selected in the sidebar.")
+        else:
+            records = (current_run_cache.get() or {}).get("records_by_uid", {})
+            uid = state.get("patient_uid")
+            outcomes = (records.get(uid) or {}).get("outcomes", {}) if uid else {}
+            empty_hint = ("Choose a saved run and a patient case in the sidebar to list "
+                          "this patient's outcomes.")
         if not outcomes:
-            return ui.p(
-                "Choose a saved run and a patient case in the sidebar to list this patient's outcomes.",
-                class_="text-muted p-3 mb-0",
-            )
+            return ui.p(empty_hint, class_="text-muted p-3 mb-0")
 
         # Unset (the page has not reported the boxes yet) means all three; the
         # client sends None once the clinician unticks the last one.
@@ -406,7 +452,7 @@ def server(input, output, session):
         name = (outcome.get("outcome_name")
                 or FOCUS_OUTCOMES.get(num, {}).get("name")
                 or f"Outcome {num}")
-        grade_result = outcome.get("grade_result") or {}
+        grade_result = grade_result_dict(outcome)
         active = "outcome-pill-active" if str(num) == selected_outcome else ""
 
         label = [ui.span(f"#{num} {name}",

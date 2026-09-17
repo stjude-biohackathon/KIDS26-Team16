@@ -11,29 +11,28 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 # The overview's card shell lives here rather than in the renderer so its filter
 # is a static control: a checkbox group re-created on every render would lose the
 # clinician's ticks, and could not be read by the render that creates it.
-outcomes_overview_card = ui.panel_conditional(
-    "input.app_mode === 'explore'",
-    ui.card(
-        ui.card_header(
+# Both modes fill it: a saved case's outcomes, or the focus outcomes a live note
+# was just graded against.
+outcomes_overview_card = ui.card(
+    ui.card_header(
+        ui.div(
+            ui.output_ui("outcomes_card_title"),
             ui.div(
-                ui.output_ui("outcomes_card_title"),
-                ui.div(
-                    ui.span("SHOW", class_="sidebar-section-label me-2"),
-                    ui.input_checkbox_group(
-                        "outcome_filter",
-                        label="",
-                        choices={b: FILTER_LABELS[b] for b in OUTCOME_BUCKETS},
-                        selected=list(OUTCOME_BUCKETS),
-                        inline=True,
-                    ),
-                    class_="d-flex align-items-center outcome-filter",
+                ui.span("SHOW", class_="sidebar-section-label me-2"),
+                ui.input_checkbox_group(
+                    "outcome_filter",
+                    label="",
+                    choices={b: FILTER_LABELS[b] for b in OUTCOME_BUCKETS},
+                    selected=list(OUTCOME_BUCKETS),
+                    inline=True,
                 ),
-                class_="d-flex justify-content-between align-items-center flex-wrap gap-2",
+                class_="d-flex align-items-center outcome-filter",
             ),
+            class_="d-flex justify-content-between align-items-center flex-wrap gap-2",
         ),
-        ui.output_ui("patient_outcomes_summary_ui"),
-        class_="mb-3 shadow-xs",
     ),
+    ui.output_ui("patient_outcomes_summary_ui"),
+    class_="mb-3 shadow-xs",
 )
 
 app_ui = ui.page_sidebar(
