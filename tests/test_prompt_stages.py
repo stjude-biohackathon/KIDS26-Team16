@@ -12,9 +12,10 @@ import json
 import pytest
 
 from experiments.medgemma_extraction import (
-    STAGES, Tally, build_prompt, call_mock, feature_brief, grade_weight,
-    prompt_features, reply_is_usable, reply_schema, stage, verify,
+    STAGES, build_prompt, call_mock, feature_brief, grade_weight,
+    prompt_features, reply_is_usable, reply_schema, stage,
 )
+from experiments.verification import Tally, verify
 from scogs.definitions import outcome_definition, presence_brief
 from scogs.tables import TABLES
 

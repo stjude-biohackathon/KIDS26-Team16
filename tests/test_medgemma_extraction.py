@@ -6,11 +6,14 @@ import pytest
 
 from experiments.grading import harness_status
 from experiments.medgemma_extraction import (
-    DEFAULT_OUTCOMES, Tally, build_prompt, call_mock, coerce,
-    is_scd_primary, outcome_seed, reconcile, reduce_policy, scd_mentions,
-    select_notes, unit_guard, verify,
+    DEFAULT_OUTCOMES, build_prompt, call_mock,
+    is_scd_primary, outcome_seed, scd_mentions,
+    select_notes,
 )
 from experiments.ollama_backend import GGUF_FILE_TYPES
+from experiments.verification import (
+    Tally, coerce, reconcile, reduce_policy, unit_guard, verify,
+)
 
 NOTE = ("A 14-year-old with HbSS presented with chest pain. FiO2 was escalated to 60%. "
         "He received a simple transfusion of 2 units and was started on norepinephrine.")
@@ -848,7 +851,7 @@ def test_expand_derived_with_computed_from(monkeypatch):
 # ---------------------------------------------------------------- Phase E: Feedback Retry
 
 def test_precheck_clean_reply_has_no_issues():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     reply = json.dumps({
         "present": True,
         "present_quote": "chest pain",
@@ -862,7 +865,7 @@ def test_precheck_clean_reply_has_no_issues():
 
 
 def test_precheck_flags_unfound_quotes():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     reply = json.dumps({
         "present": True,
         "findings": [
@@ -875,7 +878,7 @@ def test_precheck_flags_unfound_quotes():
 
 
 def test_precheck_flags_missing_quote():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     reply = json.dumps({
         "present": True,
         "findings": [
@@ -888,7 +891,7 @@ def test_precheck_flags_missing_quote():
 
 
 def test_precheck_flags_unknown_and_disallowed_features():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     reply = json.dumps({
         "findings": [
             {"feature": "non_existent_feature_123", "value": 5, "quote": "chest pain"},
@@ -905,7 +908,7 @@ def test_precheck_flags_unknown_and_disallowed_features():
 
 
 def test_precheck_flags_quote_value_mismatch():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     temp_note = "Patient had a temperature of 38.0 °C on admission."
     reply = json.dumps({
         "findings": [
@@ -918,7 +921,7 @@ def test_precheck_flags_quote_value_mismatch():
 
 
 def test_precheck_flags_unfound_present_quote():
-    from experiments.medgemma_extraction import precheck
+    from experiments.verification import precheck
     reply = json.dumps({
         "present": True,
         "present_quote": "hallucinated diagnosis statement",
