@@ -4,8 +4,9 @@ import json
 
 import pytest
 
+from experiments.grading import harness_status
 from experiments.medgemma_extraction import (
-    DEFAULT_OUTCOMES, Tally, build_prompt, call_mock, coerce, harness_status,
+    DEFAULT_OUTCOMES, Tally, build_prompt, call_mock, coerce,
     is_scd_primary, outcome_seed, reconcile, reduce_policy, scd_mentions,
     select_notes, unit_guard, verify,
 )

@@ -2,7 +2,7 @@
 from scogs.criteria import criteria_met
 from scogs.predicates import UNKNOWN
 from scogs.evaluate import grade, GRADED, ABSENT
-from experiments.medgemma_extraction import harness_status
+from experiments.grading import harness_status
 
 
 def test_criteria_met_evaluates_numeric_definitions():

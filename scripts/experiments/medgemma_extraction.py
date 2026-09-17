@@ -33,15 +33,13 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
+from experiments.grading import grade_outcome
 from experiments.ollama_backend import (
     DEFAULT_HOST, DEFAULT_MODEL, WEIGHTS, call_ollama, preflight,
 )
-from scogs.applicability import applicability
-from scogs.criteria import criteria_met
 from scogs.definitions import presence_brief
-from scogs.evaluate import grade
 from scogs.features import FEATURES
-from scogs.predicates import UNKNOWN, parse
+from scogs.predicates import parse
 from scogs.tables import TABLES
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -1071,39 +1069,6 @@ def _rank(name: str, v):
     return v
 
 
-def harness_status(rule_status: str, present, criteria=None) -> str:
-    """Reconcile model presence and objective criteria against rule engine outcome status.
-
-    Clinical intent:
-        Separates genuine absences from rule refutations and flagged presence contradictions.
-        Without this check, when a model claims a patient has fever with 36.5 °C, the rule
-        engine marks it absent, polluting the negative-control absence audit. Similarly,
-        if objective criteria are met (e.g. TRV >= 2.5 m/s) but the model failed to recognize
-        the condition, it must be flagged for clinical review rather than silently ignored.
-
-    Checks performed:
-        1. Contradicted Presence Check ('missed_presence'):
-           If objective diagnostic criteria are met (`criteria is True`) but the model said
-           the condition was not present (`present is not True`), returns 'missed_presence'.
-        2. Rule Refutation Check ('refuted'):
-           If the model claimed presence (`present is True`) but deterministic tables graded
-           it as absent (`rule_status == "absent"`), returns 'refuted'.
-        3. Pass-Through Status:
-           Otherwise passes through rule engine status:
-           - 'graded': Evaluated to a definitive single grade (1-5).
-           - 'grade_set': Multiple candidate grades possible due to missing non-essential data.
-           - 'cannot_grade': Missing essential prerequisite (e.g. patient age).
-           - 'not_applicable': Demographic exclusion (e.g. sex restriction, infant age < 60d).
-           - 'absent': Both model and rules agree outcome is absent.
-
-    Returns:
-        str: Reconciled harness status string.
-    """
-    if present is not True and criteria is True:
-        return "missed_presence"
-    return "refuted" if rule_status == "absent" and present else rule_status
-
-
 def reconcile(name: str, values: list):
     """Check and reconcile multiple quoted candidate values for a single feature.
 
@@ -1357,8 +1322,8 @@ def verify(reply: str, note: str, tally: Tally) -> tuple[dict, bool | None, dict
         9. Value Conflict Reconciliation Check: Groups accepted findings by feature and calls
            `reconcile()`:
            - If a reduction rule exists, collapses by rule (`max` / `min`).
-           - If multiple conflicting values exist without a reduction policy, withholds the feature
-             from grading and flags it in `conflicts` (`tally.value_conflicts`).
+            - If multiple conflicting values exist without a reduction policy, withholds
+              the feature from grading and flags it in `conflicts` (`tally.value_conflicts`).
 
     Returns:
         tuple[dict, bool | None, dict]:
@@ -1965,34 +1930,14 @@ def main() -> int:
     for uid, per in runs[0].items():
         grade_results_detail[uid] = {}
         for num, (feats, present, *_) in per.items():
-            ok = applicability(num, feats)
-            crit = criteria_met(num, feats)
-            res = grade(num, feats, present=bool(present), applicable=ok is not False)
-            # "the model never saw this outcome" and "the model called it and the
-            # tables overruled the call" are different questions. Pooled as one
-            # `absent` they send a reviewer to confirm an absence the rule engine
-            # produced, on a note where the model actually said present.
-            status = harness_status(res.status, present, criteria=crit is True)
+            graded = grade_outcome(num, feats, present)
+            status = graded.status
             if status == "missed_presence":
                 tallies[0].presence_contradicted += 1
             statuses[status] += 1
             by_outcome[num][status] += 1
             by_selection[selection[uid].split(":")[0]][status] += 1
-            grade_if_present = (
-                grade(num, feats, present=True, applicable=ok is not False).grade
-                if status == "missed_presence" else None
-            )
-            grade_results_detail[uid][num] = {
-                "status": status,
-                "rule_status": res.status,
-                "grade": res.grade,
-                "features": feats,
-                "present": present,
-                "applicability": "unknown" if ok is UNKNOWN else bool(ok),
-                "criteria_met": "unknown" if crit is UNKNOWN else bool(crit),
-                "grade_if_present": grade_if_present,
-                "reason": res.reason,
-            }
+            grade_results_detail[uid][num] = graded.to_record(feats, present)
 
     print(f"\nGrade status over {len(notes)}x{len(outcomes)} note-outcome pairs:")
     for k, v in statuses.most_common():
