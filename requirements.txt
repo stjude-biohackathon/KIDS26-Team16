@@ -2,3 +2,5 @@
 jupyterlab>=4.2,<5
 ipykernel>=6.29,<8
 pytest>=8,<10
+shiny>=1.0.0,<2.0.0
+pandas>=2.0.0

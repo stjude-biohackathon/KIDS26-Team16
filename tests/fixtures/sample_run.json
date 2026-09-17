@@ -1,0 +1,347 @@
+{
+  "provenance": {
+    "timestamp": "2026-09-16T12:00:00Z",
+    "model": "medgemma-27b-f16",
+    "weights": "medgemma-27b-f16",
+    "served_as": "medgemma-27b-f16",
+    "prompt_stage": "2b",
+    "quant": "F16",
+    "run_id": "20260916120000-a1b2c3d4"
+  },
+  "profiling": {
+    "total_wall_clock_sec": 12.5,
+    "sec_per_note": 4.17,
+    "total_prompt_tokens": 3500,
+    "total_completion_tokens": 820,
+    "prompt_tokens_per_note": 1166,
+    "completion_tokens_per_note": 273,
+    "completion_tokens_per_sec": 65.6
+  },
+  "automated_metrics": {
+    "proposed": 10,
+    "quoted": 10,
+    "quote_verified": 9,
+    "quote_unfound": 1,
+    "null_placeholder": 0,
+    "null_placeholder_pct": 0.0,
+    "quote_verified_pct": 90.0,
+    "quote_verified_pct_of_quoted": 90.0,
+    "hallucinated_quote_pct": 10.0,
+    "hallucinated_pct_of_quoted": 10.0,
+    "present_true": 5,
+    "present_quoted": 5,
+    "presence_contradicted": 0
+  },
+  "grade_status": {
+    "graded": 5,
+    "grade_set": 0,
+    "cannot_grade": 0,
+    "not_applicable": 0,
+    "absent": 1,
+    "refuted": 0
+  },
+  "grade_status_by_outcome": {
+    "28": { "graded": 1 },
+    "48": { "graded": 1 },
+    "15": { "graded": 1 },
+    "12": { "graded": 1 },
+    "24": { "graded": 1 },
+    "40": { "absent": 1 }
+  },
+  "detailed_records": [
+    {
+      "patient_uid": "5793438-1",
+      "selection": "seeded:28",
+      "scd_primary": true,
+      "title": "A Case Report of Acute Sickle Cell Complication with Acute Chest Syndrome",
+      "age": [[33.0, "year"]],
+      "gender": "M",
+      "patient_note": "A 33-year-old male with sickle cell disease presented with severe acute pain in the back and extremities. The abdominal pain was attributed to vaso-occlusive crisis. Two days after admission, the patient developed cough, tachypnea, fever of 38.5 C, and a new pulmonary infiltrate on chest radiography requiring invasive ventilation and ICU transfer.",
+      "outcomes": {
+        "28": {
+          "outcome_name": "Acute Sickle Cell Pain Episode (VOC)",
+          "present": true,
+          "extracted_features": {
+            "pain_co_complication": false,
+            "resp_support": "invasive_ventilation"
+          },
+          "accepted_findings": [
+            {
+              "feature": "pain_co_complication",
+              "value": false,
+              "quote": "abdominal pain was attributed to vaso-occlusive crisis.",
+              "unit": null
+            },
+            {
+              "feature": "resp_support",
+              "value": "invasive_ventilation",
+              "quote": "requiring invasive ventilation and ICU transfer.",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 3.0,
+            "features": {
+              "pain_co_complication": false,
+              "resp_support": "invasive_ventilation",
+              "patient_sex": "M",
+              "patient_age": 33.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": true,
+            "grade_if_present": null,
+            "reason": null,
+            "matched": "resp_support in [invasive_ventilation, non_invasive_ventilation]"
+          },
+          "raw_reply": "{\"present\": true, \"findings\": [{\"feature\": \"pain_co_complication\", \"value\": false, \"quote\": \"abdominal pain was attributed to vaso-occlusive crisis.\"}]}"
+        },
+        "48": {
+          "outcome_name": "Acute Chest Syndrome (ACS)",
+          "present": true,
+          "extracted_features": {
+            "resp_support": "invasive_ventilation",
+            "icu_admission": true
+          },
+          "accepted_findings": [
+            {
+              "feature": "resp_support",
+              "value": "invasive_ventilation",
+              "quote": "requiring invasive ventilation and ICU transfer.",
+              "unit": null
+            },
+            {
+              "feature": "icu_admission",
+              "value": true,
+              "quote": "and ICU transfer.",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 4.0,
+            "features": {
+              "resp_support": "invasive_ventilation",
+              "icu_admission": true,
+              "patient_sex": "M",
+              "patient_age": 33.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": true,
+            "grade_if_present": null,
+            "reason": null,
+            "matched": "resp_support in [invasive_ventilation, ecmo]"
+          },
+          "raw_reply": "{\"present\": true, \"findings\": []}"
+        }
+      },
+      "patient_context": {
+        "extracted_features": {
+          "patient_age": 33.0,
+          "patient_sex": "male"
+        },
+        "accepted_findings": [
+          {
+            "feature": "patient_age",
+            "value": 33.0,
+            "quote": "A 33-year-old male",
+            "unit": "year"
+          },
+          {
+            "feature": "patient_sex",
+            "value": "male",
+            "quote": "A 33-year-old male",
+            "unit": null
+          }
+        ],
+        "conflicts": [],
+        "raw_reply": ""
+      }
+    },
+    {
+      "patient_uid": "10010448-1",
+      "selection": "seeded:15",
+      "scd_primary": true,
+      "title": "Cerebrovascular Accident in a Pediatric Sickle Cell Patient",
+      "age": [[8.0, "year"]],
+      "gender": "F",
+      "patient_note": "An 8-year-old female with known sickle cell anemia presented with sudden onset right-sided hemiparesis and dysphasia. MRI confirmed acute ischemic stroke. Transcranial Doppler recorded prior to event showed elevated TCD velocity of 205 cm/s.",
+      "outcomes": {
+        "15": {
+          "outcome_name": "Stroke",
+          "present": true,
+          "extracted_features": {
+            "mrs": 3
+          },
+          "accepted_findings": [
+            {
+              "feature": "mrs",
+              "value": 3,
+              "quote": "right-sided hemiparesis and dysphasia.",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 3.0,
+            "features": {
+              "mrs": 3,
+              "patient_sex": "F",
+              "patient_age": 8.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": true,
+            "grade_if_present": null,
+            "reason": null,
+            "matched": "mrs == 3"
+          },
+          "raw_reply": "{\"present\": true, \"findings\": []}"
+        },
+        "12": {
+          "outcome_name": "Elevated Transcranial Doppler (TCD) Velocity",
+          "present": true,
+          "extracted_features": {
+            "tcd_velocity": 2.05
+          },
+          "accepted_findings": [
+            {
+              "feature": "tcd_velocity",
+              "value": 2.05,
+              "quote": "elevated TCD velocity of 205 cm/s.",
+              "unit": "m/s"
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 4.0,
+            "features": {
+              "tcd_velocity": 2.05,
+              "patient_sex": "F",
+              "patient_age": 8.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": true,
+            "grade_if_present": null,
+            "reason": null,
+            "matched": "tcd_velocity >= 200"
+          },
+          "raw_reply": "{\"present\": true, \"findings\": []}"
+        }
+      },
+      "patient_context": {
+        "extracted_features": {
+          "patient_age": 8.0,
+          "patient_sex": "female"
+        },
+        "accepted_findings": [
+          {
+            "feature": "patient_age",
+            "value": 8.0,
+            "quote": "An 8-year-old female",
+            "unit": "year"
+          },
+          {
+            "feature": "patient_sex",
+            "value": "female",
+            "quote": "An 8-year-old female",
+            "unit": null
+          }
+        ],
+        "conflicts": [],
+        "raw_reply": ""
+      }
+    },
+    {
+      "patient_uid": "10010448-2",
+      "selection": "seeded:24",
+      "scd_primary": true,
+      "title": "Priapism in Adolescent Sickle Cell Patient",
+      "age": [[14.0, "year"]],
+      "gender": "M",
+      "patient_note": "A 14-year-old male presented with recurrent episodes of painful prolonged penile erection lasting 6 hours.",
+      "outcomes": {
+        "24": {
+          "outcome_name": "Acute Ischemic Priapism",
+          "present": true,
+          "extracted_features": {
+            "priapism_duration_hours": 6.0
+          },
+          "accepted_findings": [
+            {
+              "feature": "priapism_duration_hours",
+              "value": 6.0,
+              "quote": "lasting 6 hours.",
+              "unit": "hours"
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "graded",
+            "rule_status": "graded",
+            "grade": 3.0,
+            "features": {
+              "priapism_duration_hours": 6.0,
+              "patient_sex": "M",
+              "patient_age": 14.0
+            },
+            "present": true,
+            "applicability": true,
+            "criteria_met": true,
+            "grade_if_present": null,
+            "reason": null,
+            "matched": "priapism_duration_hours > 4"
+          },
+          "raw_reply": "{\"present\": true, \"findings\": []}"
+        },
+        "40": {
+          "outcome_name": "Chronic Leg Ulcer",
+          "present": false,
+          "extracted_features": {},
+          "accepted_findings": [
+            {
+              "feature": "ulcer_present",
+              "value": true,
+              "quote": "nonexistent leg ulcer text in this note",
+              "unit": null
+            }
+          ],
+          "conflicts": {},
+          "grade_result": {
+            "status": "absent",
+            "rule_status": "absent",
+            "grade": null,
+            "features": {},
+            "present": false,
+            "applicability": true,
+            "criteria_met": false,
+            "grade_if_present": null,
+            "reason": "outcome not present in note",
+            "matched": null
+          },
+          "raw_reply": "{\"present\": false, \"findings\": []}"
+        }
+      },
+      "patient_context": {
+        "extracted_features": {
+          "patient_age": 14.0,
+          "patient_sex": "male"
+        },
+        "accepted_findings": [],
+        "conflicts": [],
+        "raw_reply": ""
+      }
+    }
+  ]
+}
