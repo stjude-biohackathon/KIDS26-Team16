@@ -74,11 +74,11 @@ DEFAULT_OUTCOMES = "10,11,12,15,17,21,24,28,29,39,40,47,48,49"
 
 STAGES = ("0", "1", "2a", "2b", "3")
 
-# What a run uses when --prompt-stage is not given. 2b had the best automatic
-# numbers on the ladder (100% of quotes verified, fewest cannot_grade, fully
-# repeatable; tasks/summary.md). This is only the CLI default: stage "0" stays the
-# frozen baseline arm, and the prompt-building functions still default to it.
-DEFAULT_PROMPT_STAGE = "2b"
+# What a run uses when --prompt-stage is not given. Stage 3 incorporates precision
+# rules (negation handling, episode scoping, ordinal cues, and unit hardening).
+# Any rung in STAGES ("0", "1", "2a", "2b", "3") can still be chosen via --prompt-stage.
+# Stage "0" stays the frozen baseline arm, and prompt-building functions still default to it.
+DEFAULT_PROMPT_STAGE = "3"
 
 
 @dataclass(frozen=True)

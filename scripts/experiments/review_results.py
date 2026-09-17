@@ -38,7 +38,12 @@ def summarize(data: dict) -> dict:
     }
 
 
-def export_reviews(source: pathlib.Path | str, output_dir: pathlib.Path | str | None = None) -> dict:
+def export_reviews(
+    source: pathlib.Path | str,
+    output_dir: pathlib.Path | str | None = None,
+    handcheck_limit: int = 100,
+    absence_limit: int = 50,
+) -> dict:
     """Sample grounded proposals, keep every conflict/refutation, and sample absences.
 
     CSVs use a UTF-8 BOM for Windows spreadsheet compatibility. Existing sheets
@@ -95,8 +100,9 @@ def export_reviews(source: pathlib.Path | str, output_dir: pathlib.Path | str | 
                 audit_key = "refuted_audit" if status == "refuted" else "absence_audit"
                 rows[audit_key].append(row)
     rng = random.Random(0)
-    for name, limit in (("handcheck", 100), ("absence_audit", 50)):
-        rows[name] = rng.sample(rows[name], min(limit, len(rows[name])))
+    for name, limit in (("handcheck", handcheck_limit), ("absence_audit", absence_limit)):
+        if limit is not None and limit >= 0:
+            rows[name] = rng.sample(rows[name], min(limit, len(rows[name])))
     directory.mkdir(parents=True, exist_ok=True)
     for name, path in paths.items():
         with path.open("x", encoding="utf-8-sig", newline="") as output:
@@ -110,9 +116,26 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("results", type=pathlib.Path)
     parser.add_argument("--output-dir", type=pathlib.Path)
+    parser.add_argument(
+        "--handcheck-limit",
+        type=int,
+        default=100,
+        help="Maximum grounded proposals to sample for handcheck.csv (default: 100; pass -1 for all)",
+    )
+    parser.add_argument(
+        "--absence-limit",
+        type=int,
+        default=50,
+        help="Maximum absent pairs to sample for absence_audit.csv (default: 50; pass -1 for all)",
+    )
     args = parser.parse_args()
     try:
-        paths = export_reviews(args.results, args.output_dir)
+        paths = export_reviews(
+            args.results,
+            args.output_dir,
+            handcheck_limit=args.handcheck_limit,
+            absence_limit=args.absence_limit,
+        )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.error(f"Could not export review sheets: {exc}")
     for name, path in paths.items():

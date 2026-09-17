@@ -136,10 +136,12 @@ metadata, per-run counters, profiling, grade-status distributions, and
 
 CSVs use UTF-8 with a BOM for Windows spreadsheet compatibility. Each carries the
 source `run_id` and a SHA-256 of the result file; even an empty sheet has headers. Existing sheets are
-protected because they may contain completed reviews. For another reviewer:
+protected because they may contain completed reviews. Sample limits default to 100 for `handcheck.csv`
+and 50 for `absence_audit.csv`, but can be customized with `--handcheck-limit` and `--absence-limit` (use `-1` for all).
+For custom limits or an independent reviewer:
 
 ```bash
-python scripts/experiments/review_results.py results/full.json --output-dir results/reviewer_2
+python scripts/experiments/review_results.py results/full.json --output-dir results/reviewer_2 --handcheck-limit 300 --absence-limit 150
 ```
 
 `results/`, model weights, raw dataset downloads, and local environments are

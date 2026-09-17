@@ -141,7 +141,7 @@ def test_invalid_cli_input_is_rejected_before_running(flags, tmp_path):
     assert not out.exists()
 
 
-def test_a_run_without_prompt_stage_uses_stage_2b(tmp_path):
+def test_a_run_without_prompt_stage_uses_stage_3(tmp_path):
     out = tmp_path / "default.json"
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--backend", "mock", "--notes", "1",
@@ -150,11 +150,12 @@ def test_a_run_without_prompt_stage_uses_stage_2b(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     provenance = json.loads(out.read_text(encoding="utf-8"))["provenance"]
-    assert provenance["prompt_stage"] == "2b"
+    assert provenance["prompt_stage"] == "3"
+    assert provenance["prompt_stage_flags"]["precision"] is True
     assert provenance["prompt_stage_flags"]["cot"] is True
 
 
-@pytest.mark.parametrize("name", ["0", "3"])
+@pytest.mark.parametrize("name", ["0", "1", "2a", "2b"])
 def test_any_other_prompt_stage_can_still_be_chosen(name, tmp_path):
     out = tmp_path / f"stage_{name}.json"
     result = subprocess.run(
@@ -255,6 +256,40 @@ def test_review_missed_presence_routes_to_absence_audit(tmp_path):
     assert rows[0]["model_said_present"] == "False"
     assert rows[0]["outcome"] == "08"
 
+
+def test_review_custom_sample_limits(tmp_path):
+    review = importlib.import_module("experiments.review_results")
+    outcome = {
+        "outcome_name": "Fever", "present": True,
+        "extracted_features": {},
+        "accepted_findings": [
+            {"feature": "f1", "value": 1, "quote": "finding 1", "unit": None},
+            {"feature": "f2", "value": 2, "quote": "finding 2", "unit": None},
+            {"feature": "f3", "value": 3, "quote": "finding 3", "unit": None},
+        ],
+        "conflicts": {},
+        "grade_result": {"status": "graded", "grade": 1, "reason": "ok"},
+    }
+    source = tmp_path / "results_limits.json"
+    source.write_text(json.dumps({
+        "provenance": {"model_digest": "abc", "prompt_stage": "3"},
+        "detailed_records": [{
+            "patient_uid": "test-limits", "patient_note": "finding 1 finding 2 finding 3",
+            "outcomes": {"36": outcome},
+        }],
+    }), encoding="utf-8")
+    paths = review.export_reviews(source, output_dir=tmp_path / "custom_limit", handcheck_limit=2)
+    with paths["handcheck"].open(encoding="utf-8-sig", newline="") as f:
+        assert len(list(csv.DictReader(f))) == 2
+
+    cli_out = tmp_path / "cli_limit"
+    res = subprocess.run([
+        sys.executable, str(ROOT / "scripts/experiments/review_results.py"),
+        str(source), "--output-dir", str(cli_out), "--handcheck-limit", "1",
+    ], capture_output=True, text=True, encoding="utf-8")
+    assert res.returncode == 0
+    with (cli_out / "handcheck.csv").open(encoding="utf-8-sig", newline="") as f:
+        assert len(list(csv.DictReader(f))) == 1
 
 
 def test_consistency_includes_presence_and_every_repeat(tmp_path, monkeypatch):
