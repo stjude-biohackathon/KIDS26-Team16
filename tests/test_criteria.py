@@ -1,5 +1,5 @@
 """Tests for objective presence criteria."""
-from scogs.criteria import PRESENCE_CRITERIA, criteria_met
+from scogs.criteria import criteria_met
 from scogs.predicates import UNKNOWN
 from scogs.evaluate import grade, GRADED, ABSENT
 from experiments.medgemma_extraction import harness_status

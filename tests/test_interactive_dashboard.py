@@ -1,8 +1,6 @@
 """Automated unit tests for SCOGS Interactive Dashboard and Backend Bridges."""
-import json
 from pathlib import Path
 import pytest
-import pandas as pd
 
 from scogs import GradeResult
 from dashboard.interactive_dashboard import (

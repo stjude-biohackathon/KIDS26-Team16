@@ -28,7 +28,7 @@ grades an outcome it is *told* is present; deciding presence is Layer 1/2's job.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .features import FEATURES, ordinal_rank
 from .predicates import UNKNOWN, parse

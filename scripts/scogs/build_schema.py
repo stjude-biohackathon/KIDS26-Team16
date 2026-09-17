@@ -94,7 +94,7 @@ def main() -> int:
     print(f"  {len(FEATURES)} features, {len(TABLES)} outcomes, "
           f"{schema['counts']['rules']} rules")
     print(f"  {len(schema['review_queue'])} features flagged for clinical review")
-    print(f"  0 undeclared identifiers, 0 orphans")
+    print("  0 undeclared identifiers, 0 orphans")
     return 0
 
 

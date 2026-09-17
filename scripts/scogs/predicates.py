@@ -22,7 +22,7 @@ the right-hand side is an enum *value* of the feature on the left.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 # ---------------------------------------------------------------- three-valued

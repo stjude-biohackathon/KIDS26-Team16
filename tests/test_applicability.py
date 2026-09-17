@@ -1,8 +1,7 @@
 """Tests for clinical outcome applicability rules (rules.md)."""
-import pytest
 
-from scogs.applicability import APPLICABILITY, applicability
-from scogs.evaluate import ABSENT, NOT_APPLICABLE, grade
+from scogs.applicability import applicability
+from scogs.evaluate import NOT_APPLICABLE, grade
 from scogs.predicates import UNKNOWN
 
 

@@ -595,7 +595,7 @@ T("52", "Pulmonary Hypertension",
     "mpap":  [(3, "mpap > 35"), (2, "25 <= mpap <= 35"), (1, "20 <= mpap and mpap < 25")],
     "nyha":  [(4, "nyha_class == 4"), (3, "nyha_class == 3"),
               (2, "nyha_class in (2,3)"), (1, "nyha_class in (1,2)")],
-    "echo":  [(4, f"right_heart_failure and (low_cardiac_output or resp_support >= niv_bipap_cpap)")],
+    "echo":  [(4, "right_heart_failure and (low_cardiac_output or resp_support >= niv_bipap_cpap)")],
   },
   notes=["max_of, per the rubric's own worked example: 'if patient fits Grade 2 "
          "criteria based on mPAP, but Grade 3 based on NYHA and echocardiogram "

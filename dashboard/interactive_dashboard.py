@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from htmltools import HTML, Tag, TagList, tags
+from htmltools import HTML
 from shiny import App, reactive, render, ui
 
 # `shiny run dashboard/interactive_dashboard.py` imports this file by path, so
@@ -1337,7 +1337,8 @@ def server(input, output, session):
     @output
     @render.ui
     def profiling_card():
-        state = get_current_view_state()
+        # Read for its reactive dependencies only: re-render when the selected case changes.
+        _ = get_current_view_state()
         mode = input.app_mode()
 
         if mode == "explore":

@@ -34,7 +34,7 @@ if sys.platform == "win32":
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from experiments.ollama_backend import (
-    DEFAULT_HOST, DEFAULT_MODEL, GGUF_FILE_TYPES, WEIGHTS, call_ollama, preflight,
+    DEFAULT_HOST, DEFAULT_MODEL, WEIGHTS, call_ollama, preflight,
 )
 from scogs.applicability import applicability
 from scogs.criteria import criteria_met
@@ -1876,7 +1876,7 @@ def main() -> int:
         ap.error(f"No notes available for cohort {a.cohort}")
 
     print("=" * 70)
-    print(f"P11 MedGemma Extraction Test")
+    print("P11 MedGemma Extraction Test")
     print(f"weights={WEIGHTS if a.backend == 'ollama' else 'none (mock)'}  "
           f"served-as={model}  backend={a.backend}")
     print(f"notes={len(notes)}  outcomes={','.join(outcomes)}  repeat={a.repeat}  "
@@ -1926,8 +1926,8 @@ def main() -> int:
         print(f"    quote verified:     {t.quote_ok:4d}  {rep['quote_verified_pct_of_quoted']:5.1f}% of quoted | {rep['quote_verified_pct']:.1f}% of all")
         print(f"    quote not in note:  {t.quote_unfound:4d}  {rep['hallucinated_pct_of_quoted']:5.1f}% of quoted | {rep['hallucinated_quote_pct']:.1f}% of all")
         print(f"  Accepted findings:    {rep['accepted']}")
-        print(f"     ^ a verified quote means the words are in the note, NOT that they")
-        print(f"       support the value. Precision needs the hand-check sheet.")
+        print("     ^ a verified quote means the words are in the note, NOT that they")
+        print("       support the value. Precision needs the hand-check sheet.")
         print(f"  Invalid values:       {rep['invalid_value']}")
         if rep['unit_converted'] or rep['unit_mismatch'] or rep['unit_ambiguous']:
             print(f"  Unit guard:           {rep['unit_converted']} converted into the "
@@ -1949,10 +1949,10 @@ def main() -> int:
         if rep['value_conflicts']:
             print(f"  !! VALUE CONFLICTS:   {rep['value_conflicts']} feature(s) had several "
                   f"verified values and no aggregation rule.")
-            print(f"     Withheld from grading rather than guessed at; listed per note in --out.")
+            print("     Withheld from grading rather than guessed at; listed per note in --out.")
         if rep['tokenizer_artifacts']:
             print(f"  !! TOKENIZER ARTIFACTS: {rep['tokenizer_artifacts']} quotes carry corrupt GGUF byte tokens.")
-            print(f"     The served weights are broken; these numbers are not a clean measurement.")
+            print("     The served weights are broken; these numbers are not a clean measurement.")
         print(f"  Unparseable replies:  {rep['unparseable_replies']}")
         print(f"  Prompt tokens:        {rep['prompt_tokens']} (~{rep['prompt_tokens']//len(notes)} tok/note)")
         print(f"  Completion tokens:    {rep['completion_tokens']} (~{rep['completion_tokens']//len(notes)} tok/note)")
@@ -2050,9 +2050,9 @@ def main() -> int:
     iv_status = "GOOD (≤2%)" if iv_pct <= 2 else ("WORKABLE (2-10%)" if iv_pct <= 10 else "CONCERNING (>10%)")
     print(f"  - Quote-verified % (of quoted proposals):  {qv_quoted}% -> {qv_status}")
     print(f"  - Quote-verified % (of ALL proposals):     {rep0['quote_verified_pct']}%")
-    print(f"      NB: quote-verified is a GROUNDING check, not precision. It asks only")
-    print(f"      whether the quoted words appear in the note - a quote that does not")
-    print(f"      support its value passes it. Precision comes from the hand-check sheet.")
+    print("      NB: quote-verified is a GROUNDING check, not precision. It asks only")
+    print("      whether the quoted words appear in the note - a quote that does not")
+    print("      support its value passes it. Precision comes from the hand-check sheet.")
     print(f"  - Null-placeholder rate:   {rep0['null_placeholder_pct']}% -> "
           f"{'GOOD (≤5%)' if rep0['null_placeholder_pct'] <= 5 else 'CONCERNING - the prompt omission rule is being ignored'}")
     cs_value = "  n/a" if consistency_pct is None else f"{consistency_pct}%"

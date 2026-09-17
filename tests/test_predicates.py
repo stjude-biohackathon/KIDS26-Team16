@@ -1,7 +1,7 @@
 """Parser and three-valued logic."""
 import pytest
 
-from scogs.predicates import (UNKNOWN, And, Between, Cmp, In, Not, Or, Truth,
+from scogs.predicates import (UNKNOWN, And, Between, Cmp, Or, Truth,
                               k_and, k_not, k_or, parse)
 from scogs.evaluate import CTX
 
