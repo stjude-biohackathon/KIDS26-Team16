@@ -1,0 +1,325 @@
+/* Clinical Design Tokens - Light Theme (Default) */
+:root, [data-bs-theme="light"] {
+    --scogs-canvas: #f8fafc;
+    --scogs-surface: #ffffff;
+    --scogs-surface-subtle: #f1f5f9;
+    --scogs-border: #e2e8f0;
+    --scogs-border-subtle: #f1f5f9;
+    --scogs-text: #0f172a;
+    --scogs-text-muted: #64748b;
+    --scogs-text-secondary: #475569;
+    --scogs-primary: #0284c7;
+    --scogs-primary-hover: #0369a1;
+    --scogs-code-bg: #f8fafc;
+    --scogs-code-text: #0f172a;
+    --scogs-note-bg: #f8fafc;
+    --scogs-note-text: #334155;
+    --scogs-highlight-bg: #fef3c7;
+    --scogs-highlight-text: #92400e;
+    --scogs-highlight-border: #f59e0b;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+}
+
+/* Clinical Design Tokens - Dark Theme */
+[data-bs-theme="dark"] {
+    --scogs-canvas: #090d16;
+    --scogs-surface: #111827;
+    --scogs-surface-subtle: #1f293d;
+    --scogs-border: #243048;
+    --scogs-border-subtle: #1a233a;
+    --scogs-text: #f8fafc;
+    --scogs-text-muted: #94a3b8;
+    --scogs-text-secondary: #cbd5e1;
+    --scogs-primary: #38bdf8;
+    --scogs-primary-hover: #0ea5e9;
+    --scogs-code-bg: #090d16;
+    --scogs-code-text: #38bdf8;
+    --scogs-note-bg: #090d16;
+    --scogs-note-text: #cbd5e1;
+    --scogs-highlight-bg: #78350f;
+    --scogs-highlight-text: #fef3c7;
+    --scogs-highlight-border: #f59e0b;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", sans-serif;
+    background-color: var(--scogs-canvas);
+    color: var(--scogs-text);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Header Title */
+.app-title-main {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--scogs-text);
+    letter-spacing: -0.025em;
+}
+.app-title-sub {
+    font-size: 0.85rem;
+    color: var(--scogs-text-muted);
+    letter-spacing: -0.01em;
+}
+
+/* Brand Badge */
+.badge-brand {
+    background-color: var(--scogs-primary);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+}
+[data-bs-theme="dark"] .badge-brand {
+    color: #090d16;
+}
+
+.badge-engine {
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    color: var(--scogs-text-secondary);
+    font-weight: 600;
+    font-size: 0.76rem;
+    padding: 4px 11px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Theme Switcher */
+.theme-toggle-container {
+    display: inline-flex;
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    gap: 2px;
+}
+.theme-btn {
+    border: none;
+    background: transparent;
+    color: var(--scogs-text-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.theme-btn:hover {
+    color: var(--scogs-text);
+}
+.theme-btn.active {
+    background: var(--scogs-surface);
+    color: var(--scogs-text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Sidebar Styling */
+.clinical-sidebar {
+    background: var(--scogs-surface) !important;
+    border-right: 1px solid var(--scogs-border) !important;
+}
+.sidebar-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--scogs-text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+}
+.sidebar-divider {
+    border-top: 1px solid var(--scogs-border);
+    margin: 14px 0;
+}
+
+/* Cards */
+.card {
+    background: var(--scogs-surface) !important;
+    border: 1px solid var(--scogs-border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.card-header {
+    background: var(--scogs-surface) !important;
+    border-bottom: 1px solid var(--scogs-border) !important;
+    padding: 12px 18px;
+}
+.card-header-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--scogs-text);
+    letter-spacing: -0.01em;
+}
+
+/* Metric Boxes */
+.metric-box {
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    background: var(--scogs-surface);
+    border: 1px solid var(--scogs-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+.metric-val-tabular {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+/* Severity & Status Badges (Light and Dark compliant) */
+.badge-grade-pill {
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+}
+
+.badge-grade-1 { background-color: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.badge-grade-2 { background-color: #fffbeb; color: #92400e; border-color: #fde68a; }
+.badge-grade-3, .badge-grade-4, .badge-grade-5 { background-color: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.badge-grade-set { background-color: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.badge-cannot-grade { background-color: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+.badge-not-applicable { background-color: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.badge-absent { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+.badge-refuted { background-color: #faf5ff; color: #6b21a8; border-color: #e9d5ff; }
+
+[data-bs-theme="dark"] .badge-grade-1 { background-color: rgba(6, 78, 59, 0.45); color: #6ee7b7; border-color: #059669; }
+[data-bs-theme="dark"] .badge-grade-2 { background-color: rgba(120, 53, 15, 0.45); color: #fcd34d; border-color: #d97706; }
+[data-bs-theme="dark"] .badge-grade-3, [data-bs-theme="dark"] .badge-grade-4, [data-bs-theme="dark"] .badge-grade-5 { background-color: rgba(127, 29, 29, 0.45); color: #fca5a5; border-color: #dc2626; }
+[data-bs-theme="dark"] .badge-grade-set { background-color: rgba(30, 58, 138, 0.45); color: #93c5fd; border-color: #2563eb; }
+[data-bs-theme="dark"] .badge-cannot-grade { background-color: rgba(124, 45, 18, 0.45); color: #fdba74; border-color: #ea580c; }
+[data-bs-theme="dark"] .badge-not-applicable { background-color: rgba(30, 41, 59, 0.5); color: #94a3b8; border-color: #334155; }
+[data-bs-theme="dark"] .badge-absent { background-color: rgba(15, 23, 42, 0.5); color: #94a3b8; border-color: #334155; }
+[data-bs-theme="dark"] .badge-refuted { background-color: rgba(88, 28, 135, 0.45); color: #d8b4fe; border-color: #9333ea; }
+
+/* Clean Findings Table */
+.findings-table th {
+    background: var(--scogs-surface-subtle);
+    color: var(--scogs-text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--scogs-border);
+    padding: 10px 14px;
+}
+.findings-table td {
+    font-size: 0.84rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--scogs-border-subtle);
+    padding: 9px 14px;
+    color: var(--scogs-text);
+}
+.findings-table tr:hover td {
+    background-color: var(--scogs-surface-subtle);
+}
+
+/* Micro Status Badges */
+.badge-status {
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.badge-status-verified { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.badge-status-unfound { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.badge-status-derived { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+
+[data-bs-theme="dark"] .badge-status-verified { background: rgba(6, 78, 59, 0.35); color: #6ee7b7; border: 1px solid #059669; }
+[data-bs-theme="dark"] .badge-status-unfound { background: rgba(127, 29, 29, 0.35); color: #fca5a5; border: 1px solid #dc2626; }
+[data-bs-theme="dark"] .badge-status-derived { background: rgba(120, 53, 15, 0.35); color: #fcd34d; border: 1px solid #d97706; }
+
+/* DSL Predicate Code Box */
+.dsl-code-block {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    color: var(--scogs-code-text);
+    background: var(--scogs-code-bg);
+    border: 1px solid var(--scogs-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Clinical Note Inspector Body */
+.note-text-body {
+    background: var(--scogs-note-bg);
+    color: var(--scogs-note-text);
+    border: 1px solid var(--scogs-border);
+}
+.quote-highlight {
+    background-color: var(--scogs-highlight-bg);
+    color: var(--scogs-highlight-text);
+    border-bottom: 2px solid var(--scogs-highlight-border);
+    padding: 1px 4px;
+    border-radius: 3px;
+    cursor: help;
+    font-weight: 500;
+}
+
+/* Form Elements in Dark Mode */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #0b0f19;
+    color: #f8fafc;
+    border-color: #243048;
+}
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    border-color: var(--scogs-primary);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+/* Primary Action Button */
+.btn-clinical-primary {
+    background-color: var(--scogs-primary);
+    border-color: var(--scogs-primary);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    border-radius: var(--radius-md);
+    padding: 9px 14px;
+    transition: background-color 0.15s ease, transform 0.05s ease;
+}
+.btn-clinical-primary:hover {
+    background-color: var(--scogs-primary-hover);
+    border-color: var(--scogs-primary-hover);
+    color: #ffffff;
+}
+.btn-clinical-primary:active {
+    transform: translateY(1px);
+}
+[data-bs-theme="dark"] .btn-clinical-primary {
+    color: #090d16;
+}
+
+/* Custom Scrollbar */
+.note-text-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.note-text-body::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 3px;
+}

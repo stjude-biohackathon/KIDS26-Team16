@@ -2,13 +2,9 @@
 from pathlib import Path
 import pytest
 
-from dashboard.interactive_dashboard import (
-    app,
-    find_quote_spans,
-    highlight_note_quotes,
-    load_csv_notes,
-    load_run_file,
-)
+from dashboard.data import load_csv_notes, load_run_file
+from dashboard.highlight import find_quote_spans, highlight_note_quotes
+from dashboard.interactive_dashboard import app
 
 
 def test_load_run_file_with_fixture():
@@ -99,3 +95,11 @@ def test_shiny_app_instance():
     assert app is not None
     assert hasattr(app, "ui")
     assert hasattr(app, "server")
+
+
+def test_layout_inlines_the_theme_assets():
+    # The CSS and JS moved to dashboard/static/; the page must still carry them inline.
+    from dashboard.layout import app_ui
+    page = str(app_ui)
+    assert "--scogs-canvas" in page                  # dashboard.css
+    assert "function applyTheme(theme)" in page      # theme.js

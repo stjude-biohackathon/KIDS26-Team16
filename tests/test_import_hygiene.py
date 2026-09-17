@@ -15,7 +15,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 # Modules that live inside a package (scripts/experiments, scripts/audit,
 # dashboard) and therefore must always be imported with the package prefix.
 # Add a name here whenever you create such a module.
-PACKAGE_MEMBERS = ["medgemma_extraction", "ollama_backend", "review_results", "grading", "verification", "cohort", "run_output", "evaluation", "view_state"]
+PACKAGE_MEMBERS = [
+    "medgemma_extraction", "ollama_backend", "review_results", "grading",
+    "verification", "cohort", "run_output", "evaluation", "view_state",
+    "data", "highlight", "layout", "server",
+]
 
 MEMBERS = "|".join(PACKAGE_MEMBERS)
 FORBIDDEN_IMPORT = re.compile(
