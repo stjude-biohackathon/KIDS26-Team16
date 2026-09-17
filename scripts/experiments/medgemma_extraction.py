@@ -591,7 +591,30 @@ BACKENDS = {
 }
 
 
-# ------------------------------------------------------- verification & scoring
+# ==============================================================================
+# CLINICAL EXTRACTION VERIFICATION & CHECK PIPELINE
+# ==============================================================================
+# This section implements the multi-stage verification and grounding pipeline
+# that checks and validates LLM-extracted clinical features against the source
+# clinical note and the SCOGS schema before any decision table evaluation:
+#
+#   1. Verbatim Quote Grounding (normalize, verify):
+#      Checks that quoted evidence exists verbatim in the source clinical note.
+#   2. Schema Type & Enum Coercion (coerce):
+#      Enforces declared schema types (bool, num, ord, cat) and enum values.
+#   3. Unit Guards & Normalization (unit_guard):
+#      Reconciles numbers against quote units, handles conversions, and flags mismatches.
+#   4. Age Guard (age_guard):
+#      Reconciles compound age units into decimal years; drops gestational age.
+#   5. TLC Guard (tlc_guard):
+#      Reconciles tlc_pct_pred against raw lung volume (L) vs. percent predicted (%).
+#   6. Conflict Reconciliation (reconcile, reduce_policy):
+#      Reconciles multiple findings per feature; withholds unresolvable conflicts.
+#   7. Side-Effect-Free Feedback Precheck (precheck):
+#      Pre-validates output JSON for targeted error feedback re-prompting.
+#   8. Diagnostic Status Reconciliation (harness_status):
+#      Reconciles model presence calls against rule engine and objective criteria.
+# ==============================================================================
 
 # SentencePiece byte-token wreckage from a badly converted GGUF. Its presence
 # means the served weights are corrupt, not that the model hallucinated - so it
@@ -600,6 +623,17 @@ ARTIFACT = re.compile(r"\[UNK_BYTE_|\u2581")
 
 
 def normalize(s: str) -> str:
+    """Normalize text for verbatim quote comparison.
+
+    Checks and transforms performed:
+    1. SentencePiece Byte Artifacts: Strips [UNK_BYTE_...] and \u2581 from corrupt GGUF conversions.
+    2. Whitespace Normalization: Collapses consecutive whitespace (tabs, newlines, spaces) to a single space.
+    3. Punctuation Spacing: Strips scraping artifact spaces before closing punctuation (e.g. '(Figure )' -> '(Figure)').
+    4. Casing: Lowercases text so case differences between note and quote do not cause false quote mismatches.
+
+    Returns:
+        Cleaned, lowercased string ready for verbatim substring search.
+    """
     # Strip community GGUF SentencePiece byte token artifacts (e.g. [UNK_BYTE_0xe29681▁...])
     s = re.sub(r"\[UNK_BYTE_[^\]]+\]", " ", s)
     s = s.replace("\u2581", " ")
@@ -723,8 +757,18 @@ def _number_for_unit(q: str, pat: str):
 
 
 def _agrees(a: float, b: float) -> bool:
-    """Tight on purpose. 38.9 against 39.2 is 0.8% and straddles a grade boundary,
-    so anything loose enough to call those equal defeats the check."""
+    """Strict numeric equivalence check with a tight 0.5% relative tolerance.
+
+    Check rationale:
+        Clinical grade thresholds frequently sit on fine margins. For instance,
+        a body temperature of 38.9 vs. 39.2 °C represents a 0.8% difference, yet
+        straddles a Grade 2 vs. Grade 3 boundary; similarly, TRV 2.49 vs 2.50 m/s
+        straddles elevated vs normal. Any loose tolerance (e.g. 1-5%) would defeat
+        the rubric's decision boundaries.
+
+    Formula:
+        abs(a - b) <= max(abs(b), abs(a), 1.0) * 0.005
+    """
     return abs(a - b) <= max(abs(b), abs(a), 1.0) * 0.005
 
 
@@ -818,10 +862,35 @@ def age_readings(q: str) -> list[AgeReading]:
 
 
 def age_guard(value: float, q: str):
-    """-> (status, value, detail), as `unit_guard`, for an age declared in years.
+    """Reconcile extracted patient age against quote and convert to decimal years.
 
-    An age written with a marker ("-old", "of age", "aged") outranks a bare
-    duration: in "a 5-year-old with pain for 3 days", 3 is not the patient's age.
+    Clinical intent:
+        The SCOGS schema standardizes all patient ages in years (`patient_age`).
+        Every rule reading age depends on years (e.g. pediatric stratification < 18 yr,
+        infant fever exclusion for 0-59 days [0.1642 yr]). Clinical notes express
+        infant and child ages in days, weeks, months, or compound phrases ("18-month-old",
+        "day of life 3", "2 years 4 months"). The quote is the ground truth.
+
+    Checks performed:
+        1. Compound Age Parsing: Parses adjacent units in descending order
+           (years, months, weeks, days) and computes equivalent decimal years
+           using 365.25 days/year and 12 months/year.
+        2. Gestational Age Filter Check: Rejects numbers marked with gestational/postmenstrual
+           descriptors ("born at 32 weeks", "GA", "PMA", "corrected"). If the extracted
+           value matches only a gestational age, returns UNIT_VALUE_MISMATCH.
+        3. Age Marker Prioritization Check: Outranks bare durations ("fever for 3 days" is
+           not age 3) with explicit age markers ("-old", "aged", "day of life", "DOL").
+        4. Value Agreement Check:
+           - Matches model value against parsed raw numbers or converted years (`_agrees`).
+           - Ambiguity: If multiple distinct candidate ages match, returns UNIT_AMBIGUOUS.
+           - Direct match: If value matches converted years, returns (UNIT_OK, truth, None).
+           - Raw match: If value copied raw number (e.g. 18 for 18 months), returns
+             (UNIT_CONVERTED, 1.5, detail).
+           - Mismatch: If value matches no valid age candidate, returns (UNIT_VALUE_MISMATCH, None, detail).
+           - No age candidates found: Returns (UNIT_OK, value, None) [silence default].
+
+    Returns:
+        tuple[str, float | None, str | None]: (status, reconciled_years, detail)
     """
     readings = age_readings(q)
     ages = [r for r in readings if not r.gestational]
@@ -849,15 +918,33 @@ TLC_PCT_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*(%|percent(?:age)?\b|pct\b)", r
 
 
 def tlc_guard(value: float, q: str):
-    """Reconcile tlc_pct_pred against its verified quote.
+    """Reconcile Total Lung Capacity (tlc_pct_pred) against its verified quote.
 
-    Total Lung Capacity (Outcome 50) is graded on TLC % predicted, not raw gas
-    volume in Liters. Notes commonly state both: 'TLC 3.2 L (78% predicted)'. If the
-    model extracts the 3.2, evaluating without a guard tests '3.2 < 50' and grades
-    a mild patient as Grade 4 Life-Threatening.
-    - If value matches any % in the quote, it is accepted (UNIT_OK).
-    - If value matches a volume in L/mL and a % is present, it rescues to that % (UNIT_CONVERTED).
-    - If the quote contains only volume, it is rejected (UNIT_BAD).
+    Clinical intent:
+        Total Lung Capacity (Outcome 50: Chronic Restrictive Lung Physiology) is graded
+        strictly on TLC percent predicted (% predicted), NOT raw gas volume in Liters.
+        Notes routinely state both: 'TLC 3.2 L (78% predicted)'. If the model extracts
+        the raw volume 3.2, evaluating without this guard checks '3.2 < 50%' and
+        erroneously classifies a patient with mild disease as Grade 4 Life-Threatening.
+
+    Checks performed:
+        1. Percentage Value Agreement Check:
+           If extracted `value` matches any percentage in the quote, it passes as
+           correct (UNIT_OK).
+        2. Raw Volume Rescue Check:
+           If extracted `value` matches a volume in L or mL:
+           - Exactly one percentage in quote: Rescues value to that percentage
+             (UNIT_CONVERTED, truth_pct, detail).
+           - Multiple percentages in quote: Flags as ambiguous to avoid arbitrary selection
+             (UNIT_AMBIGUOUS, value, detail).
+           - No percentage in quote (volume-only): Rejects extraction because raw volume
+             cannot be graded on percentage thresholds (UNIT_BAD, None, detail).
+        3. Fallback Validation:
+           - Quote has neither volume nor %: Passes untouched (UNIT_OK, value, None).
+           - Quote has % but value does not agree: Rejects as mismatch (UNIT_VALUE_MISMATCH, None, detail).
+
+    Returns:
+        tuple[str, float | None, str | None]: (status, reconciled_pct, detail)
     """
     vol_entries = [(float(n), u.strip()) for n, u in TLC_VOL_PATTERN.findall(q)]
     pct_entries = [(float(n), u.strip()) for n, u in TLC_PCT_PATTERN.findall(q)]
@@ -884,16 +971,37 @@ def tlc_guard(value: float, q: str):
 
 
 def unit_guard(name: str, value: float, quote: str):
-    """-> (status, value, detail). Reconcile a number against its own verified quote.
+    """Reconcile an extracted numeric value against its own verified quote.
 
-    The quote is the authority, not the value: the model may already have tried the
-    conversion and botched it ("102.6 Fahrenheit" -> 38.9, which is 39.2 and lands on
-    the far side of a grade boundary). So the number is read out of the quote, next
-    to the unit it is written in, and converted from there.
+    Clinical intent:
+        A numeric feature declares its expected unit in the schema (e.g. mg/dL, m/s, °C).
+        The verified quote is the clinical source of truth, not the model's value: the model
+        may extract a number without its unit ("creatinine 7 mg/L" extracted as 7.0 mg/dL,
+        a 10x dosing/grading error), or botch mental arithmetic ("102.6 °F" -> 38.9 °C
+        instead of 39.2 °C, crossing a grade boundary).
 
-    Silence is the default. No recognisable unit in the quote, several of them, or no
-    number beside one, and the value is returned untouched - this guard only speaks
-    where the note itself said what unit it meant.
+    Checks performed:
+        1. Schema Unit & Delegation Check:
+           - If feature has no declared unit or no conversion family, returns (UNIT_OK, value, None).
+           - If declared unit is 'years', delegates to `age_guard()`.
+           - If feature is 'tlc_pct_pred', delegates to `tlc_guard()`.
+        2. Unit Token Detection Check:
+           - Scans quote for declared unit tokens and scoped tokens (preventing collisions
+             like "cm" on wound area).
+           - No unit found in quote: Returns (UNIT_OK, value, None) [silence default].
+           - Multiple distinct unit tokens: Returns (UNIT_AMBIGUOUS, value, detail).
+           - Unit token not convertible to declared unit: Returns (UNIT_BAD, None, detail).
+        3. Anchor Number Association Check:
+           - Locates number attached to the unit token via `_number_for_unit()`.
+           - If no number is attached to the unit token: Returns (UNIT_OK, value, None).
+        4. Value & Conversion Verification Check:
+           - Converts raw number to schema's canonical unit using `UNIT_CONVERSIONS`.
+           - If value agrees with converted truth (`_agrees`): Returns (UNIT_OK, truth, None).
+           - If value agrees with raw number: Converts and returns (UNIT_CONVERTED, truth, detail).
+           - If value agrees with neither: Returns (UNIT_VALUE_MISMATCH, None, detail).
+
+    Returns:
+        tuple[str, float | None, str | None]: (status, reconciled_value, detail)
     """
     declared = FEATURES[name].get("unit")
     if declared == "years":
@@ -936,7 +1044,18 @@ AGG_MIN = re.compile(r"\blowest\b|\bminimum\b|\bnadir\b", re.I)
 
 
 def reduce_policy(name: str) -> str | None:
-    """-> 'max' | 'min' | None, read off the feature's own definition."""
+    """Check feature definition in schema for an aggregation rule ('max' | 'min').
+
+    Checks performed:
+        1. Categorical Feature Check: Returns None (unordered; no defensible winner).
+        2. Peak / Worst Search: Searches feature definition text for peak indicators
+           ('highest', 'maximum', 'max', 'peak', 'worst', 'most intensive').
+           If found, returns 'max'.
+        3. Nadir / Minimum Search: Searches feature definition text for nadir indicators
+           ('lowest', 'minimum', 'nadir').
+           If found, returns 'min'.
+        4. Default: If no policy keywords exist, returns None.
+    """
     if FEATURES[name]["type"] == "cat":
         return None                       # unordered: no defensible winner
     d = FEATURES[name]["definition"]
@@ -953,15 +1072,32 @@ def _rank(name: str, v):
 
 
 def harness_status(rule_status: str, present, criteria=None) -> str:
-    """-> the status the harness reports, which splits one of the engine's.
+    """Reconcile model presence and objective criteria against rule engine outcome status.
 
-    `absent` pools two different findings: the model never evidenced the outcome,
-    and the model DID evidence it but the tables overruled the call (a 36.5 degC
-    "fever"). Pooled, the second kind lands in the absence audit, where it asks a
-    reviewer to confirm an absence that the rule engine, not the model, produced.
+    Clinical intent:
+        Separates genuine absences from rule refutations and flagged presence contradictions.
+        Without this check, when a model claims a patient has fever with 36.5 °C, the rule
+        engine marks it absent, polluting the negative-control absence audit. Similarly,
+        if objective criteria are met (e.g. TRV >= 2.5 m/s) but the model failed to recognize
+        the condition, it must be flagged for clinical review rather than silently ignored.
 
-    `missed_presence` flags when objective criteria are met (criteria is True)
-    but the model said present was not True (present is not True).
+    Checks performed:
+        1. Contradicted Presence Check ('missed_presence'):
+           If objective diagnostic criteria are met (`criteria is True`) but the model said
+           the condition was not present (`present is not True`), returns 'missed_presence'.
+        2. Rule Refutation Check ('refuted'):
+           If the model claimed presence (`present is True`) but deterministic tables graded
+           it as absent (`rule_status == "absent"`), returns 'refuted'.
+        3. Pass-Through Status:
+           Otherwise passes through rule engine status:
+           - 'graded': Evaluated to a definitive single grade (1-5).
+           - 'grade_set': Multiple candidate grades possible due to missing non-essential data.
+           - 'cannot_grade': Missing essential prerequisite (e.g. patient age).
+           - 'not_applicable': Demographic exclusion (e.g. sex restriction, infant age < 60d).
+           - 'absent': Both model and rules agree outcome is absent.
+
+    Returns:
+        str: Reconciled harness status string.
     """
     if present is not True and criteria is True:
         return "missed_presence"
@@ -969,12 +1105,26 @@ def harness_status(rule_status: str, present, criteria=None) -> str:
 
 
 def reconcile(name: str, values: list):
-    """-> (value, conflict). Several quoted values for one feature is the norm, not
-    an edge case: a note carries five creatinines across twelve years, and one of
-    them belongs to the transplant donor. Overwriting until the last one wins picks
-    by emission order, silently. Where the schema states an aggregation the values
-    collapse by it; where it does not, disagreement is a conflict that is reported
-    and withheld, never guessed at.
+    """Check and reconcile multiple quoted candidate values for a single feature.
+
+    Clinical intent:
+        In clinical notes spanning multiple years or ICU stays, notes routinely mention
+        multiple values for the same lab (e.g. 5 creatinines, or a donor's lab value).
+        Arbitrarily taking the first or last value by emission order silently corrupts grading.
+
+    Checks performed:
+        1. Uniqueness Check: Deduplicates candidate values. If only one unique value
+           exists, returns (unique_value, None).
+        2. Aggregation Policy Check: Queries `reduce_policy(name)`:
+           - If 'max': Returns the maximum value (using numeric value or ordinal rank).
+           - If 'min': Returns the minimum value.
+        3. Unresolved Conflict Check: If multiple distinct values exist and the feature
+           has no defined aggregation policy, the values are NOT guessed. They are
+           withheld from grading and flagged as an unresolvable conflict:
+           returns (None, list_of_conflicting_values).
+
+    Returns:
+        tuple[Any | None, list | None]: (resolved_value, conflicting_values_list)
     """
     uniq = []
     for v in values:
@@ -1068,7 +1218,26 @@ class Tally:
 
 
 def coerce(name: str, value):
-    """-> (ok, coerced). Enforces the declared type; never widens it."""
+    """Enforce declared schema type and enum constraints without type widening.
+
+    Checks performed:
+        1. Feature Registry Check: Verifies `name` is declared in `FEATURES`.
+           If undeclared, returns (False, None).
+        2. Boolean Type Check ('bool'):
+           - Accepts bool instances directly.
+           - Accepts string booleans ('true', 'yes' -> True; 'false', 'no' -> False).
+           - Rejects all other types/strings (returns False, None).
+        3. Numeric Type Check ('num'):
+           - Parses value as float.
+           - Rejects values failing float conversion (returns False, None).
+        4. Categorical & Ordinal Enum Check ('cat', 'ord'):
+           - Lowercases and strips value string.
+           - Checks value against allowed enum values whitelist (`spec['values']`).
+           - Rejects values not in whitelist (returns False, None).
+
+    Returns:
+        tuple[bool, Any]: (True, coerced_value) if all checks pass, else (False, None).
+    """
     spec = FEATURES.get(name)
     if spec is None: return False, None
     t = spec["type"]
@@ -1085,11 +1254,31 @@ def coerce(name: str, value):
 
 
 def precheck(reply: str, note: str, allowed_features: set[str] | None = None) -> list[str]:
-    """Side-effect-free inspection of an extraction reply against the note text.
+    """Side-effect-free pre-validation inspection of an extraction reply against note text.
 
-    Reports specific problems: quotes not in note, values not matching quotes,
-    unknown feature names, or invalid value types. Reuses `normalize`, `coerce`,
-    and `unit_guard` without touching any Tally counters.
+    Clinical intent:
+        Performs a non-destructive dry run of all verification checks without altering
+        `Tally` counters or pipeline state. When `--feedback-retry` is enabled, this
+        identifies precise extraction flaws and formats targeted feedback so the model
+        can correct its own output in a second turn.
+
+    Checks performed:
+        1. JSON Syntax Check: Validates that `reply` is valid JSON and parses as a dictionary.
+        2. Schema Registration Check: Confirms every finding's `feature` is declared in `FEATURES`.
+        3. Outcome Scope Check: If `allowed_features` is provided, ensures the feature belongs to this outcome.
+        4. Quote Grounding Check:
+           - Verifies `quote` string is non-empty.
+           - Normalizes quote and note; checks quote appears verbatim in `note`.
+        5. Type Coercion Check: Runs `coerce(name, value)` to verify value type and enum constraints.
+        6. Unit & Number Guard Check: For numeric features, runs `unit_guard()`:
+           - Rejects invalid/unconvertible units (UNIT_BAD).
+           - Rejects numbers that disagree with quote text (UNIT_VALUE_MISMATCH).
+           - Flags ambiguous units (UNIT_AMBIGUOUS).
+        7. Presence Quote Grounding Check: If `present` is True, verifies that `present_quote`
+           appears verbatim in the note text.
+
+    Returns:
+        list[str]: List of human-readable issues describing failed checks. Empty list if all checks pass.
     """
     try:
         data = json.loads(reply)
@@ -1140,17 +1329,42 @@ def precheck(reply: str, note: str, allowed_features: set[str] | None = None) ->
 
 
 def verify(reply: str, note: str, tally: Tally) -> tuple[dict, bool | None, dict]:
-    """-> (features, present, detail).
+    """Execute the core extraction verification and grounding pipeline against a clinical note.
 
-    `detail` carries every accepted finding and every unresolved conflict for this
-    one (note, outcome). The review sheets are built from it rather than re-deriving
-    acceptance downstream, which is how a hand-check sheet ends up disagreeing with
-    the harness that produced it.
+    Clinical intent:
+        Acts as the primary quality gate separating raw model generation from deterministic
+        grading. Enforces strict evidence grounding, schema conformance, unit safety, and
+        conflict resolution. All metrics (accepted, hallucinated quotes, unit mismatches)
+        are tallied synchronously.
 
-    A verified quote means the words are in the note. It does NOT mean the words
-    support the value - "needed increasing oxygen by nasal cannula" verifies
-    perfectly behind fio2_pct=21. That judgement is human, and it is what the
-    hand-check sheet's `supports_value` column exists to record.
+    Checks performed:
+        1. JSON Parse Check: Validates JSON syntax. Bad JSON increments `tally.bad_json`.
+        2. Tokenizer Artifact Check: Scans quotes for SentencePiece corruption (`[UNK_BYTE_...]`).
+        3. Feature Whitelist Check: Validates feature name in `FEATURES`.
+        4. Verbatim Quote Grounding Check:
+           - Verifies quote is non-empty (`quote_missing`).
+           - Normalizes text and checks that quote exists verbatim in note (`quote_ok` vs `quote_unfound`).
+           - Quotes absent from the note are rejected as hallucinations and excluded from accepted findings.
+        5. Type Coercion Check: Validates type and enum constraints via `coerce()`.
+           Non-compliant values increment `value_bad` and are rejected.
+        6. Unit Guard Verification Check:
+           - Reconciles numeric features against quote units via `unit_guard()`.
+           - Detects and counts `unit_mismatch`, `quote_value_mismatch`, `unit_ambiguous`, `unit_converted`.
+        7. Finding Acceptance: Findings passing quote grounding, type coercion, and unit checks
+           are admitted to `accepted` findings.
+        8. Presence Call & Quote Check: Evaluates `present` boolean; verifies verbatim grounding
+           of `present_quote` in note (`present_quoted` vs `present_quote_unfound` vs `present_unquoted`).
+        9. Value Conflict Reconciliation Check: Groups accepted findings by feature and calls
+           `reconcile()`:
+           - If a reduction rule exists, collapses by rule (`max` / `min`).
+           - If multiple conflicting values exist without a reduction policy, withholds the feature
+             from grading and flags it in `conflicts` (`tally.value_conflicts`).
+
+    Returns:
+        tuple[dict, bool | None, dict]:
+            - features (dict): Reconciled feature values ready for decision tables.
+            - present (bool | None): Model presence call.
+            - detail (dict): Telemetry carrying 'accepted' findings, 'conflicts', 'present_quote', 'evidence'.
     """
     empty = {"accepted": [], "conflicts": {}, "present_quote": None, "evidence": None}
     try:
