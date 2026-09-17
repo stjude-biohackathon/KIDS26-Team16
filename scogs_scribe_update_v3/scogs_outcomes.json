@@ -1,0 +1,705 @@
+{
+  "grades": [
+    {
+      "grade": 1,
+      "definition": "Evidence of specific health outcome event that is usually mild. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that may be treated at home, or if they require a visit to a medical facility for treatment, they will not require admission, are classified as Grade 1."
+    },
+    {
+      "grade": 2,
+      "definition": "A specific health outcome event of greater severity than Grade 1. Symptoms are usually mild to moderate. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that cannot be treated at home and require a visit to a medical facility for treatment but do not require an admission, and symptoms are objectively more severe than those in Grade 1 are classified as Grade 2."
+    },
+    {
+      "grade": 3,
+      "definition": "A specific health outcome event of greater severity than Grade 2. Symptoms are severe, and medical treatment is used to treat the condition/complication. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that require a visit to a medical facility for treatment of severe complications and may require admission (usually do not require critical care) and are objectively more severe than those in Grade 2 are classified as Grade 3."
+    },
+    {
+      "grade": 4,
+      "definition": "A specific health outcome event of greater severity than Grade 3. Symptoms are severe or life-threatening, and medical treatment is used to treat the condition/complication. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that require a visit to a medical facility for treatment of severe complications and may require admission (usually they require critical care) and are objectively more severe than those in Grade 3 are classified as Grade 4."
+    },
+    {
+      "grade": 5,
+      "definition": "Death related to the specific health outcome."
+    }
+  ],
+  "outcomes": [
+    {
+      "id": 1,
+      "outcome": "Arrhythmia",
+      "diagnostic_criteria": "Abnormal atrial and/or ventricular rhythm as identified by electrocardiogram.",
+      "grade_definitions": {
+        "1": "Asymptomatic AND NO intervention indicated",
+        "2": "Symptomatic AND non urgent medical intervention indicated",
+        "3": "Symptomatic AND urgent intervention indicated (ablation, etc)",
+        "4": "Arrhythmia complications requiring cardioversion AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death from arrhythmia"
+      }
+    },
+    {
+      "id": 2,
+      "outcome": "Deep vein thrombosis (DVT)",
+      "diagnostic_criteria": "Presence of deep venous occlusion on imaging study, including ultrasound, CT, MRI, venogram, excluding\npulmonary embolism. Veins may include, but not limited to, common femoral vein, greater saphenous vein,\nsuperficial femoral vein, popliteal vein, peroneal vein, jugular, brachiocephalic, subclavian, and axillary.",
+      "grade_definitions": {
+        "1": "Not requiring intervention",
+        "2": "Requiring medical intervention in the form of anticoagulation AND NOT requiring invasive intervention",
+        "3": "Requiring urgent invasive medical intervention in the form of thrombolysis (site directed TPA) AND NO surgical thrombectomy",
+        "4": "Limb or life-threatening consequences OR hemodynamic or neurologic instability with or without surgical thrombectomy",
+        "5": "Death in the setting of DVT"
+      }
+    },
+    {
+      "id": 3,
+      "outcome": "Diastolic dysfunction",
+      "diagnostic_criteria": "Adults >18 years of age. According to the 2016 American Society of Echocardiography (ASE) guidelines the\nfollowing four 2D-echocardiogram variables should be used to diagnose for abnormal diastolic function in the\nadult general population with normal left ventricular systolic function.2 Thresholds have been defined above or\nbelow, which are considered abnormal.  LV diastolic function is abnormal only if two or more of these\nvariables are outside the normative range2:\n- Average E/e’ >14 (lateral E/e’ >13 or septal E/e’ >15)\n-\nAnnular e’ velocity: septal e’ <7cm/sec or lateral e’ <10cm/sec\n-\nTRV >2.8m/sec\n-\nLeft atrial volume index >34ml/m2",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "Diastolic Dysfunction Present",
+        "3": "N/A",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 4,
+      "outcome": "Heart Failure Exacerbation",
+      "diagnostic_criteria": "Workup and diagnosis of heart failure exacerbation includes a combination of physical exam and laboratory findings\nand should include some or all of the following2:\n-\nElevated jugular venous pressure (JVP) on exam\n-\nSigns of peripheral edema\n-\nOrthopnea or dyspnea\n-\nElectrocardiogram (EKG) with or without atrial arrhythmia\n-\nChest X-ray (CXR) showing signs of cardiac enlargement and/or pulmonary congestion\n-\nElevated (NT-pro) brain natriuretic peptide (NT-pro BNP or BNP)\n-\nElevated creatinine and/or blood urea nitrogen (BUN)\n-\nLow serum sodium\n-\nElevated troponin",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "Heart failure exacerbation AND NOT requiring intervention",
+        "3": "Heart failure exacerbation AND requiring intervention in the form of diuretics and/or nitric oxide containing compounds and/or non- invasive ventilation AND NOT resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3",
+        "4": "Heart failure exacerbation AND requiring intervention in the form of diuretics and/or nitric oxide containing compounds and/or non- invasive ventilation AND resulting in a life- threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3",
+        "5": "Death from heart failure exacerbation"
+      }
+    },
+    {
+      "id": 5,
+      "outcome": "Myocardial Infarction",
+      "diagnostic_criteria": "Diagnosed by one of three methods.\n1.  Detection of serum cardiac biomarkers:\n-\nMB-CK >9 IU/L at 6 to 12 hours from the onset of symptoms; peak from 14 to 36 hours\n-\nTroponin-T >0.1 ng/mL at 6 to 12 hours from the onset of symptoms; peak from 24 to 36 hours\nAND at least one of the following:\n-\nECG changes indicative of new ischemia (new ST-T changes or new left bundle branch block [LBBB])\n-\nECG manifestations of acute myocardial ischemia (in the absence of left ventricular hypertrophy and LBBB)\n➢ ST elevation:  new ST elevation at the J-point in two contiguous leads with the cut-off points of ≥0.2 mV in\nmen or ≥0.15 mV in women in leads V2–V3 and/or ≥0.1 mV in other leads\n➢ ST depression and T-wave changes:  new horizontal or down-sloping ST depression ≥0.05 mV in two\ncontiguous leads; and/or T inversion ≥0.1 mV in two contiguous leads with prominent R-wave or R/S ratio\n≥1\n-\nDevelopment of pathological Q–waves\n-\nImaging evidence of new loss of viable myocardium or new regional wall abnormality OR\n2.  Sudden, unexpected cardiac death, involving cardiac arrest, often with symptoms suggestive of myocardial ischemia OR\n3.  Histology/pathology (postmortem, most definitive):\n-\nNegative staining of the infarcted area with nitro blue tetrazolium is evident at 6 to 8 hours\n-\nHematoxylin-fuchsin-picric acid stain is independent of autolysis and is positive for infarct at 30 minutes\n(useful in sudden death)1\nSeverity Criteria\nBased on Atherosclerosis Risk in Communities (ARIC) study2\n-\nSBP <100 mm Hg\n-\nAbnormal pulse rate\n-\nDiagnostic ECG with ST elevation\n-\nNew Q wave on ECG\n-\nNew left bundle branch block\nGrade\nGrade 2\nGrade 3\nGrade 4\nGrade 5\nN/A\nAbnormal cardiac\nenzymes as listed above\nAND NO severity\ncriteria, essentially non-\nST elevation myocardial\ninfarction (NSTEMI)\nMyocardial\ninfarction with\nANY of the\nseverity criteria\nAND NO\nhemodynamic\ninstability\nMyocardial infarction resulting in significant\ncardiovascular compromise\nAND resulting in a life-threatening complication where\nthe need for life-supporting treatment indicated,\nincluding use of mechanical ventilation, vasopressors,\nrenal replacement therapy, or other life-supporting\ntreatments3 (with or without coronary intervention)\nDeath\nfrom\nmyocardial\ninfarction\nMethodology:\nGrading system based on higher levels of care and interventions required. Outcome grading created with assistance of\nexpert adult cardiologist consultant.\nReferences:\n1. Ballas SK, Lieff S, Benjamin LJ, et al. Definitions of the phenotypic manifestations of sickle cell disease. Am J Hematol. Jan\n2010;85(1):6-13. doi:10.1002/ajh.21550\n2. Myerson M, Coady S, Taylor H, Rosamond WD, Goff DC. Declining Severity of Myocardial Infarction From 1987 to 2002. Circulation.\n2009;119(4):503-514. doi:doi:10.1161/CIRCULATIONAHA.107.693879\n3. Levy M, Naudin J, Geslain G, et al. Factors associated with adverse outcome among children with sickle cell disease admitted to the\npediatric intensive care unit: an observational cohort. Ann Intensive Care. Apr 10 2024;14(1):55. doi:10.1186/s13613-024-01283-5\nAcute",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "Abnormal cardiac enzymes as listed above AND NO severity criteria, essentially non- ST elevation myocardial infarction (NSTEMI)",
+        "3": "Myocardial infarction with ANY of the severity criteria AND NO hemodynamic instability",
+        "4": "Myocardial infarction resulting in significant cardiovascular compromise AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments3 (with or without coronary intervention)",
+        "5": "Death from myocardial infarction"
+      }
+    },
+    {
+      "id": 6,
+      "outcome": "Systemic arterial hypertension",
+      "diagnostic_criteria": "Evaluation focuses on determining possible causes of and/or comorbidities associated with HTN. Evaluation\nshould include appropriate patient history, family history, physical examination, laboratory evaluation, and\nimaging.2 Diagnosis should be made based on baseline blood pressure and exclude times when patient is\nexperiencing an acute sickle cell pain event.",
+      "grade_definitions": {
+        "1": "No medical intervention required (no use of medication for hypertension) AND 1) Ages 1-13 years: BP ≥90th percentile to <95th percentile for age; 120/80 mmHg to <95th percentile (whichever is lower) 2) Ages >or= 13 years: BP 120/<80 to 129/<80 mmHg",
+        "2": "Stage 1 HTN. Requiring no more than one anti- hypertensive drug OR 1) Ages 1-13 years: BP ≥95th percentile to <95th percentile + 12 mmHg; BP range within 130/80 to 139/89 mmHg (whichever is lower) 2) Ages >or= 13 years: BP 130/80 to 139/89 mmHg",
+        "3": "Stage 2 HTN. Requiring two or more anti- hypertensives OR 1) Ages 1-13 years: BP ≥95th percentile + 12 mmHg, or ≥140/90 mmHg (whichever is lower) 2) Ages >or=13 years: ≥95th percentile + 12 mmHg; ≥140/90 mmHg (whichever is lower)",
+        "4": "Elevated BP resulting in end organ damage (e.g., acute kidney injury, sudden vision loss, stroke, myocardial infarction, pulmonary edema) at any age",
+        "5": "Death from malignant hypertension"
+      }
+    },
+    {
+      "id": 7,
+      "outcome": "Systolic dysfunction",
+      "diagnostic_criteria": "LVEF can be calculated using various modalities, either subjectively by using visual estimation or objectively by\nquantitative methods. The preference is to employ quantitative measures to assess LVEF to minimize variability and\nfavor more precision and accuracy in measurement. The following modalities may be used2:\nEchocardiography (ECHO)\nMagnetic resonance imaging (MRI)\nComputed tomography (CT)\nGated equilibrium radionuclide angiography (MUGA)\nGated myocardial perfusion imaging with either single-photon emission computed tomography (SPECT) or positron\nemission tomography (PET)\nLeft ventricular contrast ventriculography during invasive catheterization",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "Mild dysfunction (LVEF 40-49%) with or without the need for medical or surgical intervention",
+        "3": "Moderate dysfunction (LVEF 30-39%) with or without the need for medical or surgical intervention",
+        "4": "Severe dysfunction (LVEF <30%) with or without the need for medical or surgical intervention",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 8,
+      "outcome": "Tricuspid Regurgitant Jet Velocity (TRV) Elevation ON Echocardiogram",
+      "diagnostic_criteria": "TR jet velocity measured as per echocardiogram at steady state and not during hospitalization or within 2 weeks of\nvaso-occlusive event.",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "N/A",
+        "3": "TRV 2.5-2.9 m/second",
+        "4": "TRV ≥3.0 m/second",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 9,
+      "outcome": "Cerebral vasculopathy",
+      "diagnostic_criteria": "-\nConventional angiography or Brain MRA examinations are used to evaluate vessel stenoses in four\nsegments of each internal carotid artery (ICA), and 3 segments of each anterior cerebral artery (ACA)\nand middle cerebral artery (MCA).\n-\nVessel stenosis is recorded by vascular location, frequency (number of stenoses), and severity\n(percentage vessel occlusion).\n-\nSeverity of vessel segment occlusion is graded as mild (25-49%), moderate (50-74%), severe (75-\n99%), or occlusion (>99%).1",
+      "grade_definitions": {
+        "1": "Mild stenosis (25-49%) of <2 arterial segments as per MRA",
+        "2": "Mild stenosis (25-49%) of >2 arterial segments as per MRA",
+        "3": "Moderate stenosis (50- 75%) of <2 arterial segments as per MRA",
+        "4": "Moderate stenosis (50-74%) of >2 arterial segments OR Severe stenosis/occlusion (>75%) of < 2 arterial segments as per MRA",
+        "5": "Severe stenosis/ occlusion (>75%) of >3 arterial segments as per MRA OR presence of moyamoya syndrome"
+      }
+    },
+    {
+      "id": 10,
+      "outcome": "Chronic pain",
+      "diagnostic_criteria": "Reports of ongoing pain present on most days over the past 3 months either in a single location or in multiple locations\nMust display at least 1 sign:\nPalpation of the region of reported pain elicits focal pain or tenderness\n-\nMovement of the region of reported pain elicits focal pain\n-\nDecreased range of motion or weakness in the region of reported pain\n-\nEvidence of skin ulcer in the region of reported pain\n-\nEvidence of hepatobiliary or splenic imaging abnormalities (eg, splenic infarct, chronic pancreatitis) consistent with\nthe region of reported pain\n-\nEvidence of imaging abnormalities consistent with bone infarction or avascular necrosis in the region of reported\npain\nThere is no other diagnosis that better explains the signs and symptoms1",
+      "grade_definitions": {
+        "1": "No unplanned visits to medical facilities for pain treatment w/in a 12-month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score ≥81 2) PROMIS T-score < or = 48 on pain interference 3) PROMIS T-score < or = 41 on pain behavior",
+        "2": "1-3 unplanned visits to medical facilities for pain treatment w/in 12-month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score 61- 80 2) PROMIS T-score >48 but >64 on pain interference 3) PROMIS T-scores >41 but <57 on pain behavior",
+        "3": "3-10 unplanned visits to medical facilities for pain treatment w/in 12- month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score <60 2) PROMIS T-score >64 on pain interference 3) PROMIS T-score >57 on pain behavior",
+        "4": ">10 unplanned visits to medical facilities for pain treatment w/in 12-month period OR at least two of the below in the past 3 months: 1) Pain and Hurt Score <60 2) PROMIS T-score >64 on pain interference 3) PROMIS T-score >57 on pain behavior",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 11,
+      "outcome": "Cognitive dysfunction",
+      "diagnostic_criteria": "Validated performance-based tests administered by a trained psychologist or tester including Intelligence\nmeasures (specifically the Abbreviated IQ, FSIQ, G, or total cognition composite) from these scales:\n-\nWechsler Abbreviated Scale of Intelligence, 2nd edition (ages 6+)2\n-\nWechsler Intelligence Scale for Children, 5th edition (ages 6-16)3\n-\nWechsler Adult intelligence Scale, 4th Edition (ages 16+)4\n-\nWoodcock Johnson Tests of Cognitive Abilities, 4th Edition (ages 2+)5\n-\nKaufman Brief Intelligence Test, 2nd Edition (ages 4+)6\n-\nReynolds Intellectual Assessment Scales (ages 3+)7\n-\nStanford Binet Intelligence Scales, 5th Edition (ages 2+)8\n-\nNIH Toolbox, version 3 (ages 7+)9",
+      "grade_definitions": {
+        "1": "IQ evaluation 1-2 SD below mean",
+        "2": "IQ evaluation 2-3 SD below mean",
+        "3": "IQ evaluation 3 SD or more below mean",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 12,
+      "outcome": "Elevated TCD ultrasonography velocity",
+      "diagnostic_criteria": "TCD ultrasonography measures the velocity of blood flow in the brain.  Results are categorized as abnormal,\nconditional, normal, or inadequate:\n-\nAbnormal TCD: Time averaged mean of the maximum (TAMM) velocity ≥200 cm/sec in the middle cerebral\nartery (MCA) or distal internal carotid artery (ICA).\n-\nConditional TCD: TAMM velocity 170-199 cm/sec in the MCA or distal ICA.\n-\nNormal TCD: TAMM velocity <170 cm/sec in the MCA or distal ICA.\n-\nInadequate: On either the right side or left side (or both), no readings can be obtained for the distal ICA,\nbifurcation, and MCA.",
+      "grade_definitions": {
+        "1": "TAMV 170-184 cm/s (TCD) [i.e. low conditional]",
+        "2": "TAMV 185-199 cm/s (TCD) [i.e. high conditional]",
+        "3": "TAMV > 200 cm/s (TCD) [i.e. abnormal]",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 13,
+      "outcome": "Posterior reversible encephalopathy syndrome (PRES)",
+      "diagnostic_criteria": "MRI is the diagnostic gold standard. The predominant affected region is parieto-occipital of both\nhemispheres. The subcortical white matter is always affected but with frequent involvement of the cortex\nalso. Typical PRES lesions on MRI are thought to represent vasogenic edema.2",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "N/A",
+        "3": "PRES NOT requiring critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+        "4": "PRES requiring critical cardio- respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+        "5": "Death due to complications of PRES"
+      }
+    },
+    {
+      "id": 14,
+      "outcome": "Silent cerebral infarct",
+      "diagnostic_criteria": "Must meet all of the following criteria:\n-\nMRI of brain showing increased T2 (or FLAIR) signal in a pattern consistent with ischemia/infarction,\n≥3 mm in 2 dimensions\n-\nNot explained by other etiologies\n-\nNo history of CNS events\n-\nNormal neurologic examination\nNote: Cognitive deficit is diagnosed by a performance measure, cognitive testing, or validated patient\nreported outcome measure for cognitive function.",
+      "grade_definitions": {
+        "1": "Evidence of one single silent infarct lesion on brain MRI AND NO cognitive deficits",
+        "2": "Evidence of >1 silent infarct lesion on brain MRI AND NO cognitive deficits",
+        "3": "Evidence of silent infarct lesion on brain MRI (any number of lesions) AND cognitive deficits",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 15,
+      "outcome": "Stroke (hemorrhagic or ischemic)",
+      "diagnostic_criteria": "Hemorrhagic:\n-\nDemonstration of hemorrhage on CT head, MRI of the brain, or autopsy OR\n-\nIf no imaging is performed, persistently hemorrhagic spinal fluid AND\n-\nRule out hemorrhage caused by traumatic subarachnoid hemorrhage, subdural hematoma, and epidural\nhematoma\nIschemic:\n-\nMRI or CT scan showing an ischemic CNS event consistent with symptoms and signs OR\n-\nDiagnosis by a neurologist based on examination and clinical history with neurologic symptoms/signs\nlasting >24 hours\nStroke Scale: Use of National Institute of Health Stroke Scale (NIHSS) at time of presentation and/or Modified\nRankin scale score (mRS) at time of discharge",
+      "grade_definitions": {
+        "1": "Incidental radiographic findings only (ischemia, hemorrhage, encephalomalacia, hemosiderosis) AND NO neurological symptoms during episode of stroke or later",
+        "2": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms resolved completely (TIA episode) OR mRS of 0 at discharge",
+        "3": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) OR mRS of 1-3 at discharge",
+        "4": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) OR mRS of 4-5 at discharge",
+        "5": "Death from stroke"
+      }
+    },
+    {
+      "id": 16,
+      "outcome": "Hearing loss (in at least one ear)",
+      "diagnostic_criteria": "Audiology evaluations and assessments (e.g., audiometry) with normal middle ear function.",
+      "grade_definitions": {
+        "1": ">20 dB at >4 KHz loss Note: >20 dB at 8 KHz ( if 8 KHz is not recorded use 6 KHz)",
+        "2": ">20 dB at ≥4KHz loss Note: >20 dB at 4 KHz and higher frequencies",
+        "3": ">20 dB at 2 or 3 KHz loss Note: >20 dB at 2 or 3 KHz and higher frequencies (if 2 KHz is recorded, use 2KHz, if not, use 3KHz)",
+        "4": ">40 dB at ≥2KHz, but <70 dB loss Note: sensorineural hearing loss from 41 to 69 dB at 2KHz and higher frequencies",
+        "5": "≥70 dB at ≥2KHz loss Note: sensorineural hearing loss greater or equal to 70 dB at 2K and higher frequencies"
+      }
+    },
+    {
+      "id": 17,
+      "outcome": "Sickle cell retinopathy (SCR)",
+      "diagnostic_criteria": "Ophthalmologist evaluations and assessments required. Based on staging of sickle cell retinopathy (SCR)\nas per Goldberg criteria:4\nStage 1: Peripheral arterial occlusion\nStage 2: Peripheral arteriovenous anastomoses, representing dilated pre-existing capillaries (hairpin loop)\nStage 3: Neovascular and fibrous proliferation (sea fan) occurring at the posterior border of nonperfusion.\nA subsequent white sea fan appearance is due to auto-infarction of the neovasculature\nStage 4: Vitreous hemorrhage\nStage 5: Tractional retinal detachment",
+      "grade_definitions": {
+        "1": "Stage 1 or Stage 2 SCR without vision loss",
+        "2": "Stage 3 SCR without vision loss OR Stage 1 or Stage 2 SCR with vision loss",
+        "3": "Stage 4 or Stage 5 SCR OR any Stage SCR with legal blindness",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 18,
+      "outcome": "Cholecystitis/ Cholelithiasis (gallstones)",
+      "diagnostic_criteria": "Cholecystitis:\nRight upper quadrant pain, usually colicky, AND one or more of the following:\n-\nPericholecystic fluid and gallbladder wall thickening >4 mm on ultrasonography\n-\nNon-visualization of the gallbladder by 60 minutes after cholescintigraphy\n-\nA positive Murphy’s sign on physical examination\nCholelithiasis:\n-\nRadiologic (ultrasound) evidence of stones (“hyperechoic with posterior acoustic shadowing”) or sludge\n(“hypoechoic mobile matter within the gallbladder”) OR\n-\nPathologic evidence of gallstones or biliary sludge",
+      "grade_definitions": {
+        "1": "Cholelithiasis/ choledocholithiasis AND NOT requiring any medical or surgical intervention (e.g., incidental finding)",
+        "2": "Cholecystitis or cholelithiasis/ choledocholithiasis AND requiring medical intervention (oral or IV pain medication) AND NOT requiring surgical intervention",
+        "3": "Cholecystitis or cholelithiasis/ choledocholithiasis AND requiring surgical intervention in the form of stone retrieval or removal, placement of stent, or cholecystectomy",
+        "4": "Cholecystitis or cholelithiasis/ choledocholithiasis AND complicated with pancreatitis OR resulting in a life- threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2",
+        "5": "Death from cholecystitis or cholelithiasis/ choledocholithiasis complications"
+      }
+    },
+    {
+      "id": 19,
+      "outcome": "Acute kidney injury (AKI)",
+      "diagnostic_criteria": "-\nAn increase in serum creatinine (sCr) above the upper limit of normal (ULN) for age, present for at least 2\nmeasurements.\n-\nIncrease in sCr by 0.3 mg/dL (26.5 mmol/L) within 48 hours OR\n-\nIncrease in sCr to 1.5 times baseline, which is known or presumed to have occurred within the prior 7 days\nOR\n-\nUrine volume <0.5 mL/kg/hr for 6 hours2\nKidney Disease Improving Global Outcomes (KDIGO) 3staging utilized",
+      "grade_definitions": {
+        "1": "sCr 1.5-1.9 times baseline OR increase by >0.3 mg/dL",
+        "2": "sCr 2.0-2.9 times baseline",
+        "3": "sCr 3.0 times baseline OR increase in sCr to >4 mg/dL OR initiation of renal replacement therapy OR (in patients <18 years) decrease in eGFR to <35 mL/min per 1.73 m2 AND NO progression to permanent end stage renal disease",
+        "4": "sCr 3.0 times baseline OR increase in sCr to >4 mg/dL OR initiation of renal replacement therapy OR (in patients <18 years) decrease in eGFR to <35 mL/min per 1.73 m2 AND progression to end stage renal disease",
+        "5": "Death due to AKI"
+      }
+    },
+    {
+      "id": 20,
+      "outcome": "Acute papillary necrosis",
+      "diagnostic_criteria": "Acute renal papillary necrosis is a clinical diagnosis that requires a constellation of symptoms, laboratory tests,\nand diagnostic imaging.  Laboratory findings include proteinuria, pyuria, micro or macroscopic hematuria,\nbacteriuria, and low urine specific gravity. An elevation in serum creatinine may also be present. CT and/or\nintravenous urography with nephrotomography can support the diagnosis.",
+      "grade_definitions": {
+        "1": "Acute papillary necrosis requiring a visit to medical facility AND NOT requiring treatment AND NOT requiring admission",
+        "2": "Acute papillary necrosis requiring a visit to a medical facility AND requiring any treatment (e.g., erythrocyte transfusion, IVF, etc) AND NOT requiring admission",
+        "3": "Acute papillary necrosis requiring admission AND treatment (e.g., interventional procedure to remove RBC’s, intubation, mechanical ventilation, erythrocyte transfusions; vaso-pressors) AND NOT resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "4": "Acute papillary necrosis resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2",
+        "5": "Death due to acute papillary necrosis"
+      }
+    },
+    {
+      "id": 21,
+      "outcome": "Chronic kidney disease (CKD)",
+      "diagnostic_criteria": "Either of the following present for >3 months:\n-\nMarkers of kidney damage (one or more)\n➢ Albuminuria (ACR ≥30 mg/24 hours; ACR ≥ 30 mg/g [≥3 mg/mmol]) at first morning void\n➢ Urine sediment abnormalities\n➢ Electrolyte and other abnormalities due to tubular disorders\n➢ Abnormalities detected by histology\n➢ Structural abnormalities detected by imaging\n➢ History of kidney transplantation\n-\nDecreased GFR GFR\n➢ 60 ml/min/1.73 m2 (GFR categories G3a–G5)",
+      "grade_definitions": {
+        "1": "eGFR 60-89 ml/min/1.73 m2 AND albuminuria <30 mg/g",
+        "2": "eGFR 45-59 ml/min/1.73 m2 AND albuminuria <30 mg/g OR eGFR ≥60 ml/min/1.73 m2 AND albuminuria 30-300 mg/g",
+        "3": "eGFR 30-44 ml/min/1.73 m2 AND albuminuria <30 mg/g OR eGFR 45-59 ml/min/1.73 m 2 AND albuminuria 30-300 mg/g OR eGFR 60-89 ml/min/1.73 m2 AND albuminuria >300 mg/g",
+        "4": "eGFR 45-59 ml/min/1.73 m2 AND albuminuria >300 mg/g OR eGFR 30-44 ml/min/1.73 m2 AND albuminuria >30 mg/g OR eGFR 15-29 ml/min/1.73 m2",
+        "5": "eGFR <15 ml/min/1.73 m2 OR Death due to CKD"
+      }
+    },
+    {
+      "id": 22,
+      "outcome": "Reproductive Health Complications/ Female Primary Ovarian Dysfunction",
+      "diagnostic_criteria": "-\nPremature ovarian insufficiency: Oligo- or amenorrhea for at least 4 months, in addition to FSH\nconcentration >25 IU/L on two occasions.2\n-\nDiminished ovarian reserve: Abnormal ovarian reserve test results (antral follicular count (AFC) <5-7\nfollicles or AMH below the normal range for age based on the assay used)3\n-\nInfertility: The inability to conceive a pregnancy within 12 months when the female partner is <35 years old\nand within 6 months when the female partner is >35 years old.1\nNote: This condition cannot be graded in prepubertal children.",
+      "grade_definitions": {
+        "1": "Diminished ovarian reserve AND NO evidence of premature ovarian insufficiency",
+        "2": "Premature ovarian insufficiency",
+        "3": "Infertility",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 23,
+      "outcome": "Reproductive Health Complications/ Male Impairments",
+      "diagnostic_criteria": "Impaired Spermatogenesis: Decreased semen parameters (sperm concentration, motility, morphology, and/or\nviability) below reference range(s), often with the finding of elevated serum FSH concentration (> 7.6 mIU/mL).\nOligospermia: Semen sample with < 15 million sperm/mL concentration.\nSevere Oligospermia: Semen sample with < 5 million sperm/mL concentration.\nCrypotozoospermia: Semen sample with sperm seen only in the centrifuged semen pellet.\nA\ni\nS\nl\nith\nt",
+      "grade_definitions": {
+        "1": "Males: Intervention not indicated. Infertility despite normal semen parameters AND NO evidence of decreased testicular function (FSH < 7.6 mIU/mL)",
+        "2": "Males: Impaired Spermatogenesis (oligospermia or severe oligospermia or Crypotozoospermia) AND evidence of decreased testicular function (FSH level > 7.6 mIU/mL) Comment: Might necessitate Intrauterine Insemination (IUI) and/or in vitro fertilization (IVF) + intracytoplasmic sperm injection (ICSI)",
+        "3": "Males: Azoospermia AND evidence of decreased testicular function (FSH > 7.6 mIU/mL) Comment: Necessitates surgical sperm extraction and IVF + ICSI",
+        "4": "Males: N/A",
+        "5": "Males: N/A"
+      }
+    },
+    {
+      "id": 24,
+      "outcome": "Priapism",
+      "diagnostic_criteria": "A painful erectile episode event lasting >30 minutes but diagnosed by a physician or medical practitioner based\non patient self-report.  During an episode, priapism can be confirmed by physical examination findings of a fully\nerect penis and complaint of pain in the penis or scrotum.",
+      "grade_definitions": {
+        "1": "Priapism episode with or without the use of medications at home AND NOT requiring a visit to a medical facility",
+        "2": "Priapism episode requiring visit to a medical facility AND requiring treatment (e.g., medication) AND NO shunt",
+        "3": "Priapism episode requiring a visit to a medical facility AND requiring aspiration/irrigation AND NO shunt",
+        "4": "Priapism episode requiring a visit to a medical facility AND requiring shunt surgical intervention",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 25,
+      "outcome": "Delayed puberty",
+      "diagnostic_criteria": "Based on age and breast development for females, and age and testes volume or Tanner Stage 2\ndevelopment for males.",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "No breast development by age 13 years for females OR testes volume of <3 cc development by age 14 years for males",
+        "3": "No breast development by age 14 years OR no menses by age 16 years or within 4 years of breast development for females OR no increase in testes volume by age 16 years for males OR hormone replacement indicated in either sex",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 26,
+      "outcome": "Malnutrition leading to stunting (decreased height velocity)",
+      "diagnostic_criteria": "Chronic undernutrition or stunting is defined by WHO as having a height-for-age (or length-for-age) that is less than −2 SD\n(z score) of the median of the NCHS/WHO international reference. Height (ie, stature) is measured in the standing position.\nLength-for-age refers to measurements taken in the recumbent position and is recommended for children ≤2 years of age.\n-\nFor infants aged <2 years of age, Z-score is used based on WHO reference ranges2\n-\nFor children aged >2 years of age, Z-score is used based on CDC reference ranges2",
+      "grade_definitions": {
+        "1": "one data point N/A Grade 1 If there are at least 2 data points N/A",
+        "2": "N/A Grade 2 If there are at least 2 data points Decline of 1 z-score for height- for-age",
+        "3": "N/A Grade 3 If there are at least 2 data points Decline of 2 z-score for height- for-age",
+        "4": "Z-score for height-for-age <-3 below mean population Grade 4 If there are at least 2 data points Decline of 3 z-score for height- for-age",
+        "5": "5 Death Grade 5 Death"
+      }
+    },
+    {
+      "id": 27,
+      "outcome": "Underweight",
+      "diagnostic_criteria": "Z-score (for weight for length/height or BMI) greater than or equal to 1 standard deviation (SD) below the mean\npopulation reference value (CDC/WHO international reference population).1\n-\nFor infants aged <2 years of age weight-for-length Z-score is used based on WHO reference ranges2\n-\nFor children aged >2 years of age, BMI Z-score is used based on CDC reference ranges2",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "Z-score for weight-for- length or BMI (based on age as stated above) 1- 1.99 standard deviations below mean population",
+        "3": "Z-score for weight-for- length or BMI (based on age as stated above) 2- 2.99 standard deviations below mean population",
+        "4": "Z-score for weight-for- length or BMI (based on age as stated above) 3 standard deviations below mean population",
+        "5": "Death"
+      }
+    },
+    {
+      "id": 28,
+      "outcome": "Acute sickle cell pain episode",
+      "diagnostic_criteria": "-\nPatient self-report OR\n-\nCare-giver proxy report for younger children.1\n-\nAND no explanation other than sickle cell disease",
+      "grade_definitions": {
+        "1": "Acute pain episode requiring pain treatment at home for pain exacerbation",
+        "2": "Acute pain episode requiring a visit to a medical facility (including Day Hospital) for any type of treatment for pain AND NOT requiring admission",
+        "3": "Acute pain episode requiring admission AND NO evidence of organ failure or one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhemolysis",
+        "4": "Acute pain episode complicated with organ failure OR one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhemolysis OR resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death in the setting of acute pain episode"
+      }
+    },
+    {
+      "id": 29,
+      "outcome": "Acute splenic sequestration",
+      "diagnostic_criteria": "-\nDecrease in the hemoglobin or hematocrit of ≥20% OR a drop from ≥2 g/dL from baseline AND\n-\nEvidence of increased erythropoiesis such as a markedly elevated reticulocyte count (exception is when\na viral suppression occurs, such as from parvovirus-induced transient aplastic crisis) AND\n-\nAn acutely enlarging spleen (≥2 cm from baseline)1",
+      "grade_definitions": {
+        "1": "Splenic sequestration not requiring any treatment",
+        "2": "N/A",
+        "3": "Splenic sequestration requiring treatment (i.e. erythrocyte transfusion, IV fluids, etc) AND NO hemodynamic instability AND NOT requiring splenectomy, fluids, etc)",
+        "4": "Splenic sequestration AND hemodynamic instability OR requiring splenectomy",
+        "5": "Death due to splenic sequestration"
+      }
+    },
+    {
+      "id": 30,
+      "outcome": "Alloimmunization/ Delayed Hemolytic Transfusion Reaction",
+      "diagnostic_criteria": "Drop in Hgb from baseline occurring between 1 and 21 days post transfusion due to hemolysis from\nalloantibody(ies). The drop in Hgb is associated with immuno-hematology evidence (new RBC antibodies, +/-\npositive DAT) with evidence of destruction of transfused cells over self RBCs, evidence of prominent\nhemolysis (increase in LDH, indirect bilirubin, AST), and in some cases relative reticuloctyopenia.1",
+      "grade_definitions": {
+        "1": "NOT requiring intervention for immune- mediated hemolysis",
+        "2": "Decline in Hb <20% from baseline) AND NOT requiring intervention for immune-mediated hemolysis (including no erythrocyte transfusions, steroids, IVIG, or immunosuppressors)",
+        "3": "Decline in hemoglobin ≥ 20% from baseline OR requiring intervention for immune-mediated hemolysis (including erythrocyte transfusions, steroids, IVIG, or immunosuppressors",
+        "4": "Decline in Hb ≥20% from baseline AND resulting in a life- threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death due to alloantibody or autoantibody immune- mediated hemolysis"
+      }
+    },
+    {
+      "id": 31,
+      "outcome": "Chronic hypersplenism",
+      "diagnostic_criteria": "-\nSplenomegaly (children: palpable ≥2 cm below costal margin; adults: palpable) OR enlargement of spleen on\nabdominal imaging AND\n-\nOne or more cytopenia without evidence of bone marrow insufficiency or effects from hydroxyurea and as\ndefined as:\n-\nWorsening or new anemia not thought to be related to other etiologies\n-\nThrombocytopenia (<150,000 platelets/mm3) not thought to be related to other etiologies\n-\nLeukopenia or absolute neutrophil count below normal range not thought to be related to other etiologies AND\nNo evidence of acute splenic sequestration",
+      "grade_definitions": {
+        "1": "Hypersplenism with isolated thrombocytopenia AND NOT requiring splenectomy",
+        "2": "Hypersplenism with 2 cytopenias AND NOT requiring splenectomy",
+        "3": "Hypersplenism with all 3 cytopenias OR Hypersplenism leading to splenectomy",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 32,
+      "outcome": "Hepatopathy",
+      "diagnostic_criteria": "-\nAbrupt onset of severe right upper quadrant pain AND/OR\n-\nMarked increase in direct bilirubin (>50% of total) compared to baseline AND\n-\nAbsence of extrahepatic biliary system obstruction AND/OR\n-\nHepatomegaly AND/OR\n-\nElevated liver enzymes AND/OR\n-\nCoagulopathy\nModel for End-stage Liver Disease (MELD) is a classification used to grade chronic liver disease in adults. The\nscore has prognostic value in terms of three-month mortality.\nThe components of the MELD score are 4:\n-\nserum creatinine (Cr) in mg/dL\n➢ if dialysis twice in the last week, then creatinine is given a value of 4 mg/dL\n-\ntotal bilirubin in mg/dL\n-\nINR\nThese variables are used to calculate the score with the following formula\nMELD = (0.957 x ln [Cr]) + (0.378 x ln [bilirubin]) + (1.120 x ln [INR]) + 0.643\n-\n(ln = log to the base of e, loge)",
+      "grade_definitions": {
+        "1": "MELD score ≤ 29 AND NOT requiring treatment (e.g., erythrocyte transfusion or drugs for cholestasis)",
+        "2": "MELD score ≤29 AND requiring treatment (e.g., simple erythrocyte transfusion, cholestatic agents, exchange transfusions AND NOT resulting in a life- threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments5",
+        "3": "MELD score 30-39 AND requiring treatment (e.g., simple erythrocyte transfusion, cholestatic agents, or exchange transfusions AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments5",
+        "4": "MELD >40 OR resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments5",
+        "5": "Death due to liver failure from sickle cell hepa- topathy"
+      }
+    },
+    {
+      "id": 33,
+      "outcome": "Splenic infarction",
+      "diagnostic_criteria": "-\nLeft upper quadrant pain, which may be referred to the left shoulder AND\n-\nImaging evidence of necrotic or ischemic splenic parenchyma using ultrasound or CT Abdomen OR\n-\nSurgical evidence of acute splenic parenchymal necrosis1",
+      "grade_definitions": {
+        "1": "Incidental finding on radiologic imaging AND NOT requiring treatment",
+        "2": "Requiring acute care visit to a medical facility AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "3": "Requiring admission for treatment AND NOT resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "4": "Resulting in a life- threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2 OR Requiring splenectomy",
+        "5": "Death due to acute splenic infarction"
+      }
+    },
+    {
+      "id": 34,
+      "outcome": "Transfusional iron overload (hemochromatosis or hemosiderosis)",
+      "diagnostic_criteria": "-\nLiver iron concentration (LIC) > 2.5 mg Fe/100 g of dry weight liver\n-\n(Ferritin > 1000 ng/mL at steady state can be used in the absence of LIC measurement)\n-\nDeposition of iron in vital organs resulting in organ dysfunction (i.e. pancreatic dysfunction, liver\ndysfunction, cardiac siderosis)",
+      "grade_definitions": {
+        "1": "LIC 2.5-6.9 mg Fe/100 g dry weight liver OR Serum ferritin 1000- 2000 ng/dL (at steady state) irrespective of iron chelation AND MRI T2* ≥20 msec AND NO evidence of organ dysfunction",
+        "2": "LIC 7-14.9 mg Fe/100 g dry weight liver OR Serum ferritin 2000- 5000 ng/dL (at steady state) irrespective of iron chelation AND MRI T2* ≥20 msec AND NO evidence of organ dysfunction",
+        "3": "LIC ≥15 mg Fe/100 g dry weight liver OR serum ferritin 5000- 10,000 ng/dL (at steady state) irrespective of iron chelation AND MRI T2* ≥20 msec AND NO evidence of organ dysfunction",
+        "4": "LIC ≥15 mg Fe/100 g dry weight liver AND serum ferritin > 10,000 ng/dL (at steady state) irrespective of iron chelation OR MRI T2* <20 msec OR evidence of organ dysfunction due to iron overload",
+        "5": "Death due to iron overload"
+      }
+    },
+    {
+      "id": 35,
+      "outcome": "Transient aplastic crisis secondary to parvovirus B19 infection",
+      "diagnostic_criteria": "-\nDecrease in hemoglobin ≥2 g/dL from baseline AND\n-\nReticulocytopenia (absolute reticulocyte count <10,000/ul) OR\n-\nReticulocyte number disproportionately low with respect to the hemoglobin level1",
+      "grade_definitions": {
+        "1": "Transient aplastic crisis AND NOT requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+        "2": "Transient aplastic crisis with Hb nadir ≥5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+        "3": "Transient aplastic crisis with Hb nadir <5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin)",
+        "4": "Transient aplastic crisis with Hb nadir <5 g/dL AND requiring treatment (e.g., erythrocyte transfusions, erythropoietin) AND resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2",
+        "5": "Death due to transient aplastic crisis"
+      }
+    },
+    {
+      "id": 36,
+      "outcome": "Fever",
+      "diagnostic_criteria": "Temperature captured from anywhere. Regardless of presence or absence of central line\nOR any patient reported fever\nOR any visit/discussion with a medical facility regarding fever",
+      "grade_definitions": {
+        "1": "Temperature 38.0 – 38.4 degrees Celsius (100.4 - 102.2 degrees Fahrenheit)",
+        "2": "Temperature >= 38.5 Celsius (101.3 degrees Fahrenheit)",
+        "3": "N/A",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 37,
+      "outcome": "Sepsis",
+      "diagnostic_criteria": "-\nSepsis Respiratory rate greater than upper limit of normal for age\n-\nGlasgow Coma Scale <15\n-\nSystolic blood pressure ≤100 mmHg\n-\nSeptic Shock - A need for vasopressor therapy to maintain a mean arterial pressure ≥65 mmHg\nand a serum lactate >2 mM, persisting after adequate fluid resuscitation1",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "N/A",
+        "3": "Blood culture positive (bacteremia) AND signs or symptoms of organ dysfunction OR treatment indicated",
+        "4": "Life-threatening consequences of sepsis (e.g., hemodynamic instability, respiratory failure) AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death due to sepsis"
+      }
+    },
+    {
+      "id": 38,
+      "outcome": "Malignant neoplasms",
+      "diagnostic_criteria": "Pathologic diagnosis appropriate to tumor or malignancy type.",
+      "grade_definitions": {
+        "1": "Asymptomatic or mild symptoms: Clinical or diagnostic observations only OR low-grade neoplasms where intervention is not indicated (e.g., cervical intraepithelial neoplasia/ cervical dysplasia/ CIN, and teratoma incidentally identified on imaging)",
+        "2": "Moderate symptoms: Minimal, local, or noninvasive intervention indicated OR limiting age- appropriate instrumental Activities of Daily Life OR low grade, non-metastatic neoplasms (e.g., cervical carcinoma in- situ, cervical lymph node paraganglioma, basal cell carcinoma, squamous cell carcinoma, parotid carcinoma)",
+        "3": "Severe or medically significant but not immediately life- threatening: Hospitalization or prolongation of existing hospitalization indicated OR disabling or limiting self-care Activities of Daily Life OR high-grade neoplasms requiring single treatment therapy (surgery, radiation with or without chemotherapeutic agent) (e.g., breast cancer if in- situ, prostate cancer, bladder carcinoma, thyroid cancer, carcinoid, squamous cell carcinoma cervix, glioma, astrocytoma, gastrointestinal stromal tumor/GIST)",
+        "4": "Life-threatening consequences: Urgent intervention indicated OR high-grade neoplasms requiring multimodal therapy OR more than one chemotherapy agent used (e.g., MDS, AML, ALL, Hodgkin lymphoma, non- Hodgkin lymphoma, non in-situ/ invasive breast cancer, osteosarcoma, Ewing sarcoma, primitive neuroectodermal tumor/ PNET, soft tissue sarcoma, renal cancer, anaplastic CNS tumor, glioblastoma, carcinoma of head/neck, liver cancer, lung cancer, mesothelioma, melanoma)",
+        "5": "Death due to cancer complications in a person with SCD"
+      }
+    },
+    {
+      "id": 39,
+      "outcome": "Avascular necrosis of joints (AVN)",
+      "diagnostic_criteria": "Radiographic evidence of necrosis and subsequent bone changes.  Plain films may be normal early in disease\nwhereas magnetic resonance imaging (MRI) techniques demonstrate early changes and provide more detail\non the degree of bony involvement.",
+      "grade_definitions": {
+        "1": "Radiological findings of AVN AND NOT symptomatic",
+        "2": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND NO intervention",
+        "3": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND intervention with physical therapy, analgesics, bone remodeling agents OR invasive intervention with steroid injection or core decompression",
+        "4": "Radiological findings of AVN AND limiting instrumental activities of daily living AND invasive intervention with total joint replacement",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 40,
+      "outcome": "Leg ulcer",
+      "diagnostic_criteria": "Skin ulceration on physical exam; based on thickness, size, necrosis, periwound, and exudate1",
+      "grade_definitions": {
+        "1": "Intact skin with skin induration AND hyperpigmentation associated with pain/itching/burning/ warmth, possibly edema",
+        "2": "Partial thickness skin loss AND Less than 8 cm2 AND Minimal exudate AND Periwound intact",
+        "3": "Full thickness skin loss involving subcutaneous tissue AND Greater than 8 cm2 <50% wound bed with necrotic tissue AND Moderate exudate AND Periwound intact",
+        "4": "Full thickness skin loss involving damage or necrosis extending to the fascia AND Greater than 8 cm2 >50% wound bed with necrotic tissue AND Heavy exudate, possibly malodorous AND Periwound erythema, maceration + clinical signs of infection",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 41,
+      "outcome": "Osteomyelitis",
+      "diagnostic_criteria": "-\nPositive cultures from bone obtained by aspiration or biopsy (cultures from a draining tract may not\nreflect what is in the bone, so biopsies should avoid going through an ulcer) OR\n-\nPositive blood culture accompanied by radiographic and clinical findings consistent with diagnosis1\nOR\n-\nNegative blood culture but radiologic and/or histologic findings suggestive of osteomyelitis\nNote: this classification does not include chronic osteomyelitis",
+      "grade_definitions": {
+        "1": "Osteomyelitis AND NOT requiring parenteral antibiotics AND NOT requiring invasive treatments (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+        "2": "Osteomyelitis AND requiring parenteral antibiotics AND NOT requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+        "3": "Osteomyelitis AND requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND NO multifocal osteomyelitis",
+        "4": "Osteomyelitis AND requiring invasive treatment (e.g., surgery to drain abscess or bone complications) AND multifocal osteomyelitis",
+        "5": "Death from complications of osteomyelitis (e.g., sepsis)"
+      }
+    },
+    {
+      "id": 42,
+      "outcome": "Osteoporosis",
+      "diagnostic_criteria": "Bone mineral density (BMD) by dual-energy X-ray absorptiometry (DEXA) scan.",
+      "grade_definitions": {
+        "1": "Adult: Radiologic evidence of osteoporosis or Bone Mineral Density (BMD) t-score -1 to - 2.5 (osteopenia) Pediatric: Radiologic evidence of low BMD with z score of <= -2.0 AND NO history of significant fractures for both pediatrics and adults",
+        "2": "Adult: BMD t-score < -2.5 OR loss of height <2 cm or therapy to improve BMD indicated OR limiting instrumental ADL Pediatric: Low BMD (z-score <= -2.0) AND significant fracture history (defined as a long bone fracture of the lower extremity, vertebral compression, 2 or more long bone fractures of the upper extremities) for both pediatrics and adults OR therapy to improve BMD indicated for both pediatrics and adults",
+        "3": "Adult: Loss of height >= 2 cm OR hospitalization indicated OR limiting self-care ADL Pediatric: Limiting self- care ADL",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 43,
+      "outcome": "Acute Multiorgan Failure",
+      "diagnostic_criteria": "Acute deterioration in the function of 2 or more organ systems beginning with a >30% decrease in hemoglobin\nand platelet count, and involvement of any of the following organ systems utilizing appropriate tests to define\nthe organs involved (examples given in parentheses).  Disseminated intravascular coagulopathy (DIC) is also\na frequently associated condition:\n-\nLungs (chest X-ray infiltrate[s], severe hypoxia)\n-\nLiver (increase in ALT, LDH, total and direct bilirubin, alkaline phosphatase)\n-\nKidney (increased creatinine)\n-\nCentral nervous system (altered mental status)\n-\nHeart (ischemia based on characteristic ECG changes or increased troponin)\n-\nSpleen (splenomegaly—ultrasound)\n-\nCoagulopathy (alteration in PT/INR, PTT, and/or fibrinogen",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "N/A",
+        "3": "Acute multi-organ failure AND NOT resulting in a life- threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "4": "Acute multi-organ failure AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death due to multi- organ failure"
+      }
+    },
+    {
+      "id": 44,
+      "outcome": "Fetal growth restriction",
+      "diagnostic_criteria": "Use of ultrasound during pregnancy to estimate weight of fetus 1\nNote: This grading applies to the mother",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "<10% percentile of weight for gestational age",
+        "3": "<5% percentile of weight for gestational age",
+        "4": "<1% percentile of weight for gestational age",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 45,
+      "outcome": "Pregnancy loss",
+      "diagnostic_criteria": "Diagnosis of pregnancy loss is based on self-reporting (delayed menstruation and home pregnancy testing) and\nclinical testing, including declining serum human chorionic gonadotrophin (hCG) levels, transvaginal\nultrasonography and histopathology 1\nNote: This grading applies to the mother",
+      "grade_definitions": {
+        "1": "N/A",
+        "2": "N/A",
+        "3": "N/A",
+        "4": "Fetal loss at any gestational age",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 46,
+      "outcome": "Premature delivery",
+      "diagnostic_criteria": "Based on gestational age of fetus/infant 1\nNote: This grading applies to the mother",
+      "grade_definitions": {
+        "1": "Delivery of a liveborn infant at >34 to 37 weeks gestation",
+        "2": "Delivery of a liveborn infant at >28 to 34 weeks gestation",
+        "3": "Delivery of a liveborn infant at 24 to 28 weeks gestation",
+        "4": "Delivery of a liveborn infant at 24 weeks of gestation or less",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 47,
+      "outcome": "Depression",
+      "diagnostic_criteria": "To receive a diagnosis of depression according to the DSM-5 criteria, the following conditions must be met:\n1. Duration: Symptoms must be present for at least two weeks.\n2. Symptoms: The individual must experience five or more of the following symptoms during the same two-\nweek period, and at least one of these symptoms should be either:\n-\nDepressed mood: Feeling down most of the day, nearly every day.\n-\nLoss of interest or pleasure: Markedly diminished interest or pleasure in all or almost all activities.\nThe additional symptoms include:\n-\nSignificant weight loss or gain, or a change in appetite.\n-\nSlowing down of thought and physical movement (observable by others).\n-\nFatigue or loss of energy.\n-\nFeelings of worthlessness or excessive guilt.\n-\nDiminished ability to think or concentrate, or indecisiveness.\n-\nRecurrent thoughts of death, suicidal ideation, or a suicide attempt.",
+      "grade_definitions": {
+        "1": "Mild depressive symptoms OR PHQ-9 score 5-9 AND treatment not recommended",
+        "2": "Moderate depressive symptoms OR PHQ-9 score 10 to 14 AND limiting instrumental activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "3": "Severe depressive symptoms OR PHQ-9 score 15-19 AND limiting activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "4": "PHQ-9 score 20-27 OR life-threatening consequences (i.e., attempted suicide) OR threats of harm to self or others AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "5": "Death due directly to depressive symptoms (e.g., suicide)"
+      }
+    },
+    {
+      "id": 48,
+      "outcome": "Acute Chest Syndrome (ACS)",
+      "diagnostic_criteria": "Radiographic evidence of consolidation. A new segmental radiographic pulmonary infiltrate (not requiring a preceding radiograph or physical exam, but if either was performed, current findings must be new) involving at least one complete segment AND at least one of the following: temperature >=38.5 C; >2% decrease in SpO2 from a documented steady-state value on room air (FiO2=0.21); PaO2 <60 mmHg; tachypnea; intercostal retractions/nasal flaring/accessory muscle use; thoracic pain; cough; wheezing; or rales.",
+      "grade_definitions": {
+        "1": "Requiring none of the below: supplemental oxygen; simple or exchange erythrocyte transfusion; erythropoietin; BiPAP; any other supportive treatment, other than antibiotics.",
+        "2": "Requiring FiO2 >21% to <50% OR simple erythrocyte transfusion AND none of the below: BiPAP; high flow O2; exchange transfusion.",
+        "3": "Requiring >=50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion.",
+        "4": "Requiring >=50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion AND critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation).",
+        "5": "Death from ACS complications."
+      },
+      "frequency": "Acute",
+      "definition": "ACS is an acute illness characterized by fever and/or respiratory symptoms, accompanied by a new lobar pulmonary infiltrate (not atelectasis) on chest imaging.",
+      "methodology": "Severity is graded according to level of care and complexity of treatment(s) required.",
+      "source_pages": [
+        119,
+        120
+      ],
+      "aliases": [
+        "Acute chest syndrome (ACS)",
+        "Acute Chest Syndrome",
+        "ACS"
+      ],
+      "machine_grading": {
+        "engine": "acs_hybrid_v2",
+        "principle": "Deterministic text extraction anchors obvious high-value facts; verified LLM extraction supplements missing fields; Python applies SCOGS rules.",
+        "features": [
+          "death_attributed_to_acs",
+          "fio2_pct",
+          "oxygen_flow_lpm",
+          "supplemental_oxygen",
+          "bipap",
+          "high_flow_o2",
+          "simple_transfusion",
+          "exchange_transfusion",
+          "erythropoietin",
+          "other_support",
+          "vasopressor",
+          "intubation",
+          "invasive_mechanical_ventilation",
+          "other_critical_support"
+        ],
+        "strict_notes": [
+          "FiO2 percentage and oxygen flow in L/min are not interchangeable.",
+          "Do not infer room air from clinical improvement or discharge.",
+          "Explicit intubation/invasive mechanical ventilation is operationalized as respiratory support at least as intensive as Grade-3 modalities; no FiO2 value is inferred.",
+          "Deterministic text facts override conflicting LLM output."
+        ]
+      }
+    },
+    {
+      "id": 49,
+      "outcome": "Asthma exacerbation",
+      "diagnostic_criteria": "-\nEpisodic symptoms of airflow obstruction or airway hyperresponsiveness are present\n-\nAirflow obstruction is at least partially reversible\n-\nAlternative diagnoses are excluded\n-\nIf spirometry is available, reversibility is determined either by an increase in FEV1 of ≥12 percent from\nbaseline or by an increase ≥10 percent of predicted FEV1 after inhalation of a short-acting bronchodilator\n-\nAdditional studies as necessary to exclude alternate diagnoses1\n-\nImprovement with bronchodilators",
+      "grade_definitions": {
+        "1": "Mild symptoms AND NO medical intervention indicated",
+        "2": "Symptomatic AND medical intervention sought (but NO supplemental oxygen) OR limiting instrumental activities of daily living (ADL) OR intermittent asthma requiring short- acting beta-agonists as needed AND NOT status asthmaticus",
+        "3": "Limiting self- care ADL OR supplemental oxygen indicated OR status asthmaticus",
+        "4": "Life-threatening respiratory or hemodynamic compromise (i.e., requiring intubation, pressors, invasive or non-invasive ventilation)",
+        "5": "Death due to asthma complications"
+      }
+    },
+    {
+      "id": 50,
+      "outcome": "Chronic restrictive lung physiology",
+      "diagnostic_criteria": "Functional characteristics of a restrictive pattern in pulmonary function tests (PFTs) which include decreased total\nlung capacity (TLC) and forced vital capacity (FVC). According to the American Thoracic Society, the TLC predicted\n(adjusted for gender, age, height) value can be used for assessing the severity of the restrictive condition2\nFor patients with sickle cell disease, PFTs should be taken at baseline and not in the setting of acute illness",
+      "grade_definitions": {
+        "1": "TLC 70-80%; mild restrictive disease",
+        "2": "TLC 60-70%; moderate restrictive disease",
+        "3": "TLC 50-60%; moderately severe restrictive disease",
+        "4": "TLC <50% predicted; severe restrictive lung disease",
+        "5": "Death due to restrictive lung disease"
+      }
+    },
+    {
+      "id": 51,
+      "outcome": "Pulmonary Embolism (PE)",
+      "diagnostic_criteria": "ANY of the following:\n-\nPulmonary angiography demonstrating an intraluminal filling defect or abrupt vessel cut-off.\n-\nHigh probability ventilation/perfusion (V/Q) lung scan showing:\n➢ Two or more large segmental perfusion defects (>75% of a segment) without corresponding ventilation or\nradiographic abnormalities.\n➢ One large segmental perfusion defect and 2 or more moderate segmental perfusion defects (25%-75% of\na segment) without corresponding ventilation or radiographic abnormalities.\n➢ Four or more moderate segmental perfusion defects without corresponding ventilation or radiographic\nabnormalities.\n-\nCT scan (helical or spiral CT) with contrast medium demonstrating intraluminal defect(s) that partially or\ncompletely occlude a pulmonary artery or result in an abrupt vessel cut-off.\n-\nGadolinium-enhanced pulmonary magnetic resonance angiography demonstrating intraluminal defect(s)\nthat partially or completely occlude a pulmonary artery or an abrupt vessel cut-off.",
+      "grade_definitions": {
+        "1": "An incidental finding of PE or diagnosis of PE AND NO symptoms",
+        "2": "Finding of PE on imaging AND symptoms AND NO cardiac function compromise AND NO hemodynamic instability",
+        "3": "Finding of PE requiring admission AND symptoms AND cardiac function compromise, including evidence of right heart strain by ECHO, EKG, or elevated BNP (from baseline) AND NO hemodynamic instability AND NOT resulting in a life- threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "4": "Finding of PE requiring ICU admission AND symptoms AND cardiac function compromise, including evidence of right heart strain by ECHO, EKG, or elevated BNP (from baseline) OR hemodynamic instability AND resulting in a life-threatening complication where the need for life-supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life- supporting treatments2",
+        "5": "Death due to PE"
+      }
+    },
+    {
+      "id": 52,
+      "outcome": "Pulmonary Hypertension",
+      "diagnostic_criteria": "-\nDirect measurement of pulmonary artery pressure by right-sided cardiac catheterization is the gold\nstandard test for the diagnosis of pulmonary arterial hypertension (PAH) (PASP >25 mmHg at rest or >30\nmmHg with exercise)2",
+      "grade_definitions": {
+        "1": "Right heart catheterization mPAP 20-25 mmHg AND NYHA Class I-II dyspnea AND NO evidence of right sided congestive heart failure or syncope",
+        "2": "Right heart catheterization mPAP 25-35 mmHg AND NYHA Class II-III dyspnea and/or persistent cough AND NO evidence of right sided congestive heart failure or syncope",
+        "3": "Right heart catheterization mPAP > 35 mmHg AND NYHA Class III dyspnea and/or hypoxia requiring nocturnal or constant oxygen AND NO evidence of right sided congestive heart failure on physical",
+        "4": "Right heart catheterization mPAP > 35 mmHg AND NYHA Class IV dyspnea (syncope and/or dyspnea at rest) AND right sided congestive heart failure on physical exam AND severely reduced cardiac output/cardiac index or respiratory failure requiring ventilatory support",
+        "5": "Death in the setting of pulmonary hypertension"
+      }
+    },
+    {
+      "id": 53,
+      "outcome": "Sleep Apnea (OBSTRUCTIVE; Central)",
+      "diagnostic_criteria": "-\nPolysomnography measuring apnea-hypopnea index (AHI).\n-\nApnea-Hypopnea Index measures sleep apnea severity.\n-\nThe AHI is the sum of the number of apneas (pauses in breathing) plus the number of hypopneas\n(periods of shallow breathing) that occur, on average, each hour",
+      "grade_definitions": {
+        "1": "ADULTS (age ≥18 Polysomnography AHI 5-15 AND NO treatment indicated CHILDREN (age ≤18 yrs) AHI 0 – 3 AND Hb02 sat <90% for >3 min overnight OR AHI 3.1 – 7.9 AND NO Hb02 sat <90% for >3 min overnight",
+        "2": "Polysomnography AHI 5-15 AND treatment indicated (i.e. CPAP, tonsillectomy) HI 3.7 – 7.9 AND Hb02 sat <90% for >3 min overnight OR AHI 8.0 – 15.0 AND NO Hb02 sat <90% for >3 min overnight",
+        "3": "Polysomnography AHI 15-30 with or without treatment (i.e. CPAP, tonsillectomy) indicated HI 8.0 – 15.0 AND Hb02 sat <90% for >3 min overnight OR AHI 15.1 – 24.9 AND NO Hb02 sat <90% for >3 min overnight",
+        "4": "Polysomnography AHI >30 with or without treatment indicated (i.e. CPAP, tonsillectomy) AHI 15.1 – 24.9 AND Hb02 sat <90% for >3 min overnight OR AHI > or = 25",
+        "5": "N/A N/A"
+      }
+    }
+  ],
+  "schema_version": "2.0",
+  "source": {
+    "title": "St. Jude Global Sickle Cell Outcome Grading System (SCOGS)",
+    "note": "The existing 53-outcome JSON is preserved. ACS was reconciled to booklet pages 119-120 and augmented with machine-grading metadata for the demo."
+  }
+}
