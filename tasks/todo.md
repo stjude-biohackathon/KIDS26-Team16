@@ -61,12 +61,12 @@ Evaluating these 14 outcomes requires two complementary runs:
 ### Execution Steps:
 
 - [ ] **2.1 Base Run: 14 Focus Outcomes on Primary SCD Cohort (`--cohort scd_primary`)**
-  Run default Stage 3 extraction (incorporates precision rules, negation handling, and episode scoping):
+  Run default Stage 3 extraction (incorporates precision rules, negation handling, and episode scoping) on 37 notes (28 stratified seeded cases—2 for each of the 14 focus outcomes—plus 9 holdout cases):
   ```bash
   python3 scripts/experiments/medgemma_extraction.py \
     --model medgemma-27b-f16 \
     --cohort scd_primary \
-    --notes 20 \
+    --notes 37 \
     --prompt-stage 3 \
     --outcomes 14 \
     --stratify \
