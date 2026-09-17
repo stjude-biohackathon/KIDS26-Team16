@@ -16,11 +16,21 @@ Bundled PMC case cache
 implement the feature registry and deterministic grading. The generated
 `data/scogs_feature_schema.json` must stay synchronized with them.
 
-`scripts/experiments/medgemma_extraction.py` owns prompts, sampling, verification,
-and evaluation. `ollama_backend.py` owns transport and model preflight.
-`review_results.py` reads already-saved evidence to create worksheets.
-The two notebooks are ordered interfaces to this same code, not independent
-copies of model-installation or scoring logic.
+`scripts/experiments/` is split by responsibility:
+
+| Module | Owns |
+| --- | --- |
+| `medgemma_extraction.py` | CLI arguments, prompt stages, backends, the run loop |
+| `verification.py` | quote grounding, value typing, unit / age / TLC guards, conflict reconciliation |
+| `grading.py` | verified features -> grade status (`grade_outcome`), shared with the dashboard |
+| `cohort.py` | SCD cohort gate and stratified note selection |
+| `run_output.py` | console report and the results-file format |
+| `ollama_backend.py` | transport and model preflight |
+| `review_results.py` | worksheets from already-saved results |
+
+The two notebooks and `dashboard/` are interfaces to this same code, not
+independent copies of it: the dashboard's live mode calls `run()` and
+`grade_outcome()` and never builds its own prompt.
 
 ## Invariants
 
@@ -46,3 +56,7 @@ Known booklet discrepancies and the documented fever-boundary correction are
 recorded in [the verification log](../reference/rules_vs_booklet_discrepancies.md).
 This cleanup does not change grading predicates or prompt-stage semantics.
 The booklet and proposal are kept in `docs/reference/` for traceability.
+
+The audit runs in three steps: `scripts/audit/extract_booklet.py` (PDF -> JSON),
+`compare_grades.py` (exit 1 on a table-count mismatch) and `compare_prose.py`.
+Each script's docstring documents its inputs, outputs and exit codes.

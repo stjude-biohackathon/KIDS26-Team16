@@ -63,7 +63,21 @@ Ollama manages model inference independently.
 Both run on Windows/Linux, use the selected kernel's Python interpreter, handle
 paths containing spaces, and stop on subprocess failure. Each creates a unique
 folder under `results/`; neither downloads models or changes the Ollama service.
-The old Colab/Drive recovery notebooks and dashboard have been removed.
+The old Colab/Drive recovery notebooks have been removed.
+
+## Dashboard
+
+A local Shiny app for inspecting saved runs and grading single notes. Start it
+from the repository root:
+
+```bash
+python -m shiny run dashboard/interactive_dashboard.py
+```
+
+- **Explore Saved Runs** opens `results/*.json` (or the bundled test fixture) case by case.
+- **Evaluate Live Note** grades a pasted note. With Ollama running it uses the same
+  prompts, quote verification and grading as `medgemma_extraction.py`; without Ollama
+  it grades the feature values you type in.
 
 ## Terminal workflow
 
@@ -152,7 +166,8 @@ collaborators. Clear notebook outputs before committing.
 
 ```text
 notebooks/                  Two ordered, cross-platform entry points
-scripts/experiments/        Extraction, Ollama preflight/client, review exports
+dashboard/                  Shiny app: saved-run explorer and live note grading
+scripts/experiments/        Extraction CLI, verification, grading, cohort selection, Ollama client, review exports
 scripts/scogs/              Feature definitions, predicates, deterministic tables
 scripts/audit/              Optional rubric-to-PDF verification utilities
 scripts/download_data.py    Optional full-corpus downloader
@@ -163,6 +178,7 @@ docs/ollama_setup.md        Model import, Windows/Linux service setup, troublesh
 docs/research/              Current architecture and evaluation protocol
 docs/reference/             Source booklet, proposal, rubric verification log
 rules.md                   Human-readable grading authority
+pyproject.toml             pytest import roots and ruff settings (nothing to install)
 tests/                     Rule, extraction, HTTP, and notebook workflow checks
 results/                   Local outputs; ignored by Git
 ```
@@ -185,7 +201,8 @@ before rebuilding if reproducing an earlier experiment.
 ## Development
 
 ```bash
-python -m pytest -q
+pytest -q
+pip install ruff==0.14.0 && ruff check .
 python scripts/scogs/build_schema.py
 ```
 
@@ -196,7 +213,7 @@ Real hardware still requires `--check-model` and a small extraction run.
 Optional booklet audits require Poppler's `pdftotext` on `PATH`, not a model:
 
 ```bash
-python scripts/audit/extract_booklet.py
-python scripts/audit/compare_grades.py
+python scripts/audit/extract_booklet.py   # PDF -> booklet_grades.json
+python scripts/audit/compare_grades.py    # exit 1 if an outcome's table count differs
 python scripts/audit/compare_prose.py
 ```

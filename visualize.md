@@ -1,5 +1,7 @@
 # SCOGS: System Architecture & Workflow Visualizations
 
+> Diagrams only. For which module owns what, docs/research/architecture.md is authoritative.
+
 This document provides visual diagrams and workflow specifications for the **Sickle Cell Outcome Grading System (SCOGS)** architecture, clinical feature extraction harness, and deterministic grading engine.
 
 ---
@@ -7,7 +9,7 @@ This document provides visual diagrams and workflow specifications for the **Sic
 ## 1. Architectural Philosophy: "Derive, Never Predict"
 
 The core invariant of the system is that **grades are derived deterministically, never predicted end-to-end by an LLM**:
-- **Feature Extraction (Learned)**: Language models (MedGemma 4B / 27B) extract structured clinical features (labs, vitals, interventions, care settings) accompanied by verbatim quotes.
+- **Feature Extraction (Learned)**: Language models (MedGemma 27B) extract structured clinical features (labs, vitals, interventions, care settings) accompanied by verbatim quotes.
 - **Verification Gate (Deterministic)**: The §2 quote verification contract, unit conversion guards, and conflict policies reject hallucinations before grading.
 - **Rule Engine (Deterministic)**: Executable decision tables evaluate verified features using three-valued logic (`True`, `False`, `UNKNOWN`) to yield audit-grade outcomes.
 
@@ -109,7 +111,7 @@ flowchart TB
         subgraph ENGINES ["Three Parallel Extractors"]
             E1["Regex & Numeric Parser<br/>(Exact labs, vitals, drug lists, rare terms)"]
             E2["BioClinical-ModernBERT<br/>(Contextual assertion & implicit clinical spans)"]
-            E3["MedGemma 4B / 27B<br/>(Zero-shot rare tail & mention adjudication)"]
+            E3["MedGemma 27B<br/>(Zero-shot rare tail & mention adjudication)"]
         end
         Reconcile["Authority-Based Reconciler<br/>(Domain authority priority over flat voting)"]
         ENGINES --> Reconcile
@@ -161,7 +163,7 @@ flowchart LR
     end
 
     subgraph EXTRACT ["LLM Feature Extraction"]
-        LLM["MedGemma 4B / 27B<br/>Structured JSON Prompt"]
+        LLM["MedGemma 27B<br/>Structured JSON Prompt"]
         JSONOutput["Proposed Features:<br/>• Value<br/>• Verbatim Quote<br/>• Attributed Cause"]
         LLM --> JSONOutput
     end
@@ -245,7 +247,11 @@ stateDiagram-v2
 | **Predicate Evaluator** | [`scripts/scogs/predicates.py`](scripts/scogs/predicates.py) | Three-valued logic comparison engine supporting `UNKNOWN` propagation. |
 | **Decision Tables** | [`scripts/scogs/tables.py`](scripts/scogs/tables.py) | 53 executable decision tables representing the SCOGS rubric. |
 | **Rule Evaluator** | [`scripts/scogs/evaluate.py`](scripts/scogs/evaluate.py) | Evaluates (outcome, features) into `GradeResult` instances. |
-| **Extraction Harness** | [`scripts/experiments/medgemma_extraction.py`](scripts/experiments/medgemma_extraction.py) | CLI test harness for MedGemma (4B/27B/mock), quote verification, and metrics. |
-| **Review Worksheets** | [`scripts/experiments/review_results.py`](scripts/experiments/review_results.py) | Offline generator for precision (`handcheck.csv`) and false-negative (`absence_audit.csv`) review sheets. |
-| **Interactive Dashboard** | [`dashboard/index.html`](dashboard/index.html) | Browser interface with interactive quote highlighting on note text (legacy/reference). |
+| **Extraction Harness** | [`scripts/experiments/medgemma_extraction.py`](scripts/experiments/medgemma_extraction.py) | CLI arguments, prompt stages, backends, the run loop (27B/mock). |
+| **Verification Gate** | [`scripts/experiments/verification.py`](scripts/experiments/verification.py) | Quote grounding, value typing, unit / age / TLC guards, conflict reconciliation. |
+| **Grading Harness** | [`scripts/experiments/grading.py`](scripts/experiments/grading.py) | Verified features -> grade status (`grade_outcome`), shared with the dashboard. |
+| **Cohort Gate** | [`scripts/experiments/cohort.py`](scripts/experiments/cohort.py) | SCD cohort gate and stratified note selection. |
+| **Run Output** | [`scripts/experiments/run_output.py`](scripts/experiments/run_output.py) | Console report and the results-file format. |
+| **Review Worksheets** | [`scripts/experiments/review_results.py`](scripts/experiments/review_results.py) | Worksheets from already-saved results. |
+| **Interactive Dashboard** | [`dashboard/interactive_dashboard.py`](dashboard/interactive_dashboard.py) | Shiny app: explore saved runs; grade live notes through the extraction harness. |
 | **Test Suite** | [`tests/`](tests/) | Pytest suite covering tables, schemas, predicates, Ollama workflow, and verifiers. |

@@ -1,5 +1,11 @@
 # Custom Datasets Implementation Plan
 
+> **Status (2026-09-17): not started; partly stale.** Written before the maintainability
+> refactor (tasks/plan.md). `load_notes` and the cohort constants now live in
+> `scripts/experiments/cohort.py`, not `medgemma_extraction.py`; its line numbers and
+> the "1,960-line" figure are out of date, and the "uncommitted changes" precondition
+> no longer applies. Find code by function name before executing it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let `medgemma_extraction.py` read notes from a user-supplied `.json` / `.jsonl` / `.csv` file or a folder of `.txt` files, alongside the default PMC-Patients SCD notes.
