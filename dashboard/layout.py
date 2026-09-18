@@ -16,9 +16,13 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 outcomes_overview_card = ui.card(
     ui.card_header(
         ui.div(
-            ui.output_ui("outcomes_card_title"),
             ui.div(
-                ui.span("SHOW", class_="sidebar-section-label me-2"),
+                ui.span("PATIENT TRIAGE", class_="eyebrow-tag me-2"),
+                ui.output_ui("outcomes_card_title"),
+                class_="d-flex align-items-center flex-wrap gap-1",
+            ),
+            ui.div(
+                ui.span("FILTER", class_="sidebar-section-label me-2"),
                 ui.input_checkbox_group(
                     "outcome_filter",
                     label="",
@@ -38,27 +42,39 @@ outcomes_overview_card = ui.card(
 app_ui = ui.page_sidebar(
     ui.sidebar(
         ui.div(
-            ui.span("WORKSPACE CONTROL", class_="sidebar-section-label"),
-            ui.input_radio_buttons(
-                "app_mode",
-                label="",
-                choices={
-                    "explore": "Explore Saved Runs",
-                    "live": "Evaluate Live Note",
-                },
-                selected="explore",
+            ui.div(
+                ui.div(
+                    ui.span("WORKSPACE CONTROL", class_="sidebar-section-label mb-0"),
+                    ui.span("Active Mode", class_="sidebar-badge-subtle"),
+                    class_="d-flex justify-content-between align-items-center mb-2",
+                ),
+                ui.div(
+                    ui.input_radio_buttons(
+                        "app_mode",
+                        label="",
+                        choices={
+                            "explore": "Explore Saved Runs",
+                            "live": "Evaluate Live Note",
+                        },
+                        selected="explore",
+                    ),
+                    class_="sidebar-mode-switcher",
+                ),
+                class_="sidebar-panel-card mb-2",
             ),
-            class_="mb-3",
+            ui.output_ui("sidebar_controls"),
+            class_="sidebar-inner-content",
         ),
-        ui.hr(class_="sidebar-divider"),
-        ui.output_ui("sidebar_controls"),
-        width=340,
+        width=350,
         class_="clinical-sidebar",
     ),
     ui.tags.head(
         ui.tags.link(rel="preconnect", href="https://fonts.googleapis.com"),
         ui.tags.link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin=""),
-        ui.tags.link(href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap", rel="stylesheet"),
+        ui.tags.link(
+            href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap",
+            rel="stylesheet",
+        ),
         # Inlined into the page rather than served as files, so the app has no
         # static-route configuration to get wrong.
         ui.include_css(STATIC_DIR / "dashboard.css", method="inline"),
@@ -70,7 +86,7 @@ app_ui = ui.page_sidebar(
                 ui.div(
                     ui.span("SCOGS", class_="badge-brand me-2"),
                     ui.span("Clinical Evaluation & Extraction Dashboard", class_="app-title-main"),
-                    class_="d-flex align-items-center flex-wrap gap-1",
+                    class_="d-flex align-items-center flex-wrap gap-2",
                 ),
                 ui.p(
                     "Deterministic Sickle Cell Severity Grading & MedGemma Grounding Verification",
@@ -89,23 +105,35 @@ app_ui = ui.page_sidebar(
                 ),
                 class_="d-flex align-items-center flex-wrap gap-2 mt-2 mt-md-0",
             ),
-            class_="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom",
+            class_="header-island p-3 mb-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2",
         ),
         ui.div(
             outcomes_overview_card,
             ui.output_ui("executive_grade_card"),
             ui.card(
-                ui.card_header(ui.span("Clinical Note Context & Verified Spans", class_="card-header-title")),
-                ui.output_ui("note_inspector_ui"),
-                class_="shadow-xs",
-            ),
-            ui.card(
-                ui.card_header(ui.span("Clinical Findings & Grounding Verification", class_="card-header-title")),
+                ui.card_header(
+                    ui.div(
+                        ui.span("GROUNDING LEDGER", class_="eyebrow-tag me-2"),
+                        ui.span("Clinical Findings & Grounding Verification", class_="card-header-title"),
+                        class_="d-flex align-items-center flex-wrap gap-1",
+                    ),
+                ),
                 ui.output_ui("findings_table_ui"),
                 class_="shadow-xs",
             ),
+            ui.card(
+                ui.card_header(
+                    ui.div(
+                        ui.span("VERBATIM RECORD", class_="eyebrow-tag me-2"),
+                        ui.span("Clinical Note Context & Verified Spans", class_="card-header-title"),
+                        class_="d-flex align-items-center flex-wrap gap-1",
+                    ),
+                ),
+                ui.output_ui("note_inspector_ui"),
+                class_="shadow-xs",
+            ),
             ui.output_ui("profiling_card"),
-            class_="d-flex flex-column gap-4"
+            class_="d-flex flex-column gap-4",
         ),
         class_="container-fluid py-2",
     ),

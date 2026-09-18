@@ -283,7 +283,6 @@ def test_get_concurrency_assessment_model_tiers():
 
 def test_get_all_scogs_outcomes_and_choices():
     from dashboard.evaluation import (
-        FOCUS_OUTCOMES,
         TABLES,
         get_all_scogs_outcomes,
         get_outcome_choices,

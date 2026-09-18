@@ -161,12 +161,12 @@ def test_layout_inlines_the_theme_assets():
 
 
 def test_layout_ordering_and_summary_card():
-    """Verify that patient outcomes summary is near the top and note context precedes findings table."""
+    """Verify that patient outcomes summary is near the top and findings table precedes note context."""
     from dashboard.layout import app_ui
     page = str(app_ui)
     assert "patient_outcomes_summary_ui" in page
     assert "executive_grade_card" in page
-    # Note context must precede findings table
+    # Findings table must precede note context
     note_pos = page.find("Clinical Note Context &amp; Verified Spans")
     if note_pos == -1:
         note_pos = page.find("Clinical Note Context & Verified Spans")
@@ -175,7 +175,7 @@ def test_layout_ordering_and_summary_card():
         findings_pos = page.find("Clinical Findings & Grounding Verification")
     assert note_pos != -1
     assert findings_pos != -1
-    assert note_pos < findings_pos, "Note context must appear before findings table"
+    assert findings_pos < note_pos, "Findings table must appear before note context"
 
 
 def test_dashboard_css_contains_scroll_classes():

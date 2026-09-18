@@ -125,6 +125,37 @@ def test_filtering_the_overview_leaves_the_selected_outcome_on_screen(tmp_path):
     assert "GRADE 3" in out["executive_grade_card"]
 
 
+def test_selecting_different_outcome_updates_active_pill_highlight(tmp_path):
+    """Clicking different outcomes moves the outcome-pill-active highlight."""
+    import asyncio
+    from tests.shiny_session import FakeBrowser
+
+    async def run_flow():
+        browser = FakeBrowser()
+        await browser.start(app_mode="explore")
+        await browser.send_inputs(selected_run_file=mixed_status_run(tmp_path))
+
+        # Default on outcome 28
+        s28 = browser.html("patient_outcomes_summary_ui")
+        assert re.search(r'class="[^"]*outcome-pill-active[^"]*"[^>]*data-outcome-num="28"', s28)
+
+        # Clinician clicks outcome 48 (Cannot grade)
+        await browser.send_inputs(selected_outcome_num="48")
+        s48 = browser.html("patient_outcomes_summary_ui")
+        assert re.search(r'class="[^"]*outcome-pill-active[^"]*"[^>]*data-outcome-num="48"', s48)
+        assert not re.search(r'class="[^"]*outcome-pill-active[^"]*"[^>]*data-outcome-num="28"', s48)
+
+        # Clinician clicks outcome 40 (Absent)
+        await browser.send_inputs(selected_outcome_num="40")
+        s40 = browser.html("patient_outcomes_summary_ui")
+        assert re.search(r'class="[^"]*outcome-pill-active[^"]*"[^>]*data-outcome-num="40"', s40)
+        assert not re.search(r'class="[^"]*outcome-pill-active[^"]*"[^>]*data-outcome-num="48"', s40)
+
+        await browser.stop()
+
+    asyncio.run(run_flow())
+
+
 def test_explore_never_reads_the_clinical_notes_csv(monkeypatch):
     """data/clinical_notes.csv is 26 MB and only the live evaluator needs it.
 
