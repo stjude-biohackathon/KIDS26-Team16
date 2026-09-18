@@ -730,3 +730,813 @@ def grade_badge(status: str, grade: int | float | None, grades: tuple = ()) -> t
         "missed_presence": ("badge-cannot-grade", "MISSED PRESENCE (REVIEW)"),
     }
     return labels.get(status, ("badge-not-applicable", status.upper()))
+
+
+# ==============================================================================
+# PCAI / GPT-OSS LIVE INFERENCE OVERRIDES
+# ==============================================================================
+# These definitions intentionally appear at the end of this module.  Python uses
+# the final definition of each name, so the saved-run/deterministic infrastructure
+# above remains intact while the live dashboard routes inference to St. Jude PCAI.
+
+import json as _pcai_json
+import time as _pcai_time
+import re as _pcai_re
+from concurrent.futures import ThreadPoolExecutor as _ThreadPoolExecutor, as_completed as _as_completed
+
+from openai import OpenAI as _OpenAI
+from scogs.criteria import PRESENCE_CRITERIA as _PRESENCE_CRITERIA
+
+from dashboard.conformal_utils import (
+    apply_conformal as _apply_conformal,
+    normalize_probabilities as _normalize_probabilities,
+)
+
+PCAI_GATEWAY_URL = "https://bifrost.ai-application.stjude.org/v1"
+PCAI_MODEL = "gpt-oss-120b"
+PCAI_QWEN_MODEL = "Qwen/Qwen3.8-27B-FP8"
+DEFAULT_LIVE_MODEL = PCAI_MODEL
+ALLOWED_MODELS = {
+    PCAI_MODEL: "GPT-OSS 120B",
+    PCAI_QWEN_MODEL: "Qwen3.8 27B FP8",
+}
+
+# Keep these IDs aligned with the 14 PI-finalized SCOGS domains.
+_PCAI_ID_TO_RULE_NAME = {
+    "10": "Chronic pain",
+    "11": "Cognitive dysfunction",
+    "12": "Elevated TCD ultrasonography velocity",
+    "15": "Stroke (hemorrhagic or ischemic)",
+    "17": "Sickle cell retinopathy (SCR)",
+    "21": "Chronic kidney disease (CKD)",
+    "24": "Priapism",
+    "28": "Acute sickle cell pain episode",
+    "29": "Acute splenic sequestration",
+    "39": "Avascular necrosis of joints (AVN)",
+    "40": "Leg ulcer",
+    "47": "Depression",
+    "48": "Acute chest syndrome (ACS)",
+    "49": "Asthma exacerbation",
+}
+
+_PCAI_RULES_PATH = Path(__file__).resolve().parent / "scogs_14_outcomes.json"
+_PCAI_CALIBRATION_PATH = Path(__file__).resolve().parent / "conformal_calibration.json"
+
+
+def _pcai_load_rules() -> dict[str, dict[str, Any]]:
+    payload = _pcai_json.loads(_PCAI_RULES_PATH.read_text(encoding="utf-8-sig"))
+    return {r["outcome"]: r for r in payload.get("outcomes", [])}
+
+
+def _pcai_valid_classes(rule: dict[str, Any]) -> list[str]:
+    labels = ["absent", "insufficient_information"]
+    for grade, definition in rule.get("grade_definitions", {}).items():
+        if str(definition).strip().upper() != "N/A":
+            labels.append(str(grade))
+    return labels
+
+
+def _pcai_extract_text(message: Any) -> str:
+    content = getattr(message, "content", None)
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        pieces = []
+        for item in content:
+            if isinstance(item, str):
+                pieces.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                pieces.append(item["text"])
+            else:
+                txt = getattr(item, "text", None)
+                if isinstance(txt, str):
+                    pieces.append(txt)
+        if pieces:
+            return "\n".join(pieces).strip()
+    try:
+        dumped = message.model_dump()
+    except Exception:
+        dumped = {}
+    for key in ("content", "output_text", "final", "final_answer"):
+        value = dumped.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _pcai_clean_json(raw: str) -> dict[str, Any]:
+    text = (raw or "").strip()
+    if not text:
+        raise ValueError("GPT-OSS returned empty final content.")
+    text = (
+        text.replace("```json", "")
+        .replace("```JSON", "")
+        .replace("```", "")
+        .strip()
+    )
+    try:
+        parsed = _pcai_json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    start, end = text.find("{"), text.rfind("}")
+    if start >= 0 and end > start:
+        parsed = _pcai_json.loads(text[start:end + 1])
+        if isinstance(parsed, dict):
+            return parsed
+    raise ValueError("GPT-OSS response did not contain a valid JSON object.")
+
+
+def _pcai_quote_is_exact(note_text: str, quote: str) -> bool:
+    q = " ".join(str(quote or "").split()).casefold()
+    n = " ".join(str(note_text or "").split()).casefold()
+    return bool(q) and q in n
+
+
+def _pcai_load_calibration():
+    if not _PCAI_CALIBRATION_PATH.exists():
+        return None
+    try:
+        return _pcai_json.loads(_PCAI_CALIBRATION_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _pcai_calibration_for_outcome(calibration, outcome_name: str):
+    if not calibration:
+        return None
+    specific = calibration.get("per_outcome", {}).get(outcome_name)
+    if specific and specific.get("usable"):
+        return {
+            "scores": specific.get("scores", []),
+            "qhat": float(specific["qhat"]),
+            "n": int(specific["n"]),
+            "source": "outcome_specific",
+        }
+    glob = calibration.get("global", {})
+    if glob.get("usable"):
+        return {
+            "scores": glob.get("scores", []),
+            "qhat": float(glob["qhat"]),
+            "n": int(glob["n"]),
+            "source": "global_fallback",
+        }
+    return None
+
+
+def _pcai_prompt(note_text: str, rule: dict[str, Any]) -> str:
+    allowed = _pcai_valid_classes(rule)
+    return f"""
+Apply the supplied SCOGS severity rubric to this clinical note.
+
+Evaluate ONLY this outcome:
+{rule["outcome"]}
+
+Rules:
+- Use only the supplied note and SCOGS rubric.
+- Do not use hidden/reference labels.
+- Do not invent missing facts or undocumented negatives.
+- Distinguish current acute events from historical diagnoses.
+- A chronic diagnosis may establish presence, but do not force an exact grade
+  when the required grade-defining variables are missing.
+- Never assign a grade whose definition is N/A.
+- Do not convert oxygen L/min to FiO2.
+- Evidence must be copied verbatim from the note.
+- model_confidence_pct is uncalibrated model certainty from 0 to 100.
+- Return a score for every allowed class and make scores sum approximately to 100.
+- Output JSON only.
+
+If absent:
+  outcome_present=false, grade=null, status="absent"
+
+If present but exact grade cannot be determined:
+  outcome_present=true, grade=null, status="insufficient_information"
+
+If exactly gradable:
+  outcome_present=true, grade=<integer>, status="graded"
+
+CLINICAL NOTE
+-------------
+{note_text}
+
+SCOGS RUBRIC
+------------
+Diagnostic criteria:
+{rule.get("diagnostic_criteria", "")}
+
+Grade definitions:
+{_pcai_json.dumps(rule.get("grade_definitions", {}), ensure_ascii=False)}
+
+Allowed classes:
+{_pcai_json.dumps(allowed)}
+
+Return exactly one JSON object:
+{{
+  "outcome": "{rule["outcome"]}",
+  "outcome_present": true,
+  "grade": 3,
+  "status": "graded",
+  "model_confidence_pct": 90,
+  "reasoning": "brief rubric-based explanation",
+  "evidence": ["exact quote from note"],
+  "class_scores_pct": {{
+    "absent": 1,
+    "insufficient_information": 2,
+    "1": 2,
+    "2": 5,
+    "3": 90
+  }}
+}}
+""".strip()
+
+
+def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, patient_context: dict[str, Any] | None = None) -> dict[str, Any]:
+    key = os.environ.get("PCAI_API_KEY")
+    if not key:
+        raise RuntimeError("PCAI_API_KEY is not set in the terminal that launched Shiny.")
+
+    norm = normalize_outcome_id(outcome_id)
+    rule_name = _PCAI_ID_TO_RULE_NAME.get(str(int(norm)))
+    if not rule_name:
+        return _pcai_extract_and_grade_table(
+            note_text, norm, model=model, patient_context=patient_context
+        )
+
+    rules = _pcai_load_rules()
+    rule = rules.get(rule_name)
+    if rule is None:
+        raise KeyError(f"No PCAI rubric found for {rule_name}")
+
+    client = _OpenAI(
+        base_url=PCAI_GATEWAY_URL,
+        api_key=key,
+        default_headers={"x-bf-vk": key},
+        timeout=600,
+    )
+
+    last_error = None
+    for attempt in range(1, 4):
+        try:
+            kwargs = dict(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Apply the SCOGS rubric strictly. Return valid JSON only.",
+                    },
+                    {"role": "user", "content": _pcai_prompt(note_text + ("\n\nCLINICIAN CONTEXT: " + _pcai_json.dumps(patient_context, ensure_ascii=False) if patient_context else ""), rule)},
+                ],
+                temperature=0,
+                max_tokens=1800,
+            )
+            try:
+                response = client.chat.completions.create(
+                    **kwargs,
+                    reasoning_effort="low",
+                )
+            except TypeError:
+                response = client.chat.completions.create(**kwargs)
+            except Exception as exc:
+                if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+                    response = client.chat.completions.create(**kwargs)
+                else:
+                    raise
+
+            item = _pcai_clean_json(_pcai_extract_text(response.choices[0].message))
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt >= 3:
+                raise
+            _pcai_time.sleep(1.5 * attempt)
+    else:
+        raise last_error or RuntimeError("Unknown PCAI inference failure.")
+
+    present = bool(item.get("outcome_present", False))
+    status_raw = str(item.get("status", "")).strip()
+    raw_grade = item.get("grade")
+    try:
+        grade = int(raw_grade) if raw_grade is not None else None
+    except Exception:
+        grade = None
+
+    valid_labels = _pcai_valid_classes(rule)
+    valid_grades = {int(x) for x in valid_labels if x not in {"absent", "insufficient_information"}}
+
+    if not present:
+        grade = None
+        harness_status = ABSENT
+        model_status = "absent"
+    elif grade is None or grade not in valid_grades:
+        grade = None
+        harness_status = CANNOT_GRADE
+        model_status = "insufficient_information"
+    else:
+        harness_status = GRADED
+        model_status = "graded"
+
+    raw_scores = item.get("class_scores_pct", {})
+    if not isinstance(raw_scores, dict):
+        raw_scores = {}
+    probs = _normalize_probabilities(raw_scores, valid_labels)
+
+    if not present:
+        predicted_class = "absent"
+    elif grade is None:
+        predicted_class = "insufficient_information"
+    else:
+        predicted_class = str(grade)
+
+    try:
+        confidence = max(0.0, min(100.0, float(item.get("model_confidence_pct"))))
+    except Exception:
+        confidence = 100.0 * probs.get(predicted_class, 0.0)
+
+    evidence = item.get("evidence", [])
+    if not isinstance(evidence, list):
+        evidence = []
+    evidence = [
+        str(q).strip()
+        for q in evidence
+        if str(q).strip() and _pcai_quote_is_exact(note_text, str(q))
+    ]
+
+    conformal_set = []
+    conformal_target = None
+    conformal_p = None
+    calibration = _pcai_load_calibration()
+    cal_item = _pcai_calibration_for_outcome(calibration, rule_name)
+    if cal_item:
+        c = _apply_conformal(probs, cal_item["scores"], cal_item["qhat"])
+        conformal_set = c["prediction_set"]
+        conformal_target = calibration.get("target_coverage_pct")
+        conformal_p = round(100.0 * c["p_values"].get(predicted_class, 0.0), 1)
+
+    accepted = [
+        {
+            "feature": "GPT-OSS evidence",
+            "value": "supports model decision",
+            "quote": q,
+            "unit": None,
+            "source": "gptoss",
+        }
+        for q in evidence
+    ]
+
+    reason = str(item.get("reasoning", "")).strip()
+    missing = ["Exact SCOGS grade-defining information"] if harness_status == CANNOT_GRADE else []
+
+    grade_result = {
+        "outcome": normalize_outcome_id(outcome_id),
+        "status": harness_status,
+        "grade": grade,
+        "grades": [],
+        "matched": None,
+        "reason": reason,
+        "missing": missing,
+        "undecided": [],
+    }
+
+    return {
+        "outcome_name": FOCUS_OUTCOMES.get(str(int(outcome_id)), {}).get("name", rule_name),
+        "present": present,
+        "extracted_features": {
+            "model_status": model_status,
+            "model_confidence_pct": round(confidence, 1),
+            "class_probabilities": probs,
+            "conformal_prediction_set": conformal_set,
+            "conformal_target_coverage_pct": conformal_target,
+            "conformal_predicted_class_p_value_pct": conformal_p,
+        },
+        "accepted_findings": accepted,
+        "conflicts": {},
+        "status": harness_status,
+        "grade_result": grade_result,
+        "raw_reply": item,
+    }
+
+
+
+
+def _pcai_table_feature_names(outcome_id: str) -> list[str]:
+    """Features referenced by one deterministic SCOGS table and presence rule."""
+    norm = normalize_outcome_id(outcome_id)
+    table = TABLES.get(norm)
+    if table is None:
+        return []
+    expressions: list[str] = []
+    for _, pred in table.all_rows():
+        expressions.append(str(pred))
+    if _PRESENCE_CRITERIA.get(norm):
+        expressions.append(str(_PRESENCE_CRITERIA[norm]))
+
+    names: set[str] = set()
+    for expr in expressions:
+        for token in _pcai_re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", expr):
+            if token in FEATURES:
+                names.add(token)
+    return sorted(names)
+
+
+def _pcai_feature_spec(outcome_id: str, feature_name: str) -> dict[str, Any]:
+    spec = dict(FEATURES.get(feature_name, {}))
+    per_outcome = spec.get("per_outcome") or {}
+    tailored = per_outcome.get(normalize_outcome_id(outcome_id))
+    if tailored:
+        spec["outcome_specific_definition"] = tailored
+    return {
+        "type": spec.get("type"),
+        "values": spec.get("values"),
+        "unit": spec.get("unit"),
+        "definition": spec.get("definition"),
+        "outcome_specific_definition": spec.get("outcome_specific_definition"),
+        "derived": spec.get("derived"),
+    }
+
+
+def _pcai_table_prompt(note_text: str, outcome_id: str, patient_context: dict[str, Any] | None = None) -> str:
+    norm = normalize_outcome_id(outcome_id)
+    table = TABLES[norm]
+    feature_names = _pcai_table_feature_names(norm)
+    feature_specs = {name: _pcai_feature_spec(norm, name) for name in feature_names}
+    rows = [{"grade": grade, "predicate": pred} for grade, pred in table.rows]
+    strata = {key: [{"grade": g, "predicate": p} for g, p in vals] for key, vals in table.strata.items()}
+    axes = {key: [{"grade": g, "predicate": p} for g, p in vals] for key, vals in table.axes.items()}
+    ctx = patient_context or {}
+
+    return f"""
+You are the evidence-extraction stage for a deterministic SCOGS severity grader.
+Do NOT choose the final grade yourself. Extract only structured facts that are
+explicitly supported by this clinical note. A deterministic rule engine will
+apply the decision table after your response.
+
+OUTCOME #{norm}: {table.name}
+Presence criterion: {_PRESENCE_CRITERIA.get(norm, 'No separate numeric presence predicate is defined; use explicit diagnosis or clear outcome-specific evidence.')}
+Evaluation mode: {table.eval}
+Decision rows (highest grade first when applicable):
+{_pcai_json.dumps(rows, ensure_ascii=False)}
+Strata:
+{_pcai_json.dumps(strata, ensure_ascii=False)}
+Axes:
+{_pcai_json.dumps(axes, ensure_ascii=False)}
+Rubric notes:
+{_pcai_json.dumps(table.notes, ensure_ascii=False)}
+
+FEATURE CONTRACT
+{_pcai_json.dumps(feature_specs, ensure_ascii=False)}
+
+CLINICIAN CONTEXT (trusted if supplied)
+{_pcai_json.dumps(ctx, ensure_ascii=False)}
+
+CLINICAL NOTE
+{note_text}
+
+Rules:
+- Use only facts in the note plus clinician context above.
+- Do not invent normal findings or negative findings.
+- If the outcome is not documented and there is no supporting evidence, set outcome_present=false.
+- Only emit a feature when an exact quote in the note supports that feature.
+- Use categorical values exactly as listed in FEATURE CONTRACT.
+- Use JSON booleans for bool features and JSON numbers for numeric features.
+- Evidence quotes must be copied verbatim from the note.
+- model_confidence_pct is an uncalibrated confidence in the extraction/presence assessment.
+- Output JSON only.
+
+Return:
+{{
+  "outcome_present": true,
+  "model_confidence_pct": 90,
+  "features": {{"feature_name": "value"}},
+  "evidence": [
+    {{"feature": "feature_name", "quote": "exact quote from note"}}
+  ],
+  "reasoning": "brief evidence-extraction explanation"
+}}
+""".strip()
+
+
+
+def _pcai_coerce_feature_value(feature_name: str, value: Any):
+    """Coerce GPT-OSS JSON values to the canonical SCOGS feature types."""
+    spec = FEATURES.get(feature_name, {})
+    typ = spec.get("type")
+    if value is None:
+        return None
+    if typ == "bool":
+        if isinstance(value, bool):
+            return value
+        text = str(value).strip().lower()
+        if text in {"true", "yes", "1", "present"}:
+            return True
+        if text in {"false", "no", "0", "absent"}:
+            return False
+        raise ValueError(f"{feature_name}: invalid boolean {value!r}")
+    if typ == "num":
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return float(value)
+        text = str(value).strip().replace(",", "")
+        match = _pcai_re.search(r"[-+]?\d+(?:\.\d+)?", text)
+        if not match:
+            raise ValueError(f"{feature_name}: invalid numeric value {value!r}")
+        return float(match.group(0))
+    if typ in {"cat", "ord"}:
+        text = str(value).strip()
+        allowed = spec.get("values") or []
+        if text not in allowed:
+            raise ValueError(f"{feature_name}: {text!r} not in allowed values {allowed}")
+        return text
+    return value
+
+
+def _pcai_extract_and_grade_table(
+    note_text: str,
+    outcome_id: str,
+    model: str = PCAI_MODEL,
+    patient_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """GPT-OSS evidence extraction -> original deterministic SCOGS rule engine."""
+    key = os.environ.get("PCAI_API_KEY")
+    if not key:
+        raise RuntimeError("PCAI_API_KEY is not set in the terminal that launched Shiny.")
+
+    norm = normalize_outcome_id(outcome_id)
+    client = _OpenAI(
+        base_url=PCAI_GATEWAY_URL,
+        api_key=key,
+        default_headers={"x-bf-vk": key},
+        timeout=600,
+    )
+    prompt = _pcai_table_prompt(note_text, norm, patient_context)
+    last_error = None
+    for attempt in range(1, 4):
+        try:
+            kwargs = dict(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "Extract grounded SCOGS evidence. Return valid JSON only."},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0,
+                max_tokens=2200,
+            )
+            try:
+                response = client.chat.completions.create(**kwargs, reasoning_effort="low")
+            except TypeError:
+                response = client.chat.completions.create(**kwargs)
+            except Exception as exc:
+                if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+                    response = client.chat.completions.create(**kwargs)
+                else:
+                    raise
+            item = _pcai_clean_json(_pcai_extract_text(response.choices[0].message))
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt >= 3:
+                raise
+            _pcai_time.sleep(1.5 * attempt)
+    else:
+        raise last_error or RuntimeError("Unknown PCAI extraction failure.")
+
+    present = bool(item.get("outcome_present", False))
+    requested_features = item.get("features") if isinstance(item.get("features"), dict) else {}
+    evidence = item.get("evidence") if isinstance(item.get("evidence"), list) else []
+    allowed_features = set(_pcai_table_feature_names(norm))
+
+    accepted_findings = []
+    grounded_features: dict[str, Any] = {}
+    for ev in evidence:
+        if not isinstance(ev, dict):
+            continue
+        feature = str(ev.get("feature", "")).strip()
+        quote = str(ev.get("quote", "")).strip()
+        if feature not in allowed_features or feature not in requested_features:
+            continue
+        if not _pcai_quote_is_exact(note_text, quote):
+            continue
+        try:
+            value = _pcai_coerce_feature_value(feature, requested_features[feature])
+        except Exception:
+            continue
+        grounded_features[feature] = value
+        accepted_findings.append({
+            "feature": feature,
+            "value": value,
+            "quote": quote,
+            "unit": FEATURES.get(feature, {}).get("unit"),
+            "source": "gptoss",
+        })
+
+    # Clinician-entered age/sex are trusted context and may satisfy applicability.
+    ctx = patient_context or {}
+    grounded_features.update(clinician_context(ctx.get("patient_sex"), ctx.get("patient_age")))
+
+    graded = grade_outcome(norm, grounded_features, present)
+    try:
+        confidence = max(0.0, min(100.0, float(item.get("model_confidence_pct"))))
+    except Exception:
+        confidence = 0.0
+
+    display_features = dict(grounded_features)
+    display_features["model_confidence_pct"] = round(confidence, 1)
+    display_features["pcaI_grading_mode"] = "gptoss_evidence_plus_deterministic_table"
+
+    return {
+        "outcome_name": outcome_display_name(norm),
+        "present": present,
+        "extracted_features": display_features,
+        "accepted_findings": accepted_findings,
+        "conflicts": {},
+        "status": graded.status,
+        "grade_result": graded.result,
+        "raw_reply": item,
+    }
+
+
+def screen_outcomes_pcai(note_text: str, outcomes: list[str], model: str = PCAI_MODEL) -> list[str]:
+    """Experimental high-recall screen used only to speed the optional 53 mode."""
+    key = os.environ.get("PCAI_API_KEY")
+    if not key:
+        raise RuntimeError("PCAI_API_KEY is not set.")
+    outcome_ids = [normalize_outcome_id(o) for o in outcomes]
+    directory = [{"id": o, "name": outcome_display_name(o)} for o in outcome_ids]
+    client = _OpenAI(
+        base_url=PCAI_GATEWAY_URL,
+        api_key=key,
+        default_headers={"x-bf-vk": key},
+        timeout=600,
+    )
+    prompt = f"""
+Perform a HIGH-RECALL screening pass over this sickle-cell clinical note.
+Return every SCOGS outcome that is explicitly present, historically present,
+possibly present, or has any note evidence that could plausibly support it.
+Err strongly toward inclusion. Do not grade severity. Exclude an outcome only
+when the note provides no meaningful evidence for it.
+
+OUTCOME DIRECTORY
+{_pcai_json.dumps(directory, ensure_ascii=False)}
+
+NOTE
+{note_text}
+
+Return JSON only:
+{{"candidate_ids": ["01", "15", "48"], "reasoning": "brief"}}
+""".strip()
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "High-recall clinical outcome screening. Return JSON only."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0,
+        max_tokens=1400,
+    )
+    parsed = _pcai_clean_json(_pcai_extract_text(response.choices[0].message))
+    candidates = parsed.get("candidate_ids") if isinstance(parsed, dict) else []
+    if not isinstance(candidates, list):
+        raise ValueError("Fast 53 screen did not return candidate_ids.")
+    valid = set(outcome_ids)
+    result = []
+    for item in candidates:
+        try:
+            norm = normalize_outcome_id(item)
+        except Exception:
+            continue
+        if norm in valid and norm not in result:
+            result.append(norm)
+    return result
+
+
+def screened_out_item(outcome: str) -> dict[str, Any]:
+    """Explicitly preserves uncertainty for outcomes skipped by Fast 53 screening."""
+    norm = normalize_outcome_id(outcome)
+    result = GradeResult(
+        outcome=norm,
+        status=CANNOT_GRADE,
+        reason="Experimental Fast 53 pre-screen did not select this outcome for detailed grading.",
+    )
+    return {
+        "outcome_name": outcome_display_name(norm),
+        "present": False,
+        "extracted_features": {"screened_out_fast53": True},
+        "accepted_findings": [],
+        "conflicts": {},
+        "status": CANNOT_GRADE,
+        "grade_result": result,
+        "raw_reply": {"screened_out_fast53": True},
+    }
+
+
+def get_installed_models(host: str = DEFAULT_HOST) -> list[str]:
+    """Compatibility shim used by the existing Shiny sidebar."""
+    return list(ALLOWED_MODELS) if os.environ.get("PCAI_API_KEY") else []
+
+
+def is_model_installed(model: str, installed_models: list[str]) -> bool:
+    return model in ALLOWED_MODELS and model in installed_models
+
+
+def check_ollama_status(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> tuple[str, str]:
+    """Compatibility shim: dashboard status now represents St. Jude PCAI."""
+    if not os.environ.get("PCAI_API_KEY"):
+        return ("offline", "PCAI_API_KEY not set")
+    if model not in ALLOWED_MODELS:
+        return ("not_installed", f"Unsupported PCAI model: {model}")
+    return ("ready", f"St. Jude PCAI ready — {ALLOWED_MODELS[model]}")
+
+
+def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False, include_custom: bool = True) -> dict[str, Any]:
+    choices = {
+        PCAI_MODEL: "GPT-OSS 120B — grader",
+        PCAI_QWEN_MODEL: "Qwen3.8 27B FP8 — comparison model",
+    }
+    return {"St. Jude PCAI": choices} if grouped else choices
+
+
+def get_concurrency_assessment(
+    model: str = DEFAULT_LIVE_MODEL,
+    concurrency: int = 1,
+    ram_gb: float | None = None,
+) -> dict[str, Any]:
+    conc = max(1, int(concurrency))
+    status = "safe" if conc <= 2 else "caution"
+    display = ALLOWED_MODELS.get(model, model)
+    if conc == 1:
+        msg = f"✓ {display}: 1 request at a time is the safest setting."
+    elif conc == 2:
+        msg = f"✓ {display}: 2 parallel PCAI requests is the recommended speed setting."
+    else:
+        msg = (
+            f"⚠️ {display}: {conc} parallel requests is experimental and may "
+            "increase provider timeouts or rate limiting."
+        )
+    return {
+        "recommended": 2,
+        "max_safe": 2,
+        "estimated_ram_gb": 0.0,
+        "total_ram_gb": 0.0,
+        "status": status,
+        "message": msg,
+        "model_tier": display,
+    }
+
+
+def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:
+    return 2
+
+
+def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> bool:
+    """Compatibility name retained for server.py; now means PCAI is configured."""
+    return bool(os.environ.get("PCAI_API_KEY")) and model in ALLOWED_MODELS
+
+
+def extract_and_grade_note(
+    note_text: str,
+    outcomes: list[str],
+    patient_context: dict[str, Any] | None = None,
+    use_ollama: bool = False,
+    manual_features: dict[str, dict[str, Any]] | None = None,
+    model: str = DEFAULT_LIVE_MODEL,
+    host: str = DEFAULT_HOST,
+    concurrency: int | None = None,
+    num_ctx: int = OLLAMA_NUM_CTX,
+) -> dict[str, dict[str, Any]]:
+    """Live dashboard inference through St. Jude PCAI using the selected model."""
+    outcome_ids = [normalize_outcome_id(o) for o in outcomes]
+
+    if not use_ollama:
+        err = RuntimeError(
+            "PCAI is not configured. Set PCAI_API_KEY before launching the dashboard."
+        )
+        return {outcome: failed_item(outcome, err) for outcome in outcome_ids}
+
+    items: dict[str, dict[str, Any]] = {}
+    context = patient_context or {}
+    workers = max(1, min(int(concurrency or get_live_concurrency(model)), len(outcome_ids), 4))
+
+    if workers == 1 or len(outcome_ids) == 1:
+        for outcome in outcome_ids:
+            try:
+                items[outcome] = _pcai_call_one(
+                    note_text, outcome, model=model, patient_context=context
+                )
+            except Exception as exc:
+                items[outcome] = failed_item(outcome, exc)
+        return items
+
+    with _ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {
+            pool.submit(
+                _pcai_call_one, note_text, outcome, model, context
+            ): outcome
+            for outcome in outcome_ids
+        }
+        for future in _as_completed(future_map):
+            outcome = future_map[future]
+            try:
+                items[outcome] = future.result()
+            except Exception as exc:
+                items[outcome] = failed_item(outcome, exc)
+    return items
+

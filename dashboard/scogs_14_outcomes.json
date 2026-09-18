@@ -1,0 +1,212 @@
+{
+  "source": "Filtered from user-provided SCOGS booklet-derived scogs_outcomes.json",
+  "finalized_outcomes_count": 14,
+  "aliases": {
+    "Acute Pain": "Acute sickle cell pain episode",
+    "Stroke": "Stroke (hemorrhagic or ischemic)",
+    "SS": "Acute splenic sequestration",
+    "Acute Chest Syndrome": "Acute chest syndrome (ACS)",
+    "Priapism": "Priapism",
+    "Chronic Pain": "Chronic pain",
+    "CKD": "Chronic kidney disease (CKD)",
+    "Retinopathy": "Sickle cell retinopathy (SCR)",
+    "CD": "Cognitive dysfunction",
+    "Depression": "Depression",
+    "TCD Elevation": "Elevated TCD ultrasonography velocity",
+    "Asthma": "Asthma exacerbation",
+    "AVN": "Avascular necrosis of joints (AVN)",
+    "Leg Ulcer": "Leg ulcer"
+  },
+  "grades": [
+    {
+      "grade": 1,
+      "definition": "Evidence of specific health outcome event that is usually mild. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that may be treated at home, or if they require a visit to a medical facility for treatment, they will not require admission, are classified as Grade 1."
+    },
+    {
+      "grade": 2,
+      "definition": "A specific health outcome event of greater severity than Grade 1. Symptoms are usually mild to moderate. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that cannot be treated at home and require a visit to a medical facility for treatment but do not require an admission, and symptoms are objectively more severe than those in Grade 1 are classified as Grade 2."
+    },
+    {
+      "grade": 3,
+      "definition": "A specific health outcome event of greater severity than Grade 2. Symptoms are severe, and medical treatment is used to treat the condition/complication. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that require a visit to a medical facility for treatment of severe complications and may require admission (usually do not require critical care) and are objectively more severe than those in Grade 2 are classified as Grade 3."
+    },
+    {
+      "grade": 4,
+      "definition": "A specific health outcome event of greater severity than Grade 3. Symptoms are severe or life-threatening, and medical treatment is used to treat the condition/complication. Whenever objective measures of disease severity exist (e.g., biomarkers, established severity grading), these are used with or without health utilization data. Otherwise, events that require a visit to a medical facility for treatment of severe complications and may require admission (usually they require critical care) and are objectively more severe than those in Grade 3 are classified as Grade 4."
+    },
+    {
+      "grade": 5,
+      "definition": "Death related to the specific health outcome."
+    }
+  ],
+  "outcomes": [
+    {
+      "id": 28,
+      "outcome": "Acute sickle cell pain episode",
+      "diagnostic_criteria": "-\nPatient self-report OR\n-\nCare-giver proxy report for younger children.1\n-\nAND no explanation other than sickle cell disease",
+      "grade_definitions": {
+        "1": "Acute pain episode requiring pain treatment at home for pain exacerbation",
+        "2": "Acute pain episode requiring a visit to a medical facility (including Day Hospital) for any type of treatment for pain AND NOT requiring admission",
+        "3": "Acute pain episode requiring admission AND NO evidence of organ failure or one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhemolysis",
+        "4": "Acute pain episode complicated with organ failure OR one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhemolysis OR resulting in a life-threatening complication where the need for life- supporting treatment indicated, including use of mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments2",
+        "5": "Death in the setting of acute pain episode"
+      }
+    },
+    {
+      "id": 15,
+      "outcome": "Stroke (hemorrhagic or ischemic)",
+      "diagnostic_criteria": "Hemorrhagic:\n-\nDemonstration of hemorrhage on CT head, MRI of the brain, or autopsy OR\n-\nIf no imaging is performed, persistently hemorrhagic spinal fluid AND\n-\nRule out hemorrhage caused by traumatic subarachnoid hemorrhage, subdural hematoma, and epidural\nhematoma\nIschemic:\n-\nMRI or CT scan showing an ischemic CNS event consistent with symptoms and signs OR\n-\nDiagnosis by a neurologist based on examination and clinical history with neurologic symptoms/signs\nlasting >24 hours\nStroke Scale: Use of National Institute of Health Stroke Scale (NIHSS) at time of presentation and/or Modified\nRankin scale score (mRS) at time of discharge",
+      "grade_definitions": {
+        "1": "Incidental radiographic findings only (ischemia, hemorrhage, encephalomalacia, hemosiderosis) AND NO neurological symptoms during episode of stroke or later",
+        "2": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms resolved completely (TIA episode) OR mRS of 0 at discharge",
+        "3": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) OR mRS of 1-3 at discharge",
+        "4": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) OR mRS of 4-5 at discharge",
+        "5": "Death from stroke"
+      }
+    },
+    {
+      "id": 29,
+      "outcome": "Acute splenic sequestration",
+      "diagnostic_criteria": "-\nDecrease in the hemoglobin or hematocrit of ≥20% OR a drop from ≥2 g/dL from baseline AND\n-\nEvidence of increased erythropoiesis such as a markedly elevated reticulocyte count (exception is when\na viral suppression occurs, such as from parvovirus-induced transient aplastic crisis) AND\n-\nAn acutely enlarging spleen (≥2 cm from baseline)1",
+      "grade_definitions": {
+        "1": "Splenic sequestration not requiring any treatment",
+        "2": "N/A",
+        "3": "Splenic sequestration requiring treatment (i.e. erythrocyte transfusion, IV fluids, etc) AND NO hemodynamic instability AND NOT requiring splenectomy, fluids, etc)",
+        "4": "Splenic sequestration AND hemodynamic instability OR requiring splenectomy",
+        "5": "Death due to splenic sequestration"
+      }
+    },
+    {
+      "id": 48,
+      "outcome": "Acute chest syndrome (ACS)",
+      "diagnostic_criteria": "Radiographic evidence of consolidation. A new* segmental (involving at least 1 complete segment) radiographic\npulmonary infiltrate AND at least one of the following:\n-\nTemperature ≥38.5ºC\n-\n>2% decrease in SpO2 (HbO2 saturation) from a documented steady-state value on room air (FiO2 =\n0.21%)\n-\nPaO2 <60 mmHg\n-\nTachypnea (per age-adjusted normal)\n-\nIntercostal retractions, nasal flaring, or use of accessory muscles of respiration\n-\nThoracic pain\n-\nCough\n-\nWheezing\n-\nRales\n* Does not require a preceding radiograph or physical examination, but if either was performed then the current\nfindings must be new.1",
+      "grade_definitions": {
+        "1": "Requiring none of the below: • Supplemental oxygen • Simple or exchange erythrocyte transfusion • Erythropoietin • BiPAP • Any other supportive treatment, other than antibiotics",
+        "2": "Requiring FiO2 >21% to <50% OR simple erythrocyte transfusion AND none of the below: • BiPAP • High flow O2 • Exchange transfusion",
+        "3": "Requiring >50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion",
+        "4": "Requiring >50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion AND critical cardio- respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+        "5": "Death from ACS complications"
+      }
+    },
+    {
+      "id": 24,
+      "outcome": "Priapism",
+      "diagnostic_criteria": "A painful erectile episode event lasting >30 minutes but diagnosed by a physician or medical practitioner based\non patient self-report.  During an episode, priapism can be confirmed by physical examination findings of a fully\nerect penis and complaint of pain in the penis or scrotum.",
+      "grade_definitions": {
+        "1": "Priapism episode with or without the use of medications at home AND NOT requiring a visit to a medical facility",
+        "2": "Priapism episode requiring visit to a medical facility AND requiring treatment (e.g., medication) AND NO shunt",
+        "3": "Priapism episode requiring a visit to a medical facility AND requiring aspiration/irrigation AND NO shunt",
+        "4": "Priapism episode requiring a visit to a medical facility AND requiring shunt surgical intervention",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 10,
+      "outcome": "Chronic pain",
+      "diagnostic_criteria": "Reports of ongoing pain present on most days over the past 3 months either in a single location or in multiple locations\nMust display at least 1 sign:\nPalpation of the region of reported pain elicits focal pain or tenderness\n-\nMovement of the region of reported pain elicits focal pain\n-\nDecreased range of motion or weakness in the region of reported pain\n-\nEvidence of skin ulcer in the region of reported pain\n-\nEvidence of hepatobiliary or splenic imaging abnormalities (eg, splenic infarct, chronic pancreatitis) consistent with\nthe region of reported pain\n-\nEvidence of imaging abnormalities consistent with bone infarction or avascular necrosis in the region of reported\npain\nThere is no other diagnosis that better explains the signs and symptoms1",
+      "grade_definitions": {
+        "1": "No unplanned visits to medical facilities for pain treatment w/in a 12-month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score ≥81 2) PROMIS T-score < or = 48 on pain interference 3) PROMIS T-score < or = 41 on pain behavior",
+        "2": "1-3 unplanned visits to medical facilities for pain treatment w/in 12-month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score 61- 80 2) PROMIS T-score >48 but >64 on pain interference 3) PROMIS T-scores >41 but <57 on pain behavior",
+        "3": "3-10 unplanned visits to medical facilities for pain treatment w/in 12- month period OR at least one of the below in the past 3 months: 1) Pain and Hurt Score <60 2) PROMIS T-score >64 on pain interference 3) PROMIS T-score >57 on pain behavior",
+        "4": ">10 unplanned visits to medical facilities for pain treatment w/in 12-month period OR at least two of the below in the past 3 months: 1) Pain and Hurt Score <60 2) PROMIS T-score >64 on pain interference 3) PROMIS T-score >57 on pain behavior",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 21,
+      "outcome": "Chronic kidney disease (CKD)",
+      "diagnostic_criteria": "Either of the following present for >3 months:\n-\nMarkers of kidney damage (one or more)\n➢ Albuminuria (ACR ≥30 mg/24 hours; ACR ≥ 30 mg/g [≥3 mg/mmol]) at first morning void\n➢ Urine sediment abnormalities\n➢ Electrolyte and other abnormalities due to tubular disorders\n➢ Abnormalities detected by histology\n➢ Structural abnormalities detected by imaging\n➢ History of kidney transplantation\n-\nDecreased GFR GFR\n➢ 60 ml/min/1.73 m2 (GFR categories G3a–G5)",
+      "grade_definitions": {
+        "1": "eGFR 60-89 ml/min/1.73 m2 AND albuminuria <30 mg/g",
+        "2": "eGFR 45-59 ml/min/1.73 m2 AND albuminuria <30 mg/g OR eGFR ≥60 ml/min/1.73 m2 AND albuminuria 30-300 mg/g",
+        "3": "eGFR 30-44 ml/min/1.73 m2 AND albuminuria <30 mg/g OR eGFR 45-59 ml/min/1.73 m 2 AND albuminuria 30-300 mg/g OR eGFR 60-89 ml/min/1.73 m2 AND albuminuria >300 mg/g",
+        "4": "eGFR 45-59 ml/min/1.73 m2 AND albuminuria >300 mg/g OR eGFR 30-44 ml/min/1.73 m2 AND albuminuria >30 mg/g OR eGFR 15-29 ml/min/1.73 m2",
+        "5": "eGFR <15 ml/min/1.73 m2 OR Death due to CKD"
+      }
+    },
+    {
+      "id": 17,
+      "outcome": "Sickle cell retinopathy (SCR)",
+      "diagnostic_criteria": "Ophthalmologist evaluations and assessments required. Based on staging of sickle cell retinopathy (SCR)\nas per Goldberg criteria:4\nStage 1: Peripheral arterial occlusion\nStage 2: Peripheral arteriovenous anastomoses, representing dilated pre-existing capillaries (hairpin loop)\nStage 3: Neovascular and fibrous proliferation (sea fan) occurring at the posterior border of nonperfusion.\nA subsequent white sea fan appearance is due to auto-infarction of the neovasculature\nStage 4: Vitreous hemorrhage\nStage 5: Tractional retinal detachment",
+      "grade_definitions": {
+        "1": "Stage 1 or Stage 2 SCR without vision loss",
+        "2": "Stage 3 SCR without vision loss OR Stage 1 or Stage 2 SCR with vision loss",
+        "3": "Stage 4 or Stage 5 SCR OR any Stage SCR with legal blindness",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 11,
+      "outcome": "Cognitive dysfunction",
+      "diagnostic_criteria": "Validated performance-based tests administered by a trained psychologist or tester including Intelligence\nmeasures (specifically the Abbreviated IQ, FSIQ, G, or total cognition composite) from these scales:\n-\nWechsler Abbreviated Scale of Intelligence, 2nd edition (ages 6+)2\n-\nWechsler Intelligence Scale for Children, 5th edition (ages 6-16)3\n-\nWechsler Adult intelligence Scale, 4th Edition (ages 16+)4\n-\nWoodcock Johnson Tests of Cognitive Abilities, 4th Edition (ages 2+)5\n-\nKaufman Brief Intelligence Test, 2nd Edition (ages 4+)6\n-\nReynolds Intellectual Assessment Scales (ages 3+)7\n-\nStanford Binet Intelligence Scales, 5th Edition (ages 2+)8\n-\nNIH Toolbox, version 3 (ages 7+)9",
+      "grade_definitions": {
+        "1": "IQ evaluation 1-2 SD below mean",
+        "2": "IQ evaluation 2-3 SD below mean",
+        "3": "IQ evaluation 3 SD or more below mean",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 47,
+      "outcome": "Depression",
+      "diagnostic_criteria": "To receive a diagnosis of depression according to the DSM-5 criteria, the following conditions must be met:\n1. Duration: Symptoms must be present for at least two weeks.\n2. Symptoms: The individual must experience five or more of the following symptoms during the same two-\nweek period, and at least one of these symptoms should be either:\n-\nDepressed mood: Feeling down most of the day, nearly every day.\n-\nLoss of interest or pleasure: Markedly diminished interest or pleasure in all or almost all activities.\nThe additional symptoms include:\n-\nSignificant weight loss or gain, or a change in appetite.\n-\nSlowing down of thought and physical movement (observable by others).\n-\nFatigue or loss of energy.\n-\nFeelings of worthlessness or excessive guilt.\n-\nDiminished ability to think or concentrate, or indecisiveness.\n-\nRecurrent thoughts of death, suicidal ideation, or a suicide attempt.",
+      "grade_definitions": {
+        "1": "Mild depressive symptoms OR PHQ-9 score 5-9 AND treatment not recommended",
+        "2": "Moderate depressive symptoms OR PHQ-9 score 10 to 14 AND limiting instrumental activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "3": "Severe depressive symptoms OR PHQ-9 score 15-19 AND limiting activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "4": "PHQ-9 score 20-27 OR life-threatening consequences (i.e., attempted suicide) OR threats of harm to self or others AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+        "5": "Death due directly to depressive symptoms (e.g., suicide)"
+      }
+    },
+    {
+      "id": 12,
+      "outcome": "Elevated TCD ultrasonography velocity",
+      "diagnostic_criteria": "TCD ultrasonography measures the velocity of blood flow in the brain.  Results are categorized as abnormal,\nconditional, normal, or inadequate:\n-\nAbnormal TCD: Time averaged mean of the maximum (TAMM) velocity ≥200 cm/sec in the middle cerebral\nartery (MCA) or distal internal carotid artery (ICA).\n-\nConditional TCD: TAMM velocity 170-199 cm/sec in the MCA or distal ICA.\n-\nNormal TCD: TAMM velocity <170 cm/sec in the MCA or distal ICA.\n-\nInadequate: On either the right side or left side (or both), no readings can be obtained for the distal ICA,\nbifurcation, and MCA.",
+      "grade_definitions": {
+        "1": "TAMV 170-184 cm/s (TCD) [i.e. low conditional]",
+        "2": "TAMV 185-199 cm/s (TCD) [i.e. high conditional]",
+        "3": "TAMV > 200 cm/s (TCD) [i.e. abnormal]",
+        "4": "N/A",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 49,
+      "outcome": "Asthma exacerbation",
+      "diagnostic_criteria": "-\nEpisodic symptoms of airflow obstruction or airway hyperresponsiveness are present\n-\nAirflow obstruction is at least partially reversible\n-\nAlternative diagnoses are excluded\n-\nIf spirometry is available, reversibility is determined either by an increase in FEV1 of ≥12 percent from\nbaseline or by an increase ≥10 percent of predicted FEV1 after inhalation of a short-acting bronchodilator\n-\nAdditional studies as necessary to exclude alternate diagnoses1\n-\nImprovement with bronchodilators",
+      "grade_definitions": {
+        "1": "Mild symptoms AND NO medical intervention indicated",
+        "2": "Symptomatic AND medical intervention sought (but NO supplemental oxygen) OR limiting instrumental activities of daily living (ADL) OR intermittent asthma requiring short- acting beta-agonists as needed AND NOT status asthmaticus",
+        "3": "Limiting self- care ADL OR supplemental oxygen indicated OR status asthmaticus",
+        "4": "Life-threatening respiratory or hemodynamic compromise (i.e., requiring intubation, pressors, invasive or non-invasive ventilation)",
+        "5": "Death due to asthma complications"
+      }
+    },
+    {
+      "id": 39,
+      "outcome": "Avascular necrosis of joints (AVN)",
+      "diagnostic_criteria": "Radiographic evidence of necrosis and subsequent bone changes.  Plain films may be normal early in disease\nwhereas magnetic resonance imaging (MRI) techniques demonstrate early changes and provide more detail\non the degree of bony involvement.",
+      "grade_definitions": {
+        "1": "Radiological findings of AVN AND NOT symptomatic",
+        "2": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND NO intervention",
+        "3": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND intervention with physical therapy, analgesics, bone remodeling agents OR invasive intervention with steroid injection or core decompression",
+        "4": "Radiological findings of AVN AND limiting instrumental activities of daily living AND invasive intervention with total joint replacement",
+        "5": "N/A"
+      }
+    },
+    {
+      "id": 40,
+      "outcome": "Leg ulcer",
+      "diagnostic_criteria": "Skin ulceration on physical exam; based on thickness, size, necrosis, periwound, and exudate1",
+      "grade_definitions": {
+        "1": "Intact skin with skin induration AND hyperpigmentation associated with pain/itching/burning/ warmth, possibly edema",
+        "2": "Partial thickness skin loss AND Less than 8 cm2 AND Minimal exudate AND Periwound intact",
+        "3": "Full thickness skin loss involving subcutaneous tissue AND Greater than 8 cm2 <50% wound bed with necrotic tissue AND Moderate exudate AND Periwound intact",
+        "4": "Full thickness skin loss involving damage or necrosis extending to the fascia AND Greater than 8 cm2 >50% wound bed with necrotic tissue AND Heavy exudate, possibly malodorous AND Periwound erythema, maceration + clinical signs of infection",
+        "5": "N/A"
+      }
+    }
+  ]
+}

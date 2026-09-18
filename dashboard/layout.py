@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from shiny import ui
 
-from dashboard.view_state import FILTER_LABELS, OUTCOME_BUCKETS
+from dashboard.view_state import FILTER_LABELS, OUTCOME_BUCKETS, PRESENT
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -27,7 +27,7 @@ outcomes_overview_card = ui.card(
                     "outcome_filter",
                     label="",
                     choices={b: FILTER_LABELS[b] for b in OUTCOME_BUCKETS},
-                    selected=list(OUTCOME_BUCKETS),
+                    selected=[PRESENT],
                     inline=True,
                 ),
                 class_="d-flex align-items-center outcome-filter",
@@ -85,17 +85,17 @@ app_ui = ui.page_sidebar(
             ui.div(
                 ui.div(
                     ui.span("SCOGS", class_="badge-brand me-2"),
-                    ui.span("Clinical Evaluation & Extraction Dashboard", class_="app-title-main"),
+                    ui.span("Clinical Evaluation & PCAI Model Comparison Dashboard", class_="app-title-main"),
                     class_="d-flex align-items-center flex-wrap gap-2",
                 ),
                 ui.p(
-                    "Deterministic Sickle Cell Severity Grading & MedGemma Grounding Verification",
+                    "SCOGS Severity Grading with selectable GPT-OSS 120B or Qwen3.8 27B FP8",
                     class_="app-title-sub mb-0 mt-1",
                 ),
                 class_="d-flex flex-column",
             ),
             ui.div(
-                ui.span("53 SCOGS Outcome Tables Active", class_="badge-engine me-2"),
+                ui.span("14 PI-Finalized SCOGS Outcomes Active", class_="badge-engine me-2"),
                 ui.output_ui("header_status_badge"),
                 ui.div(
                     ui.tags.button("Light", type="button", class_="theme-btn", id="theme-btn-light", onclick="setTheme('light')", title="Light Theme"),

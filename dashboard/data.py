@@ -76,6 +76,22 @@ def load_csv_notes(filepath: str | Path = "data/clinical_notes.csv") -> pd.DataF
 
     df = pd.read_csv(path)
 
+    # SCOGS-Scribe summarized-case schema.
+    # This lets the existing dashboard browse dashboard/SCD_summaries.csv
+    # without changing the rest of the UI data contract.
+    if "case_id" in df.columns and "summary" in df.columns:
+        df["patient_id"] = df["case_id"].astype(str)
+        df["clinical_note"] = df["summary"].fillna("").astype(str)
+        df["note_text"] = df["clinical_note"]
+        df["patient_sex"] = "unknown"
+        df["patient_age"] = None
+        if "true_outcomes" not in df.columns:
+            if "true_outcome" in df.columns:
+                df["true_outcomes"] = df["true_outcome"].fillna("").astype(str)
+            else:
+                df["true_outcomes"] = ""
+        return df
+
     # Note text mapping
     if "clinical_note" in df.columns:
         df["clinical_note"] = df["clinical_note"].fillna("")

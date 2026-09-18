@@ -1,0 +1,51 @@
+﻿case_id,outcome,attempts,last_error
+PMC10166222_01,Acute chest syndrome (ACS),2,ValueError: Model returned empty final content.
+PMC10166222_01,Priapism,2,ValueError: Model returned empty final content.
+PMC10166222_01,Chronic pain,2,ValueError: Model returned empty final content.
+PMC10332925_01,Avascular necrosis of joints (AVN),2,ValueError: Model returned empty final content.
+PMC10332925_01,Leg ulcer,2,ValueError: Model returned empty final content.
+PMC10448924_01,Acute sickle cell pain episode,2,ValueError: Model returned empty final content.
+PMC10448924_01,Stroke (hemorrhagic or ischemic),2,ValueError: Model returned empty final content.
+PMC10448924_01,Acute splenic sequestration,2,ValueError: Model returned empty final content.
+PMC10448924_01,Acute chest syndrome (ACS),2,ValueError: Model returned empty final content.
+PMC10448924_01,Priapism,2,ValueError: Model returned empty final content.
+PMC10448924_01,Chronic pain,2,ValueError: Model returned empty final content.
+PMC10448924_01,Chronic kidney disease (CKD),2,ValueError: Model returned empty final content.
+PMC10448924_01,Sickle cell retinopathy (SCR),2,ValueError: Model returned empty final content.
+PMC10448924_01,Cognitive dysfunction,2,ValueError: Model returned empty final content.
+PMC10448924_01,Depression,2,ValueError: Model returned empty final content.
+PMC10448924_01,Elevated TCD ultrasonography velocity,2,ValueError: Model returned empty final content.
+PMC10448924_01,Asthma exacerbation,2,ValueError: Model returned empty final content.
+PMC10448924_01,Avascular necrosis of joints (AVN),2,ValueError: Model returned empty final content.
+PMC10448924_01,Leg ulcer,2,ValueError: Model returned empty final content.
+PMC10515560_01,Acute sickle cell pain episode,2,ValueError: Model returned empty final content.
+PMC10515560_01,Stroke (hemorrhagic or ischemic),2,ValueError: Model returned empty final content.
+PMC10515560_01,Acute splenic sequestration,2,ValueError: Model returned empty final content.
+PMC10515560_01,Acute chest syndrome (ACS),2,ValueError: Model returned empty final content.
+PMC10515560_01,Priapism,2,ValueError: Model returned empty final content.
+PMC10515560_01,Chronic pain,2,ValueError: Model returned empty final content.
+PMC10515560_01,Chronic kidney disease (CKD),2,ValueError: Model returned empty final content.
+PMC10515560_01,Sickle cell retinopathy (SCR),2,ValueError: Model returned empty final content.
+PMC10515560_01,Cognitive dysfunction,2,ValueError: Model returned empty final content.
+PMC10515560_01,Depression,2,ValueError: Model returned empty final content.
+PMC10515560_01,Elevated TCD ultrasonography velocity,2,ValueError: Model returned empty final content.
+PMC10515560_01,Asthma exacerbation,2,ValueError: Model returned empty final content.
+PMC10515560_01,Avascular necrosis of joints (AVN),2,ValueError: Model returned empty final content.
+PMC10515560_01,Leg ulcer,2,ValueError: Model returned empty final content.
+PMC10724029_01,Acute sickle cell pain episode,2,ValueError: Model returned empty final content.
+PMC10724029_01,Stroke (hemorrhagic or ischemic),2,ValueError: Model returned empty final content.
+PMC10724029_01,Acute splenic sequestration,2,ValueError: Model returned empty final content.
+PMC10724029_01,Acute chest syndrome (ACS),2,ValueError: Model returned empty final content.
+PMC10724029_01,Priapism,2,ValueError: Model returned empty final content.
+PMC10724029_01,Chronic pain,2,ValueError: Model returned empty final content.
+PMC10724029_01,Chronic kidney disease (CKD),2,ValueError: Model returned empty final content.
+PMC10724029_01,Sickle cell retinopathy (SCR),2,ValueError: Model returned empty final content.
+PMC10724029_01,Cognitive dysfunction,2,ValueError: Model returned empty final content.
+PMC10724029_01,Depression,2,ValueError: Model returned empty final content.
+PMC10724029_01,Elevated TCD ultrasonography velocity,2,ValueError: Model returned empty final content.
+PMC10724029_01,Asthma exacerbation,2,ValueError: Model returned empty final content.
+PMC10724029_01,Avascular necrosis of joints (AVN),2,ValueError: Model returned empty final content.
+PMC10724029_01,Leg ulcer,2,ValueError: Model returned empty final content.
+PMC10897885_01,Acute sickle cell pain episode,2,ValueError: Model returned empty final content.
+PMC10897885_01,Stroke (hemorrhagic or ischemic),2,ValueError: Model returned empty final content.
+PMC10897885_01,Acute splenic sequestration,2,ValueError: Model returned empty final content.

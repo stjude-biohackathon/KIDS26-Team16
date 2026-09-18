@@ -30,6 +30,8 @@ from dashboard.evaluation import (
     is_ollama_available,
     normalize_outcome_id,
     save_live_run_results,
+    screen_outcomes_pcai,
+    screened_out_item,
 )
 from dashboard.highlight import highlight_note_quotes
 from dashboard.view_state import (
@@ -90,7 +92,7 @@ def server(input, output, session):
     # explore-only session never touches it.
     @reactive.calc
     def csv_notes():
-        return load_csv_notes("data/clinical_notes.csv")
+        return load_csv_notes("dashboard/SCD_summaries.csv")
 
     def get_effective_model() -> str:
         try:
@@ -115,10 +117,10 @@ def server(input, output, session):
         status, _ = check_ollama_status(model=selected_model)
 
         if status == "ready":
-            return ui.span(f"Ollama Online ({selected_model} • 16,384 ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
+            return ui.span(f"PCAI Online ({selected_model} • 16,384 ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
         elif status == "not_installed":
             return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
-        return ui.span("Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
+        return ui.span("PCAI Not Configured", class_="badge bg-secondary", style="font-size: 0.76rem;")
 
     @output
     @render.ui
@@ -129,12 +131,12 @@ def server(input, output, session):
         if status == "ready":
             return ui.div(
                 ui.div(
-                    ui.span("● Ollama Online", class_="badge badge-grade-1 me-1"),
+                    ui.span("● PCAI Online", class_="badge badge-grade-1 me-1"),
                     ui.span("Ready", class_="badge bg-success-subtle text-success-emphasis"),
                     class_="d-flex align-items-center flex-wrap gap-1 mb-1",
                 ),
                 ui.div(
-                    f"{selected_model} • 16,384 ctx",
+                    f"{selected_model} • remote PCAI inference",
                     class_="small text-muted font-monospace",
                     style="font-size: 0.72rem; word-break: break-all;",
                 ),
@@ -144,7 +146,7 @@ def server(input, output, session):
             return ui.div(
                 ui.span(f"▲ Model Not Installed: {selected_model}", class_="badge badge-cannot-grade mb-1 text-wrap text-start"),
                 ui.div(
-                    f"Ollama is running, but '{selected_model}' is not installed. Run 'ollama pull {selected_model}' in terminal to download it, or analyze below in deterministic mode.",
+                    f"PCAI is configured, but '{selected_model}' is not installed. The selected model is not available through this PCAI configuration.",
                     class_="small text-muted mb-1",
                     style="font-size: 0.74rem; line-height: 1.35;",
                 ),
@@ -152,7 +154,7 @@ def server(input, output, session):
             )
         return ui.div(
             ui.div(
-                ui.span("● Ollama Offline", class_="badge bg-secondary me-1"),
+                ui.span("● PCAI Not Configured", class_="badge bg-secondary me-1"),
                 ui.span("Deterministic Mode", class_="badge bg-secondary-subtle text-secondary-emphasis"),
                 class_="d-flex align-items-center flex-wrap gap-1 mb-1",
             ),
@@ -207,9 +209,9 @@ def server(input, output, session):
         ui.update_select("live_model_select", choices=choices, selected=sel)
         installed = get_installed_models()
         if installed:
-            ui.notification_show(f"Refreshed: {len(installed)} model(s) served by Ollama.", type="message")
+            ui.notification_show(f"PCAI credential detected. Selected model: {get_effective_model()}", type="message")
         else:
-            ui.notification_show("Ollama is offline or reports 0 installed models.", type="warning")
+            ui.notification_show("PCAI_API_KEY is not set in this Shiny process.", type="warning")
 
     @reactive.effect
     @reactive.event(input.btn_select_14)
@@ -288,12 +290,12 @@ def server(input, output, session):
                 ui.div(
                     ui.div(
                         ui.span("INFERENCE RUNTIME", class_="sidebar-section-label mb-0"),
-                        ui.span("Ollama", class_="sidebar-badge-subtle"),
+                        ui.span("St. Jude PCAI", class_="sidebar-badge-subtle"),
                         class_="d-flex justify-content-between align-items-center mb-2",
                     ),
                     ui.input_select(
                         "live_model_select",
-                        "Inference Model:",
+                        "PCAI Grading Model:",
                         choices=model_choices,
                         selected=default_model,
                     ),
@@ -307,17 +309,17 @@ def server(input, output, session):
                     ),
                     ui.input_action_button(
                         "refresh_ollama_models",
-                        "↻ Refresh Ollama Models",
+                        "↻ Refresh PCAI Status",
                         class_="btn-sm btn-outline-secondary w-100 my-2",
                     ),
                     ui.output_ui("live_model_status_badge"),
                     ui.div(
                         ui.input_numeric(
                             "live_concurrency_input",
-                            "Concurrency (Parallel Workers):",
+                            "Requests in Parallel:",
                             value=get_concurrency_assessment(default_model)["recommended"],
                             min=1,
-                            max=14,
+                            max=4,
                             step=1,
                         ),
                         class_="mt-2",
@@ -382,9 +384,8 @@ def server(input, output, session):
                             "live_outcome_mode",
                             "Target Outcomes Scope:",
                             choices={
-                                "14_focus": "#14 Focus Outcomes (Default)",
-                                "all_53": "All 53 SCOGS Outcomes",
-                                "custom": "Custom Selection (Pick & Choose)",
+                                "14_focus": "14 Outcomes",
+                                "all_53": "53 Outcomes",
                             },
                             selected="14_focus",
                         ),
@@ -413,11 +414,20 @@ def server(input, output, session):
                             ui.div(
                                 ui.span("🌐 All 53 SCOGS Decision Tables Active", class_="fw-bold d-block text-success"),
                                 ui.span(
-                                    "Comprehensive evaluation across all 53 CTCAE v5.0 and Delphi consensus tables (#01 to #53).",
+                                    "Evaluates all 53 SCOGS decision tables. The 14 PI-finalized outcomes use the finalized JSON rubrics; the additional 39 use GPT-OSS evidence extraction followed by the deterministic SCOGS rule engine.",
                                     class_="small text-muted",
                                 ),
                                 class_="p-2 rounded bg-body-tertiary border mb-2",
                                 style="font-size: 0.75rem; line-height: 1.35;",
+                            ),
+                            ui.input_checkbox(
+                                "fast_screen_53",
+                                "Experimental Fast 53 pre-screen",
+                                value=False,
+                            ),
+                            ui.p(
+                                "When enabled, GPT-OSS first performs a high-recall screen and only deeply grades candidate outcomes. Screened-out outcomes are marked 'Cannot grade' rather than 'Absent'. If screening fails, the dashboard automatically falls back to exhaustive 53-outcome grading.",
+                                class_="sidebar-help-text mb-0",
                             ),
                         ),
                     ),
@@ -520,7 +530,7 @@ def server(input, output, session):
                         class_="simulation-json-wrapper",
                     ),
                     ui.div(
-                        "Key-value features evaluated directly by CTCAE rules across all selected outcomes when Ollama is offline.",
+                        "Manual feature simulation is retained for legacy testing; live clinical-note analysis uses PCAI/GPT-OSS.",
                         class_="small text-muted mt-1 mb-0",
                         style="font-size: 0.74rem;",
                     ),
@@ -723,6 +733,13 @@ def server(input, output, session):
         # are then written to a closed socket ("socket.send() raised exception").
         selected_model = get_effective_model()
         online = await asyncio.to_thread(is_ollama_available, model=selected_model)
+        if not online:
+            ui.notification_show(
+                "PCAI is not configured. Set PCAI_API_KEY in the terminal that launched Shiny and restart the app.",
+                type="error",
+                duration=8,
+            )
+            return
         results: dict[str, Any] = {}
         raw_concurrency = current("live_concurrency_input", None)
         try:
@@ -734,12 +751,48 @@ def server(input, output, session):
             ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
             return
 
+        # Optional high-recall pre-screen for the 53-outcome mode. This can cut
+        # the number of expensive detailed GPT-OSS calls substantially, but we
+        # do not call screened-out outcomes absent: they remain CANNOT_GRADE
+        # unless they receive a full outcome-level evaluation.
+        outcome_ids_to_grade = list(outcome_ids)
+        if current("live_outcome_mode", "14_focus") == "all_53" and bool(current("fast_screen_53", False)):
+            ui.notification_show(
+                "Running high-recall GPT-OSS screen across 53 outcomes…",
+                type="message",
+                duration=4,
+            )
+            try:
+                screened = await asyncio.to_thread(
+                    screen_outcomes_pcai,
+                    note_text,
+                    outcome_ids,
+                    selected_model,
+                )
+                candidates = [num for num in outcome_ids if num in set(screened)]
+                skipped = [num for num in outcome_ids if num not in set(candidates)]
+                results.update({num: screened_out_item(num) for num in skipped})
+                outcome_ids_to_grade = candidates
+                live_eval_result.set(dict(results))
+                ui.notification_show(
+                    f"Fast 53 screen selected {len(candidates)} of {len(outcome_ids)} outcomes for detailed grading.",
+                    type="message",
+                    duration=6,
+                )
+            except Exception as exc:
+                outcome_ids_to_grade = list(outcome_ids)
+                ui.notification_show(
+                    f"Fast screen failed ({exc}); falling back to exhaustive 53-outcome grading.",
+                    type="warning",
+                    duration=7,
+                )
+
         with ui.Progress(min=0, max=len(outcome_ids)) as progress:
             progress.set(0, message="Grading outcomes", detail=f"0 of {len(outcome_ids)}")
             # A chunk at a time, so the overview fills in as outcomes land instead
             # of staying empty until the last one is graded.
-            for start in range(0, len(outcome_ids), model_concurrency):
-                chunk = outcome_ids[start:start + model_concurrency]
+            for start in range(0, len(outcome_ids_to_grade), model_concurrency):
+                chunk = outcome_ids_to_grade[start:start + model_concurrency]
                 results.update(await asyncio.to_thread(
                     extract_and_grade_note,
                     note_text=note_text,
@@ -764,7 +817,7 @@ def server(input, output, session):
                 outcomes=outcome_ids,
                 results=results,
                 model=selected_model,
-                backend="ollama" if online else "deterministic",
+                backend="pcai",
                 patient_age=patient_age,
                 patient_sex=patient_sex,
                 num_ctx=OLLAMA_NUM_CTX,
@@ -832,7 +885,7 @@ def server(input, output, session):
                 return title
             return ui.div(
                 title,
-                ui.span(f"{graded} outcomes graded" if graded != 1 else "1 outcome graded",
+                ui.span(f"{graded} outcomes evaluated" if graded != 1 else "1 outcome evaluated",
                         class_="badge-engine fw-normal ms-2",
                         style="font-size: 0.78rem;"),
                 class_="d-flex align-items-center flex-wrap gap-1",
@@ -877,7 +930,7 @@ def server(input, output, session):
 
         # Unset (the page has not reported the boxes yet) means all three; the
         # client sends None once the clinician unticks the last one.
-        shown = set(current("outcome_filter", OUTCOME_BUCKETS) or ())
+        shown = set(current("outcome_filter", (PRESENT,)) or ())
         selected_outcome = str(state.get("outcome_num"))
 
         groups: dict[str, list] = {bucket: [] for bucket in OUTCOME_BUCKETS}
@@ -962,6 +1015,37 @@ def server(input, output, session):
             )
 
         details_row = []
+
+        # PCAI/GPT-OSS metadata travels in extracted_features so it remains
+        # compatible with saved-run JSON and the existing view-state contract.
+        model_meta = state.get("extracted_features") or {}
+        model_conf = model_meta.get("model_confidence_pct")
+        if model_conf is not None:
+            details_row.append(
+                ui.div(
+                    ui.span("Selected-Model Confidence", class_="sidebar-section-label mb-1"),
+                    ui.span(f"{float(model_conf):.1f}% (uncalibrated)", class_="fs-7 text-secondary"),
+                    class_="mb-2",
+                )
+            )
+
+        conformal_set = model_meta.get("conformal_prediction_set") or []
+        conformal_target = model_meta.get("conformal_target_coverage_pct")
+        conformal_p = model_meta.get("conformal_predicted_class_p_value_pct")
+        if conformal_set:
+            c_text = f"{conformal_set}"
+            if conformal_target is not None:
+                c_text += f" at {conformal_target}% target coverage"
+            if conformal_p is not None:
+                c_text += f" • selected-class conformal p-value {conformal_p}%"
+            details_row.append(
+                ui.div(
+                    ui.span("Conformal Prediction Set", class_="sidebar-section-label mb-1"),
+                    ui.span(c_text, class_="fs-7 text-secondary"),
+                    class_="mb-2",
+                )
+            )
+
         if reason:
             details_row.append(
                 ui.div(
@@ -1011,7 +1095,7 @@ def server(input, output, session):
             ui.card_header(
                 ui.div(
                     ui.div(
-                        ui.span("DETERMINISTIC VERDICT", class_="eyebrow-tag me-2"),
+                        ui.span("PCAI MODEL SCOGS VERDICT", class_="eyebrow-tag me-2"),
                         ui.span(f"Outcome #{state.get('outcome_num')}: {state.get('outcome_name')}", class_="card-header-title"),
                         class_="d-flex align-items-center flex-wrap gap-1",
                     ),
@@ -1023,7 +1107,7 @@ def server(input, output, session):
                 review_alert,
                 ui.div(
                     ui.div(
-                        ui.span("SCOGS Deterministic Grade:", class_="text-muted text-uppercase fw-semibold fs-7 mb-1"),
+                        ui.span("SCOGS Grade:", class_="text-muted text-uppercase fw-semibold fs-7 mb-1"),
                         ui.div(
                             ui.span(badge_label, class_=f"badge-grade-pill shadow-xs {badge_class}"),
                             class_="mb-2",
