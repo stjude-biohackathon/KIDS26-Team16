@@ -5,6 +5,7 @@ the case and outcome selectors read the very inputs they create, which cancels
 their own render, so the selector never appears and every card below it goes
 blank. Only a session that echoes inputs back the way a browser does shows it.
 """
+import asyncio
 import json
 import re
 from html import escape
@@ -97,6 +98,65 @@ def test_filter_can_hide_every_state_but_present(tmp_path):
     assert "Acute Sickle Cell Pain Episode (VOC)" in summary
     assert "Acute Chest Syndrome (ACS)" not in summary
     assert "Chronic Leg Ulcer" not in summary
+
+
+def test_live_analysis_ignores_the_outcome_last_inspected_in_explore(monkeypatch, tmp_path):
+    """Explore and live share `selected_outcome_num`; a saved run's pick must not
+    open a fresh live analysis on an outcome it could not grade."""
+    import dashboard.server as server
+    from tests.shiny_session import FakeBrowser
+
+    monkeypatch.setattr(server, "is_ollama_available", lambda *args, **kwargs: False)
+
+    async def go() -> str:
+        browser = FakeBrowser()
+        await browser.start(app_mode="explore")
+        await browser.send_inputs(selected_run_file=mixed_status_run(tmp_path))
+        await browser.send_inputs(selected_outcome_num="48")
+        await browser.send_inputs(app_mode="live", outcome_present_input=True)
+        await browser.send_inputs(live_note_text="Patient admitted with a severe vaso-occlusive pain crisis.",
+                                  btn_analyze=1)
+        card = browser.html("executive_grade_card")
+        await browser.stop()
+        return card
+
+    card = asyncio.run(go())
+    assert "#28" in card and "GRADE 3" in card
+
+
+def test_analysing_a_pasted_note_saves_one_file_for_it(live_results_dir):
+    """Grading the same note twice updates its file; it never piles up copies."""
+    analyze_live_note()
+    analyze_live_note()
+    saved = list(live_results_dir.iterdir())
+    assert len(saved) == 1 and saved[0].name.startswith("note_")
+    doc = json.loads(saved[0].read_text())
+    assert len(doc["detailed_records"]) == 1
+    assert len(doc["detailed_records"][0]["outcomes"]) == len(FOCUS_OUTCOMES)
+
+
+def test_csv_visits_of_one_patient_save_into_that_patients_file(live_results_dir):
+    """Rows 0 and 1 of the notes CSV are two visits of patient P00000."""
+    analyze_live_note(live_source="csv", csv_patient_idx="0")
+    analyze_live_note(live_source="csv", csv_patient_idx="1")
+    assert [p.name for p in live_results_dir.iterdir()] == ["patient_P00000.json"]
+    doc = json.loads((live_results_dir / "patient_P00000.json").read_text())
+    assert [r["patient_uid"].split(" @ ")[0] for r in doc["detailed_records"]] == ["P00000", "P00000"]
+
+
+def test_focus_mode_ignores_a_stale_custom_selection():
+    """Picks left in the hidden custom picker must not leak into "14 Focus"."""
+    out = analyze_live_note(live_outcome_mode="14_focus", live_outcome=["48"])
+    assert "14 outcomes graded" in out["outcomes_card_title"]
+
+
+def test_live_grade_card_names_a_non_focus_outcome():
+    """Outcomes outside the 14 get their rubric name and organ system, not blanks."""
+    out = analyze_live_note(live_outcome_mode="custom", live_outcome=["01"])
+    card = out["executive_grade_card"]
+    assert "Arrhythmia" in card
+    assert "Cardiovascular" in card
+    assert "General" not in card
 
 
 def test_filter_can_show_only_what_could_not_be_graded(tmp_path):
@@ -219,7 +279,7 @@ def test_live_analysis_leaves_the_event_loop_free():
 
 def test_live_analysis_can_be_narrowed_to_one_outcome():
     """Deselecting is still how a clinician runs a single outcome."""
-    out = analyze_live_note(live_outcome=["48"])
+    out = analyze_live_note(live_outcome_mode="custom", live_outcome=["48"])
     summary = out["patient_outcomes_summary_ui"]
     assert "Acute Chest Syndrome (ACS)" in summary
     assert "Chronic Leg Ulcer" not in summary

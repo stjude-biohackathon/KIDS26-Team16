@@ -1270,3 +1270,299 @@ textarea,
 [data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     background: rgba(148, 163, 184, 0.45);
 }
+
+/* ------------------------------------------------------------------------------
+   14. Utilities the markup relies on (Bootstrap 5 ships neither)
+   ------------------------------------------------------------------------------ */
+
+.fs-7 {
+    font-size: 0.8rem !important;
+}
+
+.shadow-xs {
+    box-shadow: var(--scogs-shadow-sm);
+}
+
+/* ------------------------------------------------------------------------------
+   15. Deterministic Verdict Card
+   ------------------------------------------------------------------------------ */
+
+.verdict-outcome-num {
+    font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--scogs-text-muted);
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    border-radius: var(--radius-full);
+    padding: 1px 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.verdict-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 550;
+    color: var(--scogs-text-secondary);
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    border-radius: var(--radius-full);
+    padding: 3px 10px;
+}
+
+.verdict-meta-key {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--scogs-text-muted);
+}
+
+/* The body reflows on the card's own width, not the viewport's: the sidebar
+   takes a different share of the screen in each mode. */
+.verdict-shell {
+    container-type: inline-size;
+}
+
+.verdict-body {
+    display: grid;
+    grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+    gap: 20px;
+    padding: 4px;
+    align-items: start;
+}
+
+@container (max-width: 560px) {
+    .verdict-body {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        padding: 0;
+    }
+}
+
+/* Grade tile: one tone per status, set as variables so every part follows it. */
+.verdict-grade-tile {
+    --tone-bg: var(--scogs-surface-subtle);
+    --tone-fg: var(--scogs-text-secondary);
+    --tone-border: var(--scogs-border);
+    --tone-accent: var(--scogs-text-muted);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 18px 14px;
+    background: var(--tone-bg);
+    border: 1px solid var(--tone-border);
+    border-radius: var(--radius-md);
+}
+
+.verdict-grade-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--tone-accent);
+}
+
+.verdict-grade-tile .verdict-field-label {
+    margin-bottom: 2px;
+}
+
+.verdict-grade-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--tone-fg);
+    font-variant-numeric: tabular-nums;
+}
+
+.verdict-grade-caption {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--tone-fg);
+    opacity: 0.85;
+}
+
+.verdict-tone-grade-1 { --tone-bg: #ecfdf5; --tone-fg: #065f46; --tone-border: #a7f3d0; --tone-accent: #10b981; }
+.verdict-tone-grade-2 { --tone-bg: #fffbeb; --tone-fg: #92400e; --tone-border: #fde68a; --tone-accent: #f59e0b; }
+.verdict-tone-grade-3 { --tone-bg: #fef2f2; --tone-fg: #991b1b; --tone-border: #fecaca; --tone-accent: #ef4444; }
+.verdict-tone-grade-set { --tone-bg: #eff6ff; --tone-fg: #1e40af; --tone-border: #bfdbfe; --tone-accent: #3b82f6; }
+.verdict-tone-cannot-grade { --tone-bg: #fff7ed; --tone-fg: #9a3412; --tone-border: #fed7aa; --tone-accent: #f97316; }
+.verdict-tone-not-applicable { --tone-bg: #f1f5f9; --tone-fg: #475569; --tone-border: #cbd5e1; --tone-accent: #94a3b8; }
+.verdict-tone-absent { --tone-bg: #f8fafc; --tone-fg: #64748b; --tone-border: #e2e8f0; --tone-accent: #94a3b8; }
+.verdict-tone-refuted { --tone-bg: #faf5ff; --tone-fg: #6b21a8; --tone-border: #e9d5ff; --tone-accent: #a855f7; }
+.verdict-tone-pending { border-style: dashed; }
+.verdict-tone-pending::before { display: none; }
+
+[data-bs-theme="dark"] .verdict-tone-grade-1 { --tone-bg: rgba(6, 78, 59, 0.3); --tone-fg: #6ee7b7; --tone-border: #047857; }
+[data-bs-theme="dark"] .verdict-tone-grade-2 { --tone-bg: rgba(120, 53, 15, 0.3); --tone-fg: #fcd34d; --tone-border: #b45309; }
+[data-bs-theme="dark"] .verdict-tone-grade-3 { --tone-bg: rgba(127, 29, 29, 0.3); --tone-fg: #fca5a5; --tone-border: #b91c1c; }
+[data-bs-theme="dark"] .verdict-tone-grade-set { --tone-bg: rgba(30, 58, 138, 0.3); --tone-fg: #93c5fd; --tone-border: #1d4ed8; }
+[data-bs-theme="dark"] .verdict-tone-cannot-grade { --tone-bg: rgba(124, 45, 18, 0.3); --tone-fg: #fdba74; --tone-border: #c2410c; }
+[data-bs-theme="dark"] .verdict-tone-not-applicable { --tone-bg: rgba(30, 41, 59, 0.5); --tone-fg: #94a3b8; --tone-border: #334155; --tone-accent: #64748b; }
+[data-bs-theme="dark"] .verdict-tone-absent { --tone-bg: rgba(15, 23, 42, 0.5); --tone-fg: #94a3b8; --tone-border: #334155; --tone-accent: #64748b; }
+[data-bs-theme="dark"] .verdict-tone-refuted { --tone-bg: rgba(88, 28, 135, 0.3); --tone-fg: #d8b4fe; --tone-border: #7e22ce; }
+
+/* Severity scale 1-5 under the grade */
+.verdict-scale {
+    margin-top: 10px;
+}
+
+.verdict-scale-track,
+.verdict-scale-ticks {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.verdict-scale-track {
+    align-items: center;
+    height: 10px;
+}
+
+.verdict-scale-seg {
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--scogs-border);
+    transition: background-color var(--transition-fast), height var(--transition-fast);
+}
+
+.verdict-scale-seg.is-lit {
+    background: var(--tone-accent);
+    opacity: 0.45;
+}
+
+.verdict-scale-seg.is-current {
+    height: 10px;
+    opacity: 1;
+}
+
+.verdict-scale-ticks {
+    margin-top: 4px;
+    font-size: 0.66rem;
+    text-align: center;
+    color: var(--scogs-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.verdict-scale-ticks .is-current {
+    color: var(--tone-fg);
+    font-weight: 700;
+}
+
+/* Detail column */
+.verdict-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.verdict-field-label {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--scogs-text-muted);
+    margin-bottom: 6px;
+}
+
+.verdict-field-label.is-danger {
+    color: #b91c1c;
+}
+
+[data-bs-theme="dark"] .verdict-field-label.is-danger {
+    color: #fca5a5;
+}
+
+.verdict-rationale {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--scogs-text-secondary);
+}
+
+.verdict-details .dsl-code-block {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.verdict-missing-chip {
+    font-size: 0.76rem;
+    color: #991b1b;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-full);
+    padding: 2px 9px;
+}
+
+[data-bs-theme="dark"] .verdict-missing-chip {
+    color: #fca5a5;
+    background: rgba(127, 29, 29, 0.3);
+    border-color: #b91c1c;
+}
+
+.verdict-clause {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+
+.verdict-clause .dsl-code-block {
+    flex: 1;
+    min-width: 0;
+}
+
+.verdict-clause-grade {
+    flex: none;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--scogs-text-secondary);
+    background: var(--scogs-surface-subtle);
+    border: 1px solid var(--scogs-border);
+    border-radius: var(--radius-full);
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.verdict-review {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    padding: 10px 12px;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+}
+
+[data-bs-theme="dark"] .verdict-review {
+    color: #fcd34d;
+    background: rgba(120, 53, 15, 0.3);
+    border-color: #b45309;
+}
+
+.verdict-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: var(--scogs-text-muted);
+    background: var(--scogs-surface-subtle);
+    border: 1px dashed var(--scogs-border);
+    border-radius: var(--radius-md);
+}
+
+.verdict-empty-title {
+    font-size: 0.9rem;
+    font-weight: 650;
+    color: var(--scogs-text);
+}

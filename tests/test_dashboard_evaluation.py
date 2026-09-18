@@ -96,7 +96,7 @@ def test_derived_features_come_from_the_schema():
 @pytest.mark.parametrize("status, grade, grades, expected", [
     ("graded", 3, (), ("badge-grade-3", "GRADE 3")),
     ("graded", 1, (), ("badge-grade-1", "GRADE 1")),
-    ("grade_set", None, (2, 3), ("badge-grade-set", "GRADE SET: (2, 3)")),
+    ("grade_set", None, (2, 3), ("badge-grade-set", "GRADE 2 OR 3")),
     ("missed_presence", None, (), ("badge-cannot-grade", "MISSED PRESENCE (REVIEW)")),
     ("refuted", None, (), ("badge-refuted", "REFUTED (CONTRADICTED)")),
     ("pending", None, (), ("badge-not-applicable", "PENDING")),
@@ -127,43 +127,84 @@ def test_allowed_models_and_model_choices():
     assert "__custom__" in choices
 
 
-def test_save_live_run_results_creates_valid_run_file(tmp_path):
+VOC_ITEM = {
+    "outcome_name": "Acute Sickle Cell Pain Episode (VOC)",
+    "present": True,
+    "extracted_features": {"care_setting": "inpatient"},
+    "accepted_findings": [{"feature": "care_setting", "value": "inpatient", "quote": "admitted"}],
+    "conflicts": {},
+    "status": "graded",
+    "grade_result": {"status": "graded", "grade": 3, "reason": "care_setting >= inpatient"},
+}
+
+
+def test_saved_patient_file_opens_in_explore_mode(tmp_path):
     from dashboard.data import is_run_file, load_run_file
-    from dashboard.evaluation import save_live_run_results
+    from dashboard.evaluation import save_live_patient_results
+    from dashboard.view_state import explore_view_state
 
-    results = {
-        "28": {
-            "outcome_name": "Acute Sickle Cell Pain Episode (VOC)",
-            "present": True,
-            "extracted_features": {"care_setting": "inpatient"},
-            "accepted_findings": [{"feature": "care_setting", "value": "inpatient", "quote": "admitted"}],
-            "conflicts": {},
-            "status": "graded",
-            "grade_result": {"status": "graded", "grade": 3, "reason": "care_setting >= inpatient"},
-            "raw_reply": '{"findings": []}',
-        }
-    }
-    file_path = save_live_run_results(
-        note_text="Patient admitted with severe pain.",
-        outcomes=["28"],
-        results=results,
-        model="medgemma-1.5-4b-it",
-        backend="ollama",
-        patient_age=None,
-        patient_sex=None,
-        output_dir=tmp_path / "live",
+    live = evaluate_clinical_features("48", {})    # a real GradeResult, not a dict
+    path = save_live_patient_results(
+        "Patient admitted with severe pain.",
+        {"28": VOC_ITEM, "48": {"status": live.status, "grade_result": live.result}},
+        patient_id="P00000", visit="10/8/20", title="ER visit 10/8/20",
+        patient_age=31, patient_sex="female", output_dir=tmp_path,
     )
-    assert file_path.is_file()
-    assert is_run_file(file_path)
+    assert path == tmp_path / "patient_P00000.json"
+    assert is_run_file(path)
+    run = load_run_file(path)
+    assert run["provenance"]["source"] == "live"
+    state = explore_view_state(run, "P00000 @ 10/8/20", "28")
+    assert (state["status"], state["patient_age"], state["patient_sex"]) == ("graded", 31.0, "female")
+    assert run["records_by_uid"]["P00000 @ 10/8/20"]["outcomes"]["48"]["grade_result"]["status"] == live.status
 
-    loaded = load_run_file(file_path)
-    assert loaded["provenance"]["model"] == "medgemma-1.5-4b-it"
-    assert loaded["provenance"]["source"] == "live"
-    rec = loaded["records_by_uid"]["LIVE-CASE"]
-    assert rec["patient_age"] is None
-    assert rec["patient_sex"] is None
-    assert "28" in rec["outcomes"]
-    assert rec["outcomes"]["28"]["status"] == "graded"
+
+def test_every_visit_of_a_patient_shares_one_file(tmp_path):
+    from dashboard.evaluation import save_live_patient_results
+
+    for visit in ("10/8/20", "12/26/20"):
+        save_live_patient_results(f"Note from {visit}.", {"28": VOC_ITEM},
+                                  patient_id="P00000", visit=visit, output_dir=tmp_path)
+    save_live_patient_results("Another patient.", {"28": VOC_ITEM},
+                              patient_id="P00001", visit="1/1/21", output_dir=tmp_path)
+
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["patient_P00000.json", "patient_P00001.json"]
+    doc = json.loads((tmp_path / "patient_P00000.json").read_text())
+    assert [r["patient_uid"] for r in doc["detailed_records"]] == ["P00000 @ 10/8/20", "P00000 @ 12/26/20"]
+    assert doc["grade_status"] == {"graded": 2}
+
+
+def test_regrading_a_visit_updates_its_record_instead_of_adding_one(tmp_path):
+    from dashboard.evaluation import save_live_patient_results
+
+    note = "Patient admitted with severe pain."
+    save_live_patient_results(note, {"28": VOC_ITEM}, patient_id="P00000", visit="10/8/20", output_dir=tmp_path)
+    absent = {**VOC_ITEM, "outcome_name": "Stroke", "present": False, "status": "absent",
+              "grade_result": {"status": "absent", "grade": None}}
+    save_live_patient_results(note, {"15": absent}, patient_id="P00000", visit="10/8/20", output_dir=tmp_path)
+
+    doc = json.loads((tmp_path / "patient_P00000.json").read_text())
+    assert len(doc["detailed_records"]) == 1
+    assert set(doc["detailed_records"][0]["outcomes"]) == {"28", "15"}   # earlier outcome kept
+
+    # An edited note is a different note: its old outcomes no longer apply.
+    save_live_patient_results(note + " Edited.", {"15": absent}, patient_id="P00000", visit="10/8/20",
+                              output_dir=tmp_path)
+    doc = json.loads((tmp_path / "patient_P00000.json").read_text())
+    assert set(doc["detailed_records"][0]["outcomes"]) == {"15"}
+    assert list(tmp_path.iterdir()) == [tmp_path / "patient_P00000.json"]   # no temp file left
+
+
+def test_a_pasted_note_files_under_a_hash_of_its_text(tmp_path):
+    from dashboard.evaluation import live_patient_key, save_live_patient_results
+
+    first = save_live_patient_results("Pasted note.", {"28": VOC_ITEM}, output_dir=tmp_path)
+    again = save_live_patient_results("  Pasted note.  ", {"28": VOC_ITEM}, output_dir=tmp_path)
+    other = save_live_patient_results("A different note.", {"28": VOC_ITEM}, output_dir=tmp_path)
+
+    assert first == again != other
+    assert first.name.startswith("note_") and first.stem == live_patient_key(None, "Pasted note.")
+    assert live_patient_key("P 00/1", "x") == "patient_P_00_1"     # safe as a file name
 
 
 def test_is_model_installed_matching():

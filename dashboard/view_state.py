@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from dashboard.evaluation import FOCUS_OUTCOMES
+from dashboard.evaluation import outcome_display_name
 from scogs import GRADE_SET, GRADED
 from scogs import GradeResult
 
@@ -101,7 +101,7 @@ def explore_view_state(run_data: dict | None, uid: str, outcome_num: str) -> dic
         "title": record.get("title", ""),
         "note_text": record.get("patient_note", ""),
         "outcome_num": outcome_num,
-        "outcome_name": outcome.get("outcome_name") or FOCUS_OUTCOMES.get(str(outcome_num), {}).get("name", ""),
+        "outcome_name": outcome.get("outcome_name") or outcome_display_name(str(outcome_num)),
         "present": outcome.get("present", False),
         # Results files written before `status` existed fall back to presence.
         "status": grade_result.get("status") or ("graded" if outcome.get("present") else "absent"),
@@ -124,7 +124,7 @@ def live_view_state(results: dict | None, outcome_id: str, note_text: str,
             "title": "Interactive Live Case",
             "note_text": note_text,
             "outcome_num": outcome_id,
-            "outcome_name": FOCUS_OUTCOMES.get(outcome_id, {}).get("name", ""),
+            "outcome_name": outcome_display_name(outcome_id) if outcome_id else "",
             "present": True,
             "status": "pending",
             "grade_result": None,

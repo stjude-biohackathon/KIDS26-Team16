@@ -229,7 +229,8 @@ def loop_ticks_during_analysis(seconds: float = 0.3) -> int:
         browser = FakeBrowser()
         await browser.start(app_mode="live", outcome_present_input=True)
         click = asyncio.create_task(
-            browser.send_inputs(live_note_text="a note", btn_analyze=1, live_outcome=["28"]))
+            browser.send_inputs(live_note_text="a note", btn_analyze=1,
+                                live_outcome_mode="custom", live_outcome=["28"]))
         # Hold the loop open until the analysis has been through its blocking
         # stretch: letting the session settle first would close the loop while the
         # worker is still asleep, and the heartbeat would stop with it.

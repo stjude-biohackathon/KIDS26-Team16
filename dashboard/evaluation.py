@@ -11,9 +11,14 @@ directly (tests/test_dashboard_evaluation.py).
 """
 from __future__ import annotations
 
-from pathlib import Path
+import hashlib
+import json
 import os
+import re
 import sys
+from dataclasses import asdict
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from experiments.grading import OutcomeGrade, grade_outcome
@@ -247,7 +252,6 @@ def get_concurrency_assessment(
         ram = float(ram_gb)
 
     model_lower = (model or "").lower()
-    import re
     m = re.search(r"(\d+(?:\.\d+)?)\s*b\b", model_lower)
     param_b = float(m.group(1)) if m else None
 
@@ -451,6 +455,21 @@ def outcome_display_name(outcome: str) -> str:
     )
 
 
+def outcome_meta(outcome: str) -> dict[str, str | None]:
+    """-> {name, organ_system, acuity} for any of the 53 outcomes.
+
+    Only the 14 focus outcomes carry an acuity; it is None for the rest rather
+    than a made-up default.
+    """
+    norm = normalize_outcome_id(outcome)
+    focus = FOCUS_OUTCOMES.get(str(int(norm)) if norm.isdigit() else norm, {})
+    return {
+        "name": outcome_display_name(outcome),
+        "organ_system": focus.get("organ_system") or OUTCOME_ORGAN_SYSTEMS.get(norm),
+        "acuity": focus.get("acuity"),
+    }
+
+
 def clinician_context(patient_sex: str | None, patient_age: Any) -> dict[str, Any]:
     """-> the age and sex a clinician entered, as schema features; unknowns are omitted.
 
@@ -602,10 +621,39 @@ def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOS
         return False
 
 
-def save_live_run_results(
+def live_patient_key(patient_id: str | None, note_text: str) -> str:
+    """-> the file stem that holds one patient's live results.
+
+    A CSV encounter files under its patient id, so every visit of that patient
+    lands in one file. A pasted note has no id, so it files under a hash of its
+    text: grading the same note again finds the same file.
+    """
+    if patient_id and patient_id.strip():
+        return "patient_" + (re.sub(r"[^A-Za-z0-9_-]+", "_", patient_id.strip()).strip("_") or "unknown")
+    return "note_" + hashlib.sha1(note_text.strip().encode("utf-8")).hexdigest()[:12]
+
+
+def _saved_grade_result(item: dict[str, Any]) -> dict[str, Any]:
+    """-> an item's grade result as JSON-ready data; live results hold the `GradeResult` itself."""
+    grade_res = item.get("grade_result")
+    if isinstance(grade_res, GradeResult):
+        saved = asdict(grade_res)
+        saved["grades"] = list(saved.get("grades") or [])
+        saved["missing"] = list(saved.get("missing") or [])
+        saved["undecided"] = [list(u) for u in (saved.get("undecided") or [])]
+        return saved
+    if isinstance(grade_res, dict):
+        return dict(grade_res)
+    return {"status": item.get("status", "unknown"), "grade": None, "reason": None}
+
+
+def save_live_patient_results(
     note_text: str,
-    outcomes: list[str],
     results: dict[str, Any],
+    *,
+    patient_id: str | None = None,
+    visit: str | None = None,
+    title: str | None = None,
     model: str = DEFAULT_LIVE_MODEL,
     backend: str = "ollama",
     patient_age: Any = None,
@@ -613,105 +661,114 @@ def save_live_run_results(
     output_dir: str | Path = "results/live",
     num_ctx: int = OLLAMA_NUM_CTX,
 ) -> Path:
-    """Save live note evaluation results to a JSON file compatible with the run explorer.
+    """Write a live evaluation into its patient's results file; -> that file's path.
 
-    -> Path to the saved file.
+    One file per patient (`live_patient_key`), one record per visit inside it,
+    in the same shape as a CLI results file so Explore Saved Runs opens it.
+    Grading a visit again updates its record rather than adding a file:
+    outcomes graded before are kept and the re-graded ones replaced. If the
+    note text changed, the old outcomes describe a different note, so the
+    record starts over.
     """
-    import json
-    from dataclasses import asdict
-    from datetime import datetime, timezone
-
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_id = f"live-{timestamp}"
-    filename = f"live_run_{timestamp}.json"
-    file_path = out_dir / filename
+    key = live_patient_key(patient_id, note_text)
+    path = out_dir / f"{key}.json"
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    outcome_ids = [normalize_outcome_id(o) for o in outcomes]
-    status_counts: dict[str, int] = {}
-    status_by_outcome: dict[str, dict[str, int]] = {}
+    if patient_id and patient_id.strip():
+        uid = f"{patient_id.strip()} @ {visit}" if visit else patient_id.strip()
+    else:
+        uid = "NOTE-" + key.removeprefix("note_")[:8].upper()
 
-    per_outcome_details = {}
-    for num in outcome_ids:
-        item = results.get(num, {})
-        status = item.get("status", "unknown")
-        status_counts[status] = status_counts.get(status, 0) + 1
-        status_by_outcome[num] = {status: 1}
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except (OSError, ValueError):
+        doc = {}
+    if not isinstance(doc, dict):
+        doc = {}
+    records = [r for r in (doc.get("detailed_records") or []) if isinstance(r, dict)]
 
-        grade_res = item.get("grade_result")
-        if isinstance(grade_res, GradeResult):
-            grade_dict = asdict(grade_res)
-            grade_dict["grades"] = list(grade_dict.get("grades") or [])
-            grade_dict["missing"] = list(grade_dict.get("missing") or [])
-            grade_dict["undecided"] = [list(u) for u in (grade_dict.get("undecided") or [])]
-        elif isinstance(grade_res, dict):
-            grade_dict = dict(grade_res)
-        else:
-            grade_dict = {"status": status, "grade": None, "reason": None}
-
-        per_outcome_details[num] = {
+    graded_by = {"model": model, "backend": backend, "num_ctx": num_ctx, "graded_at": now}
+    new_outcomes = {
+        num: {
             "outcome_name": item.get("outcome_name", outcome_display_name(num)),
             "present": item.get("present", False),
-            "status": status,
+            "status": item.get("status", "unknown"),
             "extracted_features": item.get("extracted_features", {}),
             "accepted_findings": item.get("accepted_findings", []),
-            "conflicts": item.get("conflicts", []),
-            "grade_result": grade_dict,
+            "conflicts": item.get("conflicts", {}),
+            "grade_result": _saved_grade_result(item),
             "raw_reply": item.get("raw_reply", ""),
+            "graded_by": graded_by,
         }
-
-    age_float = None
-    try:
-        if patient_age is not None and str(patient_age).strip():
-            age_float = float(patient_age)
-    except (ValueError, TypeError):
-        pass
-
-    sex_str = str(patient_sex).strip().lower() if patient_sex else None
-    if sex_str not in ("male", "female"):
-        sex_str = None
-
-    record = {
-        "patient_uid": LIVE_NOTE_UID,
-        "title": f"Live Evaluation ({model})",
-        "age": [[age_float, "year"]] if age_float is not None else None,
-        "patient_age": age_float,
-        "gender": sex_str,
-        "patient_sex": sex_str,
-        "patient_note": note_text,
-        "outcomes": per_outcome_details,
+        for num, item in ((normalize_outcome_id(k), v) for k, v in results.items())
     }
 
-    run_doc = {
+    age = None
+    try:
+        if patient_age is not None and str(patient_age).strip():
+            age = float(patient_age)
+    except (TypeError, ValueError):
+        pass
+    sex = str(patient_sex or "").strip().lower()
+    sex = sex if sex in ("male", "female") else None
+
+    old = next((r for r in records if r.get("patient_uid") == uid), None)
+    kept = old.get("outcomes", {}) if old and old.get("patient_note") == note_text else {}
+    record = {
+        "patient_uid": uid,
+        "title": title or "Pasted clinical note",
+        "visit_datetime": visit,
+        "age": [[age, "year"]] if age is not None else None,
+        "patient_age": age,
+        "gender": sex,
+        "patient_sex": sex,
+        "patient_note": note_text,
+        "updated_at": now,
+        "outcomes": {**kept, **new_outcomes},
+    }
+    records = [record if r is old else r for r in records] if old else [*records, record]
+
+    status_counts: dict[str, int] = {}
+    status_by_outcome: dict[str, dict[str, int]] = {}
+    for rec in records:
+        for num, outcome in (rec.get("outcomes") or {}).items():
+            status = outcome.get("status", "unknown")
+            status_counts[status] = status_counts.get(status, 0) + 1
+            per_outcome = status_by_outcome.setdefault(num, {})
+            per_outcome[status] = per_outcome.get(status, 0) + 1
+
+    doc = {
         "provenance": {
-            "timestamp": timestamp,
-            "run_id": run_id,
+            **(doc.get("provenance") or {}),
+            "source": "live",
+            "patient_key": key,
+            "patient_id": patient_id.strip() if patient_id and patient_id.strip() else None,
+            "updated_at": now,
             "model": model,
             "weights": model,
-            "served_as": model,
             "backend": backend,
             "num_ctx": num_ctx,
-            "notes_count": 1,
-            "outcomes": outcome_ids,
-            "source": "live",
+            "notes_count": len(records),
         },
-        "profiling": {
-            "total_outcomes": len(outcome_ids),
-        },
+        "profiling": doc.get("profiling") or {},
         "automated_metrics": {
-            "outcomes_graded": len(results),
-            "accepted_findings_total": sum(len(item.get("accepted_findings", [])) for item in results.values()),
+            "outcomes_graded": sum(len(r.get("outcomes") or {}) for r in records),
+            "accepted_findings_total": sum(len(o.get("accepted_findings") or [])
+                                           for r in records for o in (r.get("outcomes") or {}).values()),
         },
         "grade_status": status_counts,
         "grade_status_by_outcome": status_by_outcome,
-        "detailed_records": [record],
+        "detailed_records": records,
     }
 
-    with file_path.open("w", encoding="utf-8") as f:
-        json.dump(run_doc, f, indent=2)
-
-    return file_path
+    # Written beside the target and swapped in, so a crash mid-write never
+    # leaves a patient's file half-written.
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(doc, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
+    return path
 
 
 def grade_badge(status: str, grade: int | float | None, grades: tuple = ()) -> tuple[str, str]:
@@ -720,7 +777,8 @@ def grade_badge(status: str, grade: int | float | None, grades: tuple = ()) -> t
         css = {1: "badge-grade-1", 2: "badge-grade-2"}.get(grade, "badge-grade-3")
         return css, f"GRADE {int(grade)}" if grade is not None else "GRADED"
     if status == GRADE_SET:
-        return "badge-grade-set", f"GRADE SET: {grades}" if grades else "GRADE SET"
+        # Same wording as GradeResult.__str__ ("Grade 2 or 3"), not a Python tuple.
+        return "badge-grade-set", f"GRADE {' OR '.join(str(int(g)) for g in grades)}" if grades else "GRADE SET"
     labels = {
         CANNOT_GRADE: ("badge-cannot-grade", "CANNOT GRADE"),
         NOT_APPLICABLE: ("badge-not-applicable", "NOT APPLICABLE"),

@@ -29,7 +29,8 @@ from dashboard.evaluation import (
     is_derived,
     is_ollama_available,
     normalize_outcome_id,
-    save_live_run_results,
+    outcome_meta,
+    save_live_patient_results,
 )
 from dashboard.highlight import highlight_note_quotes
 from dashboard.view_state import (
@@ -61,6 +62,57 @@ BUCKET_PILL_CLASS = {
 }
 
 
+#: Where live evaluations are kept: one JSON file per patient
+#: (evaluation.save_live_patient_results). Tests point it at a temporary folder.
+LIVE_RESULTS_DIR = "results/live"
+
+#: One line under the verdict's grade saying what the harness status means.
+VERDICT_STATUS_TEXT = {
+    "graded": "Deterministic grade from the matched rubric row.",
+    "grade_set": "More than one grade fits the evidence.",
+    "cannot_grade": "The rules could not decide a grade from the features found.",
+    "missed_presence": "Model said absent, but objective criteria are met.",
+    "absent": "Outcome not present in this note.",
+    "not_applicable": "Outcome does not apply to this patient.",
+    "refuted": "The note contradicts this outcome.",
+    "pending": "Run the analysis to grade this outcome.",
+}
+#: The severity scale drawn under the grade.
+SEVERITY_GRADES = range(1, 6)
+
+
+def _severity_scale(status: str, grade: Any, grades: tuple) -> Any:
+    """Grades 1-5 as segments: lit up to a grade, or just the grades still in play."""
+    if status == "graded" and grade is not None:
+        current = {int(grade)}
+        lit = set(range(1, int(grade) + 1))
+    elif status == "grade_set":
+        current = lit = {int(g) for g in grades or ()}
+    else:
+        current = lit = set()
+    return ui.div(
+        ui.div(*[
+            ui.span(class_=" ".join(["verdict-scale-seg"]
+                                    + (["is-lit"] if g in lit else [])
+                                    + (["is-current"] if g in current else [])))
+            for g in SEVERITY_GRADES
+        ], class_="verdict-scale-track"),
+        ui.div(*[ui.span(str(g), class_="is-current" if g in current else None) for g in SEVERITY_GRADES],
+               class_="verdict-scale-ticks"),
+        class_="verdict-scale",
+        aria_hidden="true",
+    )
+
+
+def _verdict_field(label: str, body: Any, *, danger: bool = False) -> Any:
+    """One labelled block in the verdict's detail column."""
+    return ui.div(
+        ui.div(label, class_="verdict-field-label" + (" is-danger" if danger else "")),
+        body,
+        class_="verdict-field",
+    )
+
+
 # ==============================================================================
 # 3. Server Logic
 # ==============================================================================
@@ -69,6 +121,10 @@ def server(input, output, session):
     # Reactive state
     current_run_cache = reactive.value(None)
     live_eval_result = reactive.value(None)
+    # The outcome pill last clicked in live mode. Explore mode writes the same
+    # `selected_outcome_num` input, so reading the input directly would open a
+    # fresh live analysis on whatever outcome was last inspected in a saved run.
+    live_clicked_outcome = reactive.value("")
     session_case_outcomes: dict[tuple[str, str], str] = {}
 
     def current(name: str, default: Any = None) -> Any:
@@ -115,7 +171,7 @@ def server(input, output, session):
         status, _ = check_ollama_status(model=selected_model)
 
         if status == "ready":
-            return ui.span(f"Ollama Online ({selected_model} • 16,384 ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
+            return ui.span(f"Ollama Online ({selected_model} • {OLLAMA_NUM_CTX:,} ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
         elif status == "not_installed":
             return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
         return ui.span("Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
@@ -134,7 +190,7 @@ def server(input, output, session):
                     class_="d-flex align-items-center flex-wrap gap-1 mb-1",
                 ),
                 ui.div(
-                    f"{selected_model} • 16,384 ctx",
+                    f"{selected_model} • {OLLAMA_NUM_CTX:,} ctx",
                     class_="small text-muted font-monospace",
                     style="font-size: 0.72rem; word-break: break-all;",
                 ),
@@ -663,33 +719,49 @@ def server(input, output, session):
     def selected_live_outcomes() -> list[str]:
         """-> the outcomes the live evaluator grades: 14 focus (default), all 53, or custom picks."""
         mode = current("live_outcome_mode", "14_focus")
-        picked = current("live_outcome")
-
         if mode == "all_53":
             return [normalize_outcome_id(k) for k in sorted(TABLES.keys())]
-        elif mode == "custom":
-            if picked is not None:
-                if isinstance(picked, str):
-                    picked = (picked,)
-                chosen = [normalize_outcome_id(num) for num in picked if normalize_outcome_id(num) in TABLES]
-                return chosen
-            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
-        else:
-            # Mode "14_focus" (default)
-            # If specifically overridden in a test or caller passing a custom subset in live_outcome:
-            if picked is not None:
-                if isinstance(picked, str):
-                    picked = (picked,)
-                picked_norm = [normalize_outcome_id(p) for p in picked if normalize_outcome_id(p) in TABLES]
-                focus_norm = [normalize_outcome_id(f) for f in FOCUS_OUTCOMES]
-                if set(picked_norm) != set(focus_norm) and len(picked_norm) > 0:
-                    return picked_norm
-            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
+        if mode == "custom":
+            # The picker stays in the page (hidden) in the other modes, so its
+            # picks count only here: "14 Focus" must mean the 14.
+            picked = current("live_outcome")
+            if picked is None:
+                return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
+            if isinstance(picked, str):
+                picked = (picked,)
+            return [normalize_outcome_id(num) for num in picked if normalize_outcome_id(num) in TABLES]
+        return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
+
+    @reactive.effect
+    @reactive.event(input.selected_outcome_num)
+    def _remember_live_click():
+        if current("app_mode") == "live":
+            live_clicked_outcome.set(str(input.selected_outcome_num() or ""))
+
+    def selected_csv_encounter() -> dict[str, str] | None:
+        """-> the patient id, visit and a title for the CSV row being graded;
+        None for a pasted note, which has no patient id."""
+        if current("live_source") != "csv":
+            return None
+        try:
+            row = csv_notes().iloc[int(current("csv_patient_idx"))]
+        except (TypeError, ValueError, IndexError):
+            return None
+        patient_id = str(row.get("patient_id") or "").strip()
+        if not patient_id:
+            return None
+        visit = str(row.get("visit_datetime") or "").strip()
+        facility = str(row.get("facility_type") or "").strip()
+        return {
+            "patient_id": patient_id,
+            "visit": visit,
+            "title": " ".join(part for part in (facility, "visit", visit) if part),
+        }
 
     def live_outcome_num(results: dict | None) -> str:
         """-> the outcome the live cards below the overview show: the pill the
         clinician clicked when it was graded, else the most informative result."""
-        clicked = str(current("selected_outcome_num") or "")
+        clicked = live_clicked_outcome.get()
         if results:
             return clicked if clicked in results else sorted(results.items(), key=outcome_rank)[0][0]
         chosen = selected_live_outcomes()
@@ -701,6 +773,10 @@ def server(input, output, session):
     async def _perform_live_eval():
         note_text = current("live_note_text", "") or ""
         outcome_ids = selected_live_outcomes()
+        # Checked before the Ollama preflight, which can take up to a minute.
+        if not outcome_ids:
+            ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
+            return
         patient_sex = current("patient_sex_input", "") or "unknown"
         patient_age = current("patient_age_input", None)
         present = bool(current("outcome_present_input", True))
@@ -723,6 +799,11 @@ def server(input, output, session):
         # are then written to a closed socket ("socket.send() raised exception").
         selected_model = get_effective_model()
         online = await asyncio.to_thread(is_ollama_available, model=selected_model)
+        if online and not note_text.strip():
+            # Deterministic mode grades the typed features and needs no note;
+            # the model has nothing to extract from an empty one.
+            ui.notification_show("The clinical narrative is empty. Paste or select a note to extract from.", type="warning")
+            return
         results: dict[str, Any] = {}
         raw_concurrency = current("live_concurrency_input", None)
         try:
@@ -730,9 +811,6 @@ def server(input, output, session):
         except (ValueError, TypeError):
             user_concurrency = get_live_concurrency(selected_model)
         model_concurrency = max(1, min(user_concurrency, len(outcome_ids)))
-        if not outcome_ids:
-            ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
-            return
 
         with ui.Progress(min=0, max=len(outcome_ids)) as progress:
             progress.set(0, message="Grading outcomes", detail=f"0 of {len(outcome_ids)}")
@@ -756,28 +834,27 @@ def server(input, output, session):
                 live_eval_result.set(dict(results))
                 progress.set(len(results), detail=f"{len(results)} of {len(outcome_ids)}")
 
-        # Save live run outputs into results/live
+        backend = "ollama" if online else "deterministic"
+        summary = f"Grading complete: {len(results)} outcome{'s' if len(results) != 1 else ''} ({backend})."
+        encounter = selected_csv_encounter() or {}
         try:
-            saved_path = await asyncio.to_thread(
-                save_live_run_results,
-                note_text=note_text,
-                outcomes=outcome_ids,
-                results=results,
+            saved = await asyncio.to_thread(
+                save_live_patient_results,
+                note_text,
+                results,
+                patient_id=encounter.get("patient_id"),
+                visit=encounter.get("visit"),
+                title=encounter.get("title"),
                 model=selected_model,
-                backend="ollama" if online else "deterministic",
+                backend=backend,
                 patient_age=patient_age,
                 patient_sex=patient_sex,
+                output_dir=LIVE_RESULTS_DIR,
                 num_ctx=OLLAMA_NUM_CTX,
             )
-            ui.notification_show(
-                f"Analysis and grading complete ({len(results)} outcomes). Saved to {saved_path}",
-                type="message",
-            )
+            ui.notification_show(f"{summary} Saved to {saved.as_posix()}", type="message")
         except Exception as e:
-            ui.notification_show(
-                f"Analysis complete ({len(results)} outcomes), but saving to results/live failed: {e}",
-                type="warning",
-            )
+            ui.notification_show(f"{summary} Saving the patient's results failed: {e}", type="warning")
 
     # Helper: resolve active state data
     def get_current_view_state() -> dict[str, Any]:
@@ -938,106 +1015,101 @@ def server(input, output, session):
     def executive_grade_card():
         state = get_current_view_state()
         if not state:
-            return ui.card(ui.p("Select a run file and case in the sidebar to begin inspection.", class_="text-muted p-3"))
+            return ui.card(
+                ui.div(
+                    ui.span("No case selected", class_="verdict-empty-title"),
+                    ui.span("Select a run file and case in the sidebar to begin inspection."),
+                    class_="verdict-empty m-3",
+                ),
+                class_="verdict-card",
+            )
 
-        # The harness status (experiments/grading.py) decides the badge. The card
-        # never re-derives it from `present` or the features.
+        # The harness status (experiments/grading.py) decides the verdict. The
+        # card never re-derives it from `present` or the features.
         status = state.get("status") or "pending"
+        pending = status == "pending"
         details = grade_details(state.get("grade_result"))
         grade_val, grades = details["grade"], details["grades"]
-        matched, reason = details["matched"], details["reason"]
-        missing, undecided = details["missing"], details["undecided"]
-        needs_review = details["needs_review"]
         badge_class, badge_label = grade_badge(status, grade_val, grades)
+        tone = "pending" if pending else badge_class.removeprefix("badge-")
 
-        review_alert = None
-        if needs_review:
-            review_alert = ui.div(
-                ui.span("Review Advisory: ", class_="fw-bold"),
-                ui.span(
-                    f"Ambiguous features or missing data ({', '.join(missing) if missing else 'Review criteria'})."
-                ),
-                class_="alert alert-warning py-2 px-3 mb-3 rounded-2 border-warning",
-                style="font-size: 0.88rem;",
-            )
+        num = str(state.get("outcome_num") or "")
+        meta = outcome_meta(num) if num else {}
+        name = state.get("outcome_name") or meta.get("name") or f"Outcome {num}"
+        meta_chips = [
+            ui.span(ui.span(key, class_="verdict-meta-key"), value, class_="verdict-meta-chip")
+            for key, value in (("System", meta.get("organ_system")), ("Acuity", meta.get("acuity")))
+            if value
+        ]
 
-        details_row = []
-        if reason:
-            details_row.append(
-                ui.div(
-                    ui.span("Decision Rationale", class_="sidebar-section-label mb-1"),
-                    ui.span(str(reason), class_="fs-7 text-secondary"),
-                    class_="mb-2"
-                )
-            )
-        if matched:
-            details_row.append(
-                ui.div(
-                    ui.span("Matched Rule Predicate", class_="sidebar-section-label mb-1"),
-                    ui.div(ui.code(str(matched), class_="dsl-code-block")),
-                    class_="mb-2"
-                )
-            )
-        if missing:
-            details_row.append(
-                ui.div(
-                    ui.span("Missing Required Features", class_="sidebar-section-label text-danger mb-1"),
-                    ui.span(", ".join(str(m) for m in missing), class_="text-danger fs-7"),
-                    class_="mb-2"
-                )
-            )
-        if undecided:
-            clause_elements = []
-            for grade_num, clause in undecided:
-                clause_elements.append(
-                    ui.div(
-                        ui.span(f"Grade {grade_num}", class_="badge badge-not-applicable px-2 py-1 me-2 fw-semibold", style="font-size: 0.72rem;"),
-                        ui.code(str(clause), class_="dsl-code-block fs-7"),
-                        class_="mb-2 d-flex align-items-center"
-                    )
-                )
-            details_row.append(
-                ui.div(
-                    ui.span("Undecided Clauses", class_="sidebar-section-label mb-2"),
-                    ui.div(*clause_elements, class_="ps-2 border-start border-2 border-secondary"),
-                    class_="mb-2 w-100"
-                )
-            )
+        grade_tile = ui.div(
+            ui.span("SCOGS grade", class_="verdict-field-label"),
+            ui.div("NOT GRADED" if pending else badge_label, class_="verdict-grade-value"),
+            ui.p(VERDICT_STATUS_TEXT.get(status, ""), class_="verdict-grade-caption mb-0"),
+            _severity_scale(status, grade_val, grades),
+            class_=f"verdict-grade-tile verdict-tone-{tone}",
+            role="status",
+        )
 
-        meta = FOCUS_OUTCOMES.get(str(state.get("outcome_num")), {})
-        meta_info = f"Organ System: {meta.get('organ_system', 'General')} | Acuity: {meta.get('acuity', 'Standard')}"
+        fields = []
+        if details["needs_review"]:
+            fields.append(ui.div(
+                ui.span("Needs clinician review: ", class_="fw-semibold"),
+                "the evidence does not settle a single grade.",
+                class_="verdict-review",
+            ))
+        if pending:
+            fields.append(ui.div(
+                ui.span("Awaiting analysis", class_="verdict-empty-title"),
+                ui.span(str(details["reason"])),
+                class_="verdict-empty",
+            ))
+        else:
+            if details["reason"]:
+                fields.append(_verdict_field(
+                    "Decision rationale", ui.p(str(details["reason"]), class_="verdict-rationale mb-0")))
+            if details["matched"]:
+                fields.append(_verdict_field(
+                    "Matched rule predicate", ui.code(str(details["matched"]), class_="dsl-code-block")))
+            if details["missing"]:
+                fields.append(_verdict_field(
+                    "Missing required features",
+                    ui.div(*[ui.code(str(m), class_="verdict-missing-chip") for m in details["missing"]],
+                           class_="d-flex flex-wrap gap-1"),
+                    danger=True,
+                ))
+            if details["undecided"]:
+                fields.append(_verdict_field(
+                    "Undecided clauses",
+                    ui.div(*[
+                        ui.div(ui.span(f"Grade {grade_num}", class_="verdict-clause-grade"),
+                               ui.code(str(clause), class_="dsl-code-block"),
+                               class_="verdict-clause")
+                        for grade_num, clause in details["undecided"]
+                    ], class_="d-flex flex-column gap-2"),
+                ))
+            if len(fields) == int(details["needs_review"]):
+                fields.append(ui.p("No rule details were recorded for this outcome.",
+                                   class_="text-muted small mb-0"))
 
         return ui.card(
             ui.card_header(
                 ui.div(
                     ui.div(
-                        ui.span("DETERMINISTIC VERDICT", class_="eyebrow-tag me-2"),
-                        ui.span(f"Outcome #{state.get('outcome_num')}: {state.get('outcome_name')}", class_="card-header-title"),
-                        class_="d-flex align-items-center flex-wrap gap-1",
+                        ui.span("DETERMINISTIC VERDICT", class_="eyebrow-tag"),
+                        ui.span(f"#{num}", class_="verdict-outcome-num") if num else None,
+                        ui.span(name, class_="card-header-title"),
+                        class_="d-flex align-items-center flex-wrap gap-2",
                     ),
-                    ui.span(meta_info, class_="badge-engine fw-normal", style="font-size: 0.78rem;"),
-                    class_="d-flex justify-content-between align-items-center flex-wrap gap-2",
+                    ui.div(*meta_chips, class_="d-flex flex-wrap gap-1") if meta_chips else None,
+                    class_="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100",
                 )
             ),
             ui.div(
-                review_alert,
-                ui.div(
-                    ui.div(
-                        ui.span("SCOGS Deterministic Grade:", class_="text-muted text-uppercase fw-semibold fs-7 mb-1"),
-                        ui.div(
-                            ui.span(badge_label, class_=f"badge-grade-pill shadow-xs {badge_class}"),
-                            class_="mb-2",
-                        ),
-                        class_="d-flex flex-column",
-                    ),
-                    ui.div(
-                        *details_row,
-                        class_="d-flex flex-column gap-2 ms-md-4 flex-grow-1",
-                    ),
-                    class_="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3",
-                ),
-                class_="p-3",
+                ui.div(grade_tile, ui.div(*fields, class_="verdict-details"), class_="verdict-body"),
+                class_="verdict-shell",
             ),
+            class_="verdict-card",
         )
 
     @output
@@ -1231,7 +1303,7 @@ def server(input, output, session):
                             ui.span("Inference Engine", class_="sidebar-section-label"),
                             ui.h5(engine_title, class_="fw-bold mb-0"),
                             ui.span(engine_desc, class_=f"fs-7 {engine_color} mt-1 d-block"),
-                            ui.span(f"Host: {hw_str} • Context: 16,384 tokens • Concurrency: {conc} workers", class_="fs-7 text-secondary mt-1"),
+                            ui.span(f"Host: {hw_str} • Context: {OLLAMA_NUM_CTX:,} tokens • Concurrency: {conc} workers", class_="fs-7 text-secondary mt-1"),
                             class_="metric-box",
                         ),
                         col_widths=[6, 6],
