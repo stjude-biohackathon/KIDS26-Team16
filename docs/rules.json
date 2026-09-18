@@ -1,0 +1,61 @@
+{
+  "_source": "St. Jude Global — Sickle Cell Outcome Grading System (SCOGS) official booklet. Grades transcribed verbatim from the outcome tables. Use grade 0 for 'present but not gradable / criteria not met' and grade -1 for 'outcome not present in note'.",
+
+  "Acute Sickle Cell Pain Episode": {
+    "outcome": "Acute Sickle Cell Pain Episode",
+    "booklet_page": 71,
+    "definition": "A new event of pain or an exacerbation of pain lasting at least two hours with no explanation other than vaso-occlusion, requiring therapy with analgesics.",
+    "diagnostic_criteria": "Patient self-report OR care-giver proxy report for younger children, AND no explanation other than sickle cell disease.",
+    "validation": "Grade only if this is an acute vaso-occlusive pain episode. If no acute pain episode is described, return grade -1.",
+    "grades": {
+      "1": "Acute pain episode requiring pain treatment at HOME for pain exacerbation (no medical facility visit).",
+      "2": "Acute pain episode requiring a VISIT to a medical facility (including Day Hospital) for any type of pain treatment, AND NOT requiring admission.",
+      "3": "Acute pain episode requiring ADMISSION, AND no evidence of organ failure or any of these complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis.",
+      "4": "Acute pain episode complicated with organ failure OR one of these complications (acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, hyperhaemolysis), OR resulting in a life-threatening complication requiring life-supporting treatment (mechanical ventilation, vasopressors, renal replacement therapy, or other).",
+      "5": "Death in the setting of acute pain episode."
+    }
+  },
+
+  "Acute Chest Syndrome (ACS)": {
+    "outcome": "Acute Chest Syndrome (ACS)",
+    "booklet_page": 119,
+    "definition": "An acute illness characterized by fever and/or respiratory symptoms, accompanied by a NEW LOBAR pulmonary infiltrate (not atelectasis) on chest imaging.",
+    "diagnostic_criteria": "Radiographic evidence of consolidation — a new segmental infiltrate involving at least one complete segment AND at least one of: temperature >= 38.5 C; >2% decrease in SpO2 from steady-state on room air; PaO2 < 60 mmHg; tachypnea; intercostal retractions / nasal flaring / accessory muscle use; thoracic pain; cough; wheezing; rales.",
+    "validation": "Grade only if a new lobar/segmental infiltrate is present AND at least one qualifying sign. If no new infiltrate, return grade -1 (not gradable as ACS).",
+    "grades": {
+      "1": "Requires NONE of the below: supplemental oxygen, simple or exchange transfusion, erythropoietin, BiPAP, or any supportive treatment other than antibiotics.",
+      "2": "Requires FiO2 >21% to <50% OR simple erythrocyte transfusion, AND none of: BiPAP, high-flow O2, exchange transfusion.",
+      "3": "Requires >=50% FiO2 OR BiPAP OR high-flow O2 OR exchange transfusion.",
+      "4": "Requires >=50% FiO2 OR BiPAP OR high-flow O2 OR exchange transfusion, AND critical cardio-respiratory interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation).",
+      "5": "Death from ACS complications."
+    }
+  },
+
+  "Acute Splenic Sequestration": {
+    "outcome": "Acute Splenic Sequestration",
+    "booklet_page": 73,
+    "definition": "Rapid intrasplenic trapping of blood cells causing a precipitous fall in hemoglobin, often with thrombocytopenia and hypovolemia.",
+    "diagnostic_criteria": "Decrease in hemoglobin/hematocrit of >=20% OR a drop of >=2 g/dL from baseline, AND evidence of increased erythropoiesis (e.g. elevated reticulocyte count), AND an acutely enlarging spleen (>=2 cm from baseline).",
+    "validation": "Grade only if splenic sequestration is described. If not present, return grade -1. NOTE: Grade 2 is N/A for this outcome — never assign grade 2.",
+    "grades": {
+      "1": "Splenic sequestration NOT requiring any treatment.",
+      "3": "Splenic sequestration requiring treatment (erythrocyte transfusion, IV fluids, etc.) AND no hemodynamic instability AND not requiring splenectomy.",
+      "4": "Splenic sequestration AND hemodynamic instability OR requiring splenectomy.",
+      "5": "Death due to splenic sequestration."
+    }
+  },
+
+  "Priapism": {
+    "outcome": "Priapism",
+    "booklet_page": 63,
+    "definition": "A painful, persistent, unwanted erection of the penis, which may recur (stuttering).",
+    "diagnostic_criteria": "A painful erectile episode lasting >30 minutes, diagnosed by a physician based on patient self-report; can be confirmed by exam findings of a fully erect penis and pain in penis or scrotum.",
+    "validation": "Grade only if a priapism episode is described. If not present, return grade -1. NOTE: Grade 5 is N/A for this outcome — never assign grade 5.",
+    "grades": {
+      "1": "Priapism episode with or without medications at HOME, AND NOT requiring a visit to a medical facility.",
+      "2": "Priapism episode requiring a visit to a medical facility AND requiring treatment (e.g., medication), AND no shunt.",
+      "3": "Priapism episode requiring a visit to a medical facility AND requiring aspiration/irrigation, AND no shunt.",
+      "4": "Priapism episode requiring a visit to a medical facility AND requiring shunt surgical intervention."
+    }
+  }
+}
