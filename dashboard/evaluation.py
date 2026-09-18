@@ -12,6 +12,8 @@ directly (tests/test_dashboard_evaluation.py).
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import sys
 from typing import Any
 
 from experiments.grading import OutcomeGrade, grade_outcome
@@ -168,6 +170,122 @@ PREFLIGHT_TIMEOUT = 60
 #: For lightweight 4B models (medgemma-1.5-4b-it), memory footprint is small (~2.4 GB),
 #: allowing higher concurrency (4 workers) to process the 14 focus outcomes much faster.
 LIVE_CONCURRENCY = 2
+
+
+def detect_system_hardware() -> dict[str, Any]:
+    """-> system hardware profile including total RAM (GB), CPU cores, and OS platform."""
+    cpu_count = os.cpu_count() or 4
+    total_ram_gb = 16.0
+    try:
+        if hasattr(os, "sysconf") and "SC_PAGE_SIZE" in os.sysconf_names and "SC_PHYS_PAGES" in os.sysconf_names:
+            page_size = os.sysconf("SC_PAGE_SIZE")
+            pages = os.sysconf("SC_PHYS_PAGES")
+            total_ram_gb = round((page_size * pages) / (1024 ** 3), 1)
+        elif sys.platform == "win32":
+            import ctypes
+
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("sullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+
+            stat = MEMORYSTATUSEX()
+            stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+                total_ram_gb = round(stat.ullTotalPhys / (1024 ** 3), 1)
+    except Exception:
+        pass
+
+    return {
+        "total_ram_gb": total_ram_gb,
+        "cpu_count": cpu_count,
+        "platform": sys.platform,
+    }
+
+
+def get_concurrency_assessment(
+    model: str = DEFAULT_LIVE_MODEL,
+    concurrency: int = 1,
+    ram_gb: float | None = None,
+) -> dict[str, Any]:
+    """Assess user-chosen concurrency against system hardware for the selected model.
+
+    Returns:
+      - recommended: default recommended concurrency for this model & RAM
+      - max_safe: maximum safe concurrency before high risk of swap thrashing or OOM
+      - estimated_ram_gb: estimated memory needed (weights + KV cache per slot)
+      - total_ram_gb: detected system RAM
+      - status: 'safe' | 'caution' | 'danger'
+      - message: human-readable advisory message
+      - model_tier: detected model tier string (e.g. '4B', '12B', '21B', '27B')
+    """
+    if ram_gb is None:
+        hw = detect_system_hardware()
+        ram = float(hw.get("total_ram_gb", 16.0))
+    else:
+        ram = float(ram_gb)
+
+    model_lower = (model or "").lower()
+    if "4b" in model_lower:
+        weight_gb = 2.4
+        kv_slot_gb = 1.0
+        rec = 4 if ram >= 12 else 2
+        max_safe = 4 if ram < 32 else 8
+        model_tier = "4B"
+    elif any(k in model_lower for k in ("12b", "14b")):
+        weight_gb = 8.0
+        kv_slot_gb = 2.0
+        rec = 1 if ram <= 16 else 2
+        max_safe = 1 if ram <= 16 else 3
+        model_tier = "12B"
+    elif any(k in model_lower for k in ("20b", "21b")):
+        weight_gb = 14.0
+        kv_slot_gb = 2.5
+        rec = 1 if ram <= 24 else 2
+        max_safe = 1 if ram <= 24 else 2
+        model_tier = "21B"
+    else:
+        # Default / 27B models
+        weight_gb = 27.0
+        kv_slot_gb = 3.5
+        rec = 1 if ram <= 32 else 2
+        max_safe = 1 if ram <= 32 else 2
+        model_tier = "27B"
+
+    conc = max(1, int(concurrency))
+    est_footprint = round(weight_gb + (conc * kv_slot_gb), 1)
+    safe_ceiling = ram * 0.75
+
+    if est_footprint <= safe_ceiling and conc <= max_safe:
+        status = "safe"
+        if conc == rec:
+            msg = f"✓ Optimal: {conc} worker(s) recommended for {model_tier} model on {ram:.0f} GB RAM (~{est_footprint} GB footprint)."
+        else:
+            msg = f"✓ Safe: {conc} worker(s) well within hardware capacity ({ram:.0f} GB RAM, ~{est_footprint} GB footprint)."
+    elif est_footprint <= ram and conc <= max_safe + 1:
+        status = "caution"
+        msg = f"⚠️ Caution: {conc} worker(s) will use ~{est_footprint} GB of {ram:.0f} GB RAM. May reduce per-worker token speed."
+    else:
+        status = "danger"
+        msg = f"🚨 High Risk: {conc} worker(s) requires ~{est_footprint} GB (detected {ram:.0f} GB RAM). High risk of Out-of-Memory crash!"
+
+    return {
+        "recommended": rec,
+        "max_safe": max_safe,
+        "estimated_ram_gb": est_footprint,
+        "total_ram_gb": ram,
+        "status": status,
+        "message": msg,
+        "model_tier": model_tier,
+    }
 
 
 def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:

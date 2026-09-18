@@ -233,3 +233,43 @@ def test_get_live_concurrency():
     assert get_live_concurrency("gemma4:21b") == 2
     assert get_live_concurrency("") == 2
 
+
+def test_detect_system_hardware():
+    from dashboard.evaluation import detect_system_hardware
+    hw = detect_system_hardware()
+    assert isinstance(hw["total_ram_gb"], float)
+    assert hw["total_ram_gb"] > 0
+    assert isinstance(hw["cpu_count"], int)
+    assert hw["cpu_count"] > 0
+    assert isinstance(hw["platform"], str)
+
+
+def test_get_concurrency_assessment_model_tiers():
+    from dashboard.evaluation import get_concurrency_assessment
+
+    # 4B model on 16 GB system
+    res_4b_optimal = get_concurrency_assessment("medgemma-1.5-4b-it", concurrency=4, ram_gb=16.0)
+    assert res_4b_optimal["recommended"] == 4
+    assert res_4b_optimal["status"] == "safe"
+    assert "Optimal" in res_4b_optimal["message"]
+
+    res_4b_high = get_concurrency_assessment("medgemma-1.5-4b-it", concurrency=5, ram_gb=16.0)
+    assert res_4b_high["status"] == "caution"
+
+    # 12B model on 16 GB system
+    res_12b_1 = get_concurrency_assessment("gemma4:12b", concurrency=1, ram_gb=16.0)
+    assert res_12b_1["recommended"] == 1
+    assert res_12b_1["status"] == "safe"
+
+    res_12b_2 = get_concurrency_assessment("gemma4:12b", concurrency=2, ram_gb=16.0)
+    assert res_12b_2["status"] == "caution"
+
+    res_12b_3 = get_concurrency_assessment("gemma4:12b", concurrency=3, ram_gb=16.0)
+    assert res_12b_3["status"] == "danger"
+    assert "High Risk" in res_12b_3["message"]
+
+    # 12B model on 64 GB workstation
+    res_12b_workstation = get_concurrency_assessment("gemma4:12b", concurrency=2, ram_gb=64.0)
+    assert res_12b_workstation["status"] == "safe"
+
+

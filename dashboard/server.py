@@ -15,7 +15,9 @@ from dashboard.evaluation import (
     DEFAULT_LIVE_MODEL,
     FOCUS_OUTCOMES,
     check_ollama_status,
+    detect_system_hardware,
     extract_and_grade_note,
+    get_concurrency_assessment,
     get_live_concurrency,
     get_model_choices,
     grade_badge,
@@ -61,6 +63,7 @@ def server(input, output, session):
     # Reactive state
     current_run_cache = reactive.value(None)
     live_eval_result = reactive.value(None)
+    session_case_outcomes: dict[tuple[str, str], str] = {}
 
     def current(name: str, default: Any = None) -> Any:
         """-> input `name`'s value, or `default` until the client has sent one.
@@ -121,6 +124,43 @@ def server(input, output, session):
             )
         return ui.span(f"● Ollama Offline ({selected_model}) - Deterministic Mode", class_="badge bg-secondary mb-2")
 
+    @output
+    @render.ui
+    def live_concurrency_advisory():
+        selected_model = (
+            input.live_model_select()
+            if (hasattr(input, "live_model_select") and input.live_model_select())
+            else DEFAULT_LIVE_MODEL
+        )
+        try:
+            val = input.live_concurrency_input()
+            conc = int(val) if val else get_live_concurrency(selected_model)
+        except (ValueError, TypeError):
+            conc = get_live_concurrency(selected_model)
+
+        assessment = get_concurrency_assessment(selected_model, concurrency=conc)
+        status = assessment["status"]
+        if status == "safe":
+            color_class = "text-success border-success-subtle bg-success-subtle"
+        elif status == "caution":
+            color_class = "text-warning-emphasis border-warning-subtle bg-warning-subtle"
+        else:
+            color_class = "text-danger border-danger-subtle bg-danger-subtle"
+
+        return ui.div(
+            ui.div(assessment["message"], class_=f"p-1 px-2 rounded border {color_class}"),
+            class_="mb-2",
+            style="font-size: 0.74rem; line-height: 1.25;",
+        )
+
+    @reactive.effect
+    @reactive.event(input.live_model_select)
+    def _update_concurrency_for_selected_model():
+        model = input.live_model_select()
+        if model:
+            rec = get_concurrency_assessment(model)["recommended"]
+            ui.update_numeric("live_concurrency_input", value=rec)
+
     # Dynamic Sidebar Controls
     @output
     @render.ui
@@ -163,6 +203,15 @@ def server(input, output, session):
                     selected=default_model,
                 ),
                 ui.output_ui("live_model_status_badge"),
+                ui.input_numeric(
+                    "live_concurrency_input",
+                    "Concurrency (Parallel Workers):",
+                    value=get_concurrency_assessment(default_model)["recommended"],
+                    min=1,
+                    max=14,
+                    step=1,
+                ),
+                ui.output_ui("live_concurrency_advisory"),
                 ui.input_radio_buttons(
                     "live_source",
                     "Input Source:",
@@ -349,8 +398,16 @@ def server(input, output, session):
         if not choices:
             choices = {k: f"#{k} {v['name']}" for k, v in FOCUS_OUTCOMES.items()}
 
+        filepath = current("selected_run_file", "")
+        case_key = (filepath, uid)
         current_sel = current("selected_outcome_num")
-        selected_k = current_sel if (current_sel in choices) else (best_default or next(iter(choices.keys()), None))
+        if case_key not in session_case_outcomes:
+            selected_k = best_default or next(iter(choices.keys()), None)
+            session_case_outcomes[case_key] = selected_k
+        else:
+            selected_k = current_sel if (current_sel in choices) else (session_case_outcomes.get(case_key) or best_default or next(iter(choices.keys()), None))
+            if selected_k in choices:
+                session_case_outcomes[case_key] = selected_k
         return ui.input_select("selected_outcome_num", "Select Outcome:", choices=choices, selected=selected_k)
 
     def selected_live_outcomes() -> list[str]:
@@ -400,7 +457,12 @@ def server(input, output, session):
         selected_model = current("live_model_select", DEFAULT_LIVE_MODEL) or DEFAULT_LIVE_MODEL
         online = await asyncio.to_thread(is_ollama_available, model=selected_model)
         results: dict[str, Any] = {}
-        model_concurrency = get_live_concurrency(selected_model)
+        raw_concurrency = current("live_concurrency_input", None)
+        try:
+            user_concurrency = int(raw_concurrency) if raw_concurrency is not None else get_live_concurrency(selected_model)
+        except (ValueError, TypeError):
+            user_concurrency = get_live_concurrency(selected_model)
+        model_concurrency = max(1, min(user_concurrency, len(outcome_ids)))
         with ui.Progress(min=0, max=len(outcome_ids)) as progress:
             progress.set(0, message="Grading outcomes", detail=f"0 of {len(outcome_ids)}")
             # A chunk at a time, so the overview fills in as outcomes land instead
@@ -460,9 +522,14 @@ def server(input, output, session):
                 uid = next(iter(records.keys()))
             rec = records.get(uid, {})
             outcomes = rec.get("outcomes", {})
-            outcome_num = current("selected_outcome_num")
-            if outcome_num not in outcomes:
-                if outcomes:
+            filepath = current("selected_run_file", "")
+            case_key = (filepath, uid)
+            outcome_num = session_case_outcomes.get(case_key)
+            if not outcome_num or outcome_num not in outcomes:
+                current_sel = current("selected_outcome_num")
+                if current_sel in outcomes:
+                    outcome_num = current_sel
+                elif outcomes:
                     outcome_num = sorted(outcomes.items(), key=outcome_rank)[0][0]
                 else:
                     outcome_num = "28"
@@ -840,7 +907,14 @@ def server(input, output, session):
             )
             status, _ = check_ollama_status(model=live_model)
 
-            conc = get_live_concurrency(live_model)
+            try:
+                val = input.live_concurrency_input()
+                conc = int(val) if val else get_live_concurrency(live_model)
+            except (ValueError, TypeError):
+                conc = get_live_concurrency(live_model)
+
+            hw = detect_system_hardware()
+            hw_str = f"{hw['total_ram_gb']:.0f} GB RAM • {hw['cpu_count']} Cores"
             if status == "ready":
                 engine_title = f"Ollama / {live_model}"
                 engine_desc = f"Real-time extraction (Installed & Ready • {conc}x Concurrency)"
@@ -868,7 +942,7 @@ def server(input, output, session):
                             ui.span("Inference Engine", class_="sidebar-section-label"),
                             ui.h5(engine_title, class_="fw-bold mb-0"),
                             ui.span(engine_desc, class_=f"fs-7 {engine_color} mt-1 d-block"),
-                            ui.span(f"Context: 16,384 tokens • Concurrency: {conc} workers", class_="fs-7 text-secondary mt-1"),
+                            ui.span(f"Host: {hw_str} • Context: 16,384 tokens • Concurrency: {conc} workers", class_="fs-7 text-secondary mt-1"),
                             class_="metric-box",
                         ),
                         col_widths=[6, 6],
