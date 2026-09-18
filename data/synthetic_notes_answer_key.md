@@ -21,6 +21,10 @@ Eight synthetic clinical notes were written with intentionally embedded clinical
 | **6** | SYNTH_006 — 42F, HbSS | Fatal — ACS death | ACS (#48) = 5, Pain (#28) = 5, AKI (#19) = 3, Fever (#36) = 2 | Grades 2–5 |
 | **7** | SYNTH_007 — 14F, HbSC | Mild ACS — Room air, antibiotics only | ACS (#48) = 1, Pain (#28) = 2, Fever (#36) = 2 | Grades 1–2 |
 | **8** | SYNTH_008 — 16M, HbSS | Priapism — Aspiration/irrigation | Priapism (#24) = 3, Pain (#28) = 3 | Grade 3 |
+| **9** | SYNTH_009 — 25M, HbSS | Moderate ACS — Simple transfusion + nasal cannula | ACS (#48) = 2, Pain (#28) = 3, Fever (#36) = 2 | Grades 2–3 |
+| **10** | SYNTH_010 — 31F, HbSS | Ischemic stroke — Residual deficits, mRS 2 | Stroke (#15) = 3 | Grade 3 |
+| **11** | SYNTH_011 — 8M, HbSS | Pediatric sepsis — Pneumococcal bacteremia | Sepsis (#37) = 3, Pain (#28) = 3, Fever (#36) = 2 | Grades 2–3 |
+| **12** | SYNTH_012 — 27F, HbSS | Borderline — All values just below thresholds | Pain (#28) = 2 (5 outcomes tested as absent) | Grade 2 |
 
 ---
 
@@ -409,15 +413,188 @@ Eight synthetic clinical notes were written with intentionally embedded clinical
 
 ---
 
+## Note 9: SYNTH_009 — Moderate ACS (Grade 2)
+
+**Patient:** 25-year-old male, HbSS  
+**Setting:** ER → admitted to medical floor (4-day stay)  
+**Purpose:** Completes ACS grade coverage (was missing Grade 2)
+
+### Graded Outcomes
+
+#### Acute Chest Syndrome (#48) → Grade 2
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `fio2_pct` | `28%` | *"nasal cannula at 2 L/min (FiO2 approximately 28%)"* |
+| `resp_support` | `nasal_cannula` | Same as above |
+| `transfusion_type` | `simple` | *"simple red blood cell transfusion... 2 units of packed red blood cells"*; *"No exchange transfusion was performed"* |
+| `acs_other_support` | `false` | *"No erythropoietin was given"* |
+| `life_support` | `false` | *"did not require high-flow nasal cannula, BiPAP, or any form of non-invasive or invasive ventilation. No vasopressors or other life-support interventions"* |
+| `death_attributed` | `false` | Patient discharged alive |
+
+**Rule applied:** `(fio2_pct < 50 AND resp_support < high_flow AND transfusion_type != exchange) AND (transfusion_type == simple OR resp_support > room_air OR acs_other_support)` → **Grade 2** ✓  
+(Has supplemental O₂ and simple transfusion, but none of the Grade 3 triggers: FiO₂ < 50%, not high-flow, not exchange)
+
+#### Acute Sickle Cell Pain Episode (#28) → Grade 3
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `care_setting` | `inpatient` | *"Patient admitted to the medical floor"* |
+| `pain_co_complication` | `false` | *"without co-complications"* |
+
+**Rule applied:** `care_setting >= inpatient AND NOT pain_co_complication` → **Grade 3** ✓
+
+#### Fever (#36) → Grade 2
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `temperature` | `39.0 °C` | *"Temperature 39.0 degrees Celsius"* |
+
+**Rule applied:** `temperature >= 38.5` → **Grade 2** ✓
+
+#### Outcomes Confirmed Absent
+
+| Outcome | Evidence of Absence |
+|:--------|:-------------------|
+| PE (#51) | *"CT pulmonary angiography: No pulmonary embolism"* |
+| DVT (#02) | *"No swelling, no tenderness, no calf tenderness"* |
+| Stroke (#15) | *"No neurological complications"*; *"no focal deficits"* |
+| Arrhythmia (#01) | *"No arrhythmias on telemetry"* |
+
+---
+
+## Note 10: SYNTH_010 — Ischemic Stroke (Grade 3)
+
+**Patient:** 31-year-old female, HbSS, history of elevated TCD velocities  
+**Setting:** ER → neuro ICU → medical floor (8-day stay)  
+**Purpose:** First CNS outcome graded. No concurrent pain crisis.
+
+### Graded Outcomes
+
+#### Stroke (#15) → Grade 3
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `stroke_symptoms` | `true` | *"right-sided weakness and slurred speech"*; *"NIHSS score 8 at presentation"* |
+| `stroke_symptoms_resolved` | `false` | *"stroke symptoms present and not fully resolved at discharge"*; *"NIHSS improved from 8 to 3"* (still abnormal) |
+| `mrs` | `2` | *"Modified Rankin Scale (mRS) at discharge: 2 — slight disability"* |
+| `incidental_radiographic_only` | `false` | Symptomatic stroke |
+| `death_attributed` | `false` | Patient discharged alive |
+
+**Rule applied:** `stroke_symptoms AND NOT stroke_symptoms_resolved AND 1 <= mrs <= 3` → **Grade 3** ✓  
+(Not Grade 4: mRS 2 is in the 1–3 range, not 4–5. Not Grade 2: symptoms have NOT fully resolved.)
+
+#### Outcomes Confirmed Absent
+
+| Outcome | Evidence of Absence |
+|:--------|:-------------------|
+| Pain (#28) | *"No concurrent vaso-occlusive pain crisis — no pain reported during admission"* |
+| Fever (#36) | *"No fever throughout admission (temperature remained below 38.0 degrees Celsius)"* |
+| ACS (#48) | *"No chest pain or respiratory symptoms — no evidence of ACS"*; *"Chest X-ray: No infiltrates"* |
+| Arrhythmia (#01) | *"No arrhythmias on telemetry"* |
+
+---
+
+## Note 11: SYNTH_011 — Sepsis (Grade 3)
+
+**Patient:** 8-year-old male, HbSS, functional asplenia  
+**Setting:** Pediatric ER → admitted to medical floor (4-day stay)  
+**Purpose:** First sepsis grading. First pediatric patient under age 10.
+
+### Graded Outcomes
+
+#### Sepsis (#37) → Grade 3
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `blood_culture_positive` | `true` | *"blood cultures (both sets) grew Streptococcus pneumoniae, serotype 19A"* |
+| `organ_dysfunction` | `true` | *"elevated lactate"* (3.2 mmol/L), tachycardia (142 bpm), borderline hypotension, lethargy |
+| `treated` | `true` | *"ceftriaxone 100 mg/kg IV... and vancomycin"*; *"Normal saline bolus 20 mL/kg"* |
+| `life_threatening_sepsis` | `false` | Responded to fluids without vasopressors; *"did NOT require vasopressors, mechanical ventilation, or any other life-support interventions"* |
+| `life_support` | `false` | Same as above |
+| `death_attributed` | `false` | Patient discharged alive |
+
+**Rule applied:** `blood_culture_positive AND (organ_dysfunction OR treated)` → **Grade 3** ✓  
+(Not Grade 4: no life-threatening sepsis + no life support. Not Grade 5: patient survived.)
+
+#### Acute Sickle Cell Pain Episode (#28) → Grade 3
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `care_setting` | `inpatient` | *"Patient admitted to the medical floor"* |
+| `pain_co_complication` | `false` | *"no co-complications"* |
+
+**Rule applied:** `care_setting >= inpatient AND NOT pain_co_complication` → **Grade 3** ✓
+
+#### Fever (#36) → Grade 2
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `temperature` | `39.6 °C` | *"Temperature 39.6 degrees Celsius (103.3 degrees Fahrenheit)"* |
+
+**Rule applied:** `temperature >= 38.5` → **Grade 2** ✓
+
+#### Outcomes Confirmed Absent
+
+| Outcome | Evidence of Absence |
+|:--------|:-------------------|
+| ACS (#48) | *"Clear lungs bilaterally, no infiltrates"*; *"no respiratory distress, no new infiltrates — ACS ruled out"* |
+| Stroke (#15) | *"no focal deficits, no neck stiffness"* |
+| AKI (#19) | Creatinine 0.5 mg/dL (1.25x baseline 0.4) — below 1.5x threshold |
+
+---
+
+## Note 12: SYNTH_012 — Borderline/Edge Case (Precision Test)
+
+**Patient:** 27-year-old female, HbSS  
+**Setting:** ED treat-and-release  
+**Purpose:** Tests the system's ability to correctly identify outcomes as ABSENT when clinical values are just below diagnostic thresholds. All borderline values should produce "absent" — a false positive here indicates a precision error.
+
+### Graded Outcomes
+
+#### Acute Sickle Cell Pain Episode (#28) → Grade 2
+
+| Feature | Extracted Value | Source Quote |
+|:--------|:---------------|:-------------|
+| `care_setting` | `ed_treat_release` | *"After 3 hours in the ED... Patient does not require admission. Discharged home"* |
+| `pain_co_complication` | `false` | No complications identified |
+
+**Rule applied:** `care_setting >= clinic AND care_setting < inpatient` → **Grade 2** ✓
+
+### Critical "Absent" Outcomes (Borderline Values)
+
+> [!IMPORTANT]
+> These outcomes are the key test cases in this note. Each has clinical values intentionally set **just below** the grading threshold. The correct answer for all five is **absent**.
+
+| Outcome | Value in Note | Threshold | Margin | Correct Grade |
+|:--------|:-------------|:----------|:-------|:-------------|
+| **Fever (#36)** | 37.9 °C | ≥ 38.0 °C | **0.1° below** | **absent** |
+| **AKI (#19)** | Creatinine 1.40x baseline | ≥ 1.5x baseline | **0.1x below** | **absent** |
+| **ACS (#48)** | Subsegmental atelectasis | Lobar/segmental infiltrate required | Wrong finding type | **absent** |
+| **DVT (#02)** | Calf tenderness, D-dimer 0.8 | Positive Doppler required | Doppler negative | **absent** |
+| **Depression (#47)** | PHQ-2 = 2 | PHQ-9 ≥ 5 | No full PHQ-9 done | **absent** |
+
+#### Supporting Quotes
+
+| Outcome | Evidence |
+|:--------|:--------|
+| Fever | *"Temperature 37.9 degrees Celsius... below the 38.0 degrees Celsius threshold"* |
+| AKI | *"creatinine 0.84 mg/dL (baseline 0.6 mg/dL, representing 1.40 times baseline — note: this is below the 1.5x threshold)"* |
+| ACS | *"subsegmental atelectasis... No lobar or segmental consolidation. No infiltrate meeting criteria for acute chest syndrome"* |
+| DVT | *"Normal compressibility of all deep veins bilaterally. No evidence of deep vein thrombosis"* |
+| Depression | *"PHQ-2 score 2 — below the screening threshold; formal PHQ-9 not indicated"* |
+
+---
+
 ## Summary: Grade Coverage
 
 | Grade | Outcomes Using It |
 |:-----:|:-----------------|
 | **1** | Pain (Note 4), Fever (Note 1), ACS (Note 7) |
-| **2** | Pain (Notes 1, 7), Fever (Notes 2, 3, 6, 7), AKI (Note 3), DVT (Note 5) |
-| **3** | ACS (Note 2), Pain (Notes 5, 8), AKI (Note 6), Priapism (Note 8) |
+| **2** | Pain (Notes 1, 7, 12), Fever (Notes 2, 3, 6, 7, 9, 11), AKI (Note 3), DVT (Note 5), ACS (Note 9) |
+| **3** | ACS (Note 2), Pain (Notes 5, 8, 9, 11), AKI (Note 6), Priapism (Note 8), Stroke (Note 10), Sepsis (Note 11) |
 | **4** | Pain (Notes 2, 3), ACS (Note 3) |
 | **5** | ACS (Note 6), Pain (Note 6) |
-| **absent** | Multiple per note (DVT, PE, Stroke, Leg Ulcer, Depression, etc.) |
+| **absent** | Multiple per note — Note 12 specifically tests 5 borderline-absent outcomes |
 
-These 8 notes cover **6 distinct SCOGS outcomes** across **all 5 grades (1–5)**, with **explicit absence evidence** for 3–7+ additional outcomes per note — a significant improvement over the existing dataset's single outcome with only grades 2–3.
+These 12 notes cover **8 distinct SCOGS outcomes** across **all 5 grades (1–5)**, with **explicit absence evidence** throughout. Note 12 specifically tests boundary precision with values intentionally set just below grading thresholds.
