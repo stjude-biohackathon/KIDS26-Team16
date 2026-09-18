@@ -741,6 +741,7 @@ def grade_badge(status: str, grade: int | float | None, grades: tuple = ()) -> t
 
 import json as _pcai_json
 import time as _pcai_time
+import threading
 import re as _pcai_re
 from concurrent.futures import ThreadPoolExecutor as _ThreadPoolExecutor, as_completed as _as_completed
 
@@ -755,10 +756,19 @@ from dashboard.conformal_utils import (
 PCAI_GATEWAY_URL = "https://bifrost.ai-application.stjude.org/v1"
 PCAI_MODEL = "gpt-oss-120b"
 PCAI_QWEN_MODEL = "Qwen/Qwen3.8-27B-FP8"
-DEFAULT_LIVE_MODEL = PCAI_MODEL
+# Qwen is the grading model. A bounded completion budget keeps JSON grading fast
+# and prevents long generations from running into the PCAI gateway timeout.
+# Override in PowerShell with, e.g., $env:PCAI_MAX_TOKENS="8192" if needed.
+# The PCAI/Bifrost gateway currently has a ~30 s provider-side request limit.
+# Qwen only needs a compact JSON grading payload, so keep the completion budget
+# small enough that it reaches the final answer quickly.
+PCAI_MAX_TOKENS = max(512, int(os.environ.get("PCAI_MAX_TOKENS", "1200")))
+PCAI_ATTEMPTS = max(1, min(2, int(os.environ.get("PCAI_ATTEMPTS", "1"))))
+PCAI_QWEN_CONCURRENCY = max(1, min(4, int(os.environ.get("PCAI_CONCURRENCY", "2"))))
+DEFAULT_LIVE_MODEL = PCAI_QWEN_MODEL
 ALLOWED_MODELS = {
-    PCAI_MODEL: "GPT-OSS 120B",
     PCAI_QWEN_MODEL: "Qwen3.8 27B FP8",
+    PCAI_MODEL: "GPT-OSS 120B",
 }
 
 # Keep these IDs aligned with the 14 PI-finalized SCOGS domains.
@@ -827,7 +837,7 @@ def _pcai_extract_text(message: Any) -> str:
 def _pcai_clean_json(raw: str) -> dict[str, Any]:
     text = (raw or "").strip()
     if not text:
-        raise ValueError("GPT-OSS returned empty final content.")
+        raise ValueError("PCAI model returned empty final content.")
     text = (
         text.replace("```json", "")
         .replace("```JSON", "")
@@ -845,7 +855,7 @@ def _pcai_clean_json(raw: str) -> dict[str, Any]:
         parsed = _pcai_json.loads(text[start:end + 1])
         if isinstance(parsed, dict):
             return parsed
-    raise ValueError("GPT-OSS response did not contain a valid JSON object.")
+    raise ValueError("PCAI model response did not contain a valid JSON object.")
 
 
 def _pcai_quote_is_exact(note_text: str, quote: str) -> bool:
@@ -886,72 +896,50 @@ def _pcai_calibration_for_outcome(calibration, outcome_name: str):
 
 
 def _pcai_prompt(note_text: str, rule: dict[str, Any]) -> str:
+    """Compact single-outcome prompt optimized for the 30 s PCAI gateway."""
     allowed = _pcai_valid_classes(rule)
-    return f"""
-Apply the supplied SCOGS severity rubric to this clinical note.
+    return f"""/no_think
+Grade ONLY this SCOGS outcome from the note: {rule["outcome"]}
 
-Evaluate ONLY this outcome:
-{rule["outcome"]}
+Use only documented facts. Do not invent negatives or missing values. Historical
+diagnoses can establish presence. If present but the exact rubric grade cannot be
+determined, use status=insufficient_information and grade=null. Evidence must be
+short verbatim quotes from the note. Return JSON only; no markdown.
 
-Rules:
-- Use only the supplied note and SCOGS rubric.
-- Do not use hidden/reference labels.
-- Do not invent missing facts or undocumented negatives.
-- Distinguish current acute events from historical diagnoses.
-- A chronic diagnosis may establish presence, but do not force an exact grade
-  when the required grade-defining variables are missing.
-- Never assign a grade whose definition is N/A.
-- Do not convert oxygen L/min to FiO2.
-- Evidence must be copied verbatim from the note.
-- model_confidence_pct is uncalibrated model certainty from 0 to 100.
-- Return a score for every allowed class and make scores sum approximately to 100.
-- Output JSON only.
+RUBRIC
+Diagnostic: {rule.get("diagnostic_criteria", "")}
+Grades: {_pcai_json.dumps(rule.get("grade_definitions", {}), ensure_ascii=False, separators=(",", ":"))}
+Allowed classes: {_pcai_json.dumps(allowed, separators=(",", ":"))}
 
-If absent:
-  outcome_present=false, grade=null, status="absent"
-
-If present but exact grade cannot be determined:
-  outcome_present=true, grade=null, status="insufficient_information"
-
-If exactly gradable:
-  outcome_present=true, grade=<integer>, status="graded"
-
-CLINICAL NOTE
--------------
+NOTE
 {note_text}
 
-SCOGS RUBRIC
-------------
-Diagnostic criteria:
-{rule.get("diagnostic_criteria", "")}
-
-Grade definitions:
-{_pcai_json.dumps(rule.get("grade_definitions", {}), ensure_ascii=False)}
-
-Allowed classes:
-{_pcai_json.dumps(allowed)}
-
-Return exactly one JSON object:
-{{
-  "outcome": "{rule["outcome"]}",
-  "outcome_present": true,
-  "grade": 3,
-  "status": "graded",
-  "model_confidence_pct": 90,
-  "reasoning": "brief rubric-based explanation",
-  "evidence": ["exact quote from note"],
-  "class_scores_pct": {{
-    "absent": 1,
-    "insufficient_information": 2,
-    "1": 2,
-    "2": 5,
-    "3": 90
-  }}
-}}
+Return one compact object with exactly these keys:
+{{"outcome":"{rule["outcome"]}","outcome_present":true,"grade":3,"status":"graded","model_confidence_pct":90,"reasoning":"brief","evidence":["exact quote"],"class_scores_pct":{{"absent":1,"insufficient_information":2,"1":2,"2":5,"3":90}}}}
+Scores must cover every allowed class and sum approximately to 100.
 """.strip()
 
 
-def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, patient_context: dict[str, Any] | None = None) -> dict[str, Any]:
+
+_PCAI_CLIENT_CACHE = {}
+_PCAI_CLIENT_LOCK = threading.Lock()
+
+def _pcai_client_for_key(key: str):
+    """Reuse the OpenAI/PCAI client so each outcome does not rebuild a connection pool."""
+    with _PCAI_CLIENT_LOCK:
+        client = _PCAI_CLIENT_CACHE.get(key)
+        if client is None:
+            client = _OpenAI(
+                base_url=PCAI_GATEWAY_URL,
+                api_key=key,
+                default_headers={"x-bf-vk": key},
+                timeout=600,
+            )
+            _PCAI_CLIENT_CACHE[key] = client
+        return client
+
+
+def _pcai_call_one(note_text: str, outcome_id: str, model: str = DEFAULT_LIVE_MODEL, patient_context: dict[str, Any] | None = None) -> dict[str, Any]:
     key = os.environ.get("PCAI_API_KEY")
     if not key:
         raise RuntimeError("PCAI_API_KEY is not set in the terminal that launched Shiny.")
@@ -968,19 +956,28 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
     if rule is None:
         raise KeyError(f"No PCAI rubric found for {rule_name}")
 
+    # Use a fresh client per outcome, matching the known-fast PCAI build.
+    # This avoids a stale pooled connection causing a later request to sit until timeout.
     client = _OpenAI(
         base_url=PCAI_GATEWAY_URL,
         api_key=key,
         default_headers={"x-bf-vk": key},
-        timeout=600,
+        # Bifrost itself times out around 30 s. Do not let the SDK add retries
+        # around that timeout; the dashboard handles failures per outcome.
+        timeout=35,
+        max_retries=0,
     )
 
     last_error = None
-    # GPT-OSS may use a substantial part of the completion budget for reasoning.
-    # Use the full 16,384-token completion allowance for every single-outcome
-    # request so the model has room to reason and still emit the final JSON.
-    token_budgets = (16384, 16384, 16384)
-    for attempt in range(1, 4):
+    call_started = _pcai_time.perf_counter()
+    response_meta = {}
+    for attempt in range(1, PCAI_ATTEMPTS + 1):
+        attempt_started = _pcai_time.perf_counter()
+        print(
+            f"[PCAI] START outcome={norm} model={model} "
+            f"attempt={attempt}/{PCAI_ATTEMPTS}",
+            flush=True,
+        )
         try:
             kwargs = dict(
                 model=model,
@@ -988,44 +985,84 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
                     {
                         "role": "system",
                         "content": (
-                            "Apply the SCOGS rubric strictly. "
-                            "Return the final answer immediately as one valid JSON object only. "
-                            "Do not include markdown."
+                            "/no_think\n"
+                            "Apply the SCOGS rubric strictly. Return one compact JSON object only. "
+                            "No markdown and no hidden chain-of-thought."
                         ),
                     },
                     {"role": "user", "content": _pcai_prompt(note_text + ("\n\nCLINICIAN CONTEXT: " + _pcai_json.dumps(patient_context, ensure_ascii=False) if patient_context else ""), rule)},
                 ],
                 temperature=0,
-                max_tokens=token_budgets[attempt - 1],
+                max_tokens=PCAI_MAX_TOKENS,
             )
-            try:
-                response = client.chat.completions.create(
-                    **kwargs,
-                    reasoning_effort="low",
-                )
-            except TypeError:
-                response = client.chat.completions.create(**kwargs)
-            except Exception as exc:
-                if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+            if model == PCAI_MODEL:
+                try:
+                    response = client.chat.completions.create(
+                        **kwargs,
+                        reasoning_effort="low",
+                    )
+                except TypeError:
                     response = client.chat.completions.create(**kwargs)
-                else:
-                    raise
+                except Exception as exc:
+                    if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+                        response = client.chat.completions.create(**kwargs)
+                    else:
+                        raise
+            else:
+                # Qwen3 can spend most of the gateway's 30 s limit in thinking.
+                # Disable thinking at both the prompt and chat-template levels.
+                try:
+                    response = client.chat.completions.create(
+                        **kwargs,
+                        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+                    )
+                except Exception as exc:
+                    msg = str(exc).lower()
+                    # Some OpenAI-compatible gateways do not expose chat-template
+                    # kwargs. In that case /no_think remains in the prompt.
+                    if any(x in msg for x in ("chat_template_kwargs", "enable_thinking", "extra_body", "unknown field", "extra field")):
+                        response = client.chat.completions.create(**kwargs)
+                    else:
+                        raise
 
             choice = response.choices[0]
             raw_final = _pcai_extract_text(choice.message)
+            finish_reason = getattr(choice, "finish_reason", None)
+            usage = getattr(response, "usage", None)
+            response_meta = {
+                "attempt": attempt,
+                "finish_reason": finish_reason,
+                "latency_seconds": round(_pcai_time.perf_counter() - attempt_started, 3),
+                "response_chars": len(raw_final or ""),
+                "prompt_tokens": getattr(usage, "prompt_tokens", None) if usage is not None else None,
+                "completion_tokens": getattr(usage, "completion_tokens", None) if usage is not None else None,
+                "total_tokens": getattr(usage, "total_tokens", None) if usage is not None else None,
+            }
+            print(
+                f"[PCAI] RESPONSE outcome={norm} "
+                f"latency={response_meta['latency_seconds']}s "
+                f"finish_reason={finish_reason!r} "
+                f"chars={response_meta['response_chars']} "
+                f"tokens={response_meta['total_tokens']}",
+                flush=True,
+            )
             if not raw_final:
-                finish_reason = getattr(choice, "finish_reason", None)
                 raise ValueError(
-                    f"GPT-OSS returned empty final content "
-                    f"(finish_reason={finish_reason!r}, max_tokens={token_budgets[attempt - 1]})."
+                    f"PCAI model returned empty final content "
+                    f"(finish_reason={finish_reason!r}, max_tokens={PCAI_MAX_TOKENS})."
                 )
             item = _pcai_clean_json(raw_final)
             break
         except Exception as exc:
             last_error = exc
-            if attempt >= 3:
+            print(
+                f"[PCAI] ERROR outcome={norm} attempt={attempt}/{PCAI_ATTEMPTS} "
+                f"{type(exc).__name__}: {exc}",
+                flush=True,
+            )
+            if attempt >= PCAI_ATTEMPTS:
                 raise
-            _pcai_time.sleep(1.5 * attempt)
+            _pcai_time.sleep(0.5)
     else:
         raise last_error or RuntimeError("Unknown PCAI inference failure.")
 
@@ -1091,7 +1128,7 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
 
     accepted = [
         {
-            "feature": "GPT-OSS evidence",
+            "feature": "Qwen evidence",
             "value": "supports model decision",
             "quote": q,
             "unit": None,
@@ -1124,6 +1161,11 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
             "conformal_prediction_set": conformal_set,
             "conformal_target_coverage_pct": conformal_target,
             "conformal_predicted_class_p_value_pct": conformal_p,
+            "pcai_response_meta": {
+                **response_meta,
+                "total_call_seconds": round(_pcai_time.perf_counter() - call_started, 3),
+            },
+            "pcai_raw_response_text": raw_final,
         },
         "accepted_findings": accepted,
         "conflicts": {},
@@ -1234,7 +1276,7 @@ Return:
 
 
 def _pcai_coerce_feature_value(feature_name: str, value: Any):
-    """Coerce GPT-OSS JSON values to the canonical SCOGS feature types."""
+    """Coerce PCAI model JSON values to the canonical SCOGS feature types."""
     spec = FEATURES.get(feature_name, {})
     typ = spec.get("type")
     if value is None:
@@ -1268,10 +1310,10 @@ def _pcai_coerce_feature_value(feature_name: str, value: Any):
 def _pcai_extract_and_grade_table(
     note_text: str,
     outcome_id: str,
-    model: str = PCAI_MODEL,
+    model: str = DEFAULT_LIVE_MODEL,
     patient_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """GPT-OSS evidence extraction -> original deterministic SCOGS rule engine."""
+    """Qwen evidence extraction -> original deterministic SCOGS rule engine."""
     key = os.environ.get("PCAI_API_KEY")
     if not key:
         raise RuntimeError("PCAI_API_KEY is not set in the terminal that launched Shiny.")
@@ -1296,15 +1338,18 @@ def _pcai_extract_and_grade_table(
                 temperature=0,
                 max_tokens=2200,
             )
-            try:
-                response = client.chat.completions.create(**kwargs, reasoning_effort="low")
-            except TypeError:
-                response = client.chat.completions.create(**kwargs)
-            except Exception as exc:
-                if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+            if model == PCAI_MODEL:
+                try:
+                    response = client.chat.completions.create(**kwargs, reasoning_effort="low")
+                except TypeError:
                     response = client.chat.completions.create(**kwargs)
-                else:
-                    raise
+                except Exception as exc:
+                    if "reasoning_effort" in str(exc).lower() and "timeout" not in str(exc).lower():
+                        response = client.chat.completions.create(**kwargs)
+                    else:
+                        raise
+            else:
+                response = client.chat.completions.create(**kwargs)
             item = _pcai_clean_json(_pcai_extract_text(response.choices[0].message))
             break
         except Exception as exc:
@@ -1356,7 +1401,7 @@ def _pcai_extract_and_grade_table(
 
     display_features = dict(grounded_features)
     display_features["model_confidence_pct"] = round(confidence, 1)
-    display_features["pcaI_grading_mode"] = "gptoss_evidence_plus_deterministic_table"
+    display_features["pcaI_grading_mode"] = "qwen_evidence_plus_deterministic_table"
 
     return {
         "outcome_name": outcome_display_name(norm),
@@ -1370,7 +1415,7 @@ def _pcai_extract_and_grade_table(
     }
 
 
-def screen_outcomes_pcai(note_text: str, outcomes: list[str], model: str = PCAI_MODEL) -> list[str]:
+def screen_outcomes_pcai(note_text: str, outcomes: list[str], model: str = DEFAULT_LIVE_MODEL) -> list[str]:
     """Experimental high-recall screen used only to speed the optional 53 mode."""
     key = os.environ.get("PCAI_API_KEY")
     if not key:
@@ -1464,8 +1509,8 @@ def check_ollama_status(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOS
 
 def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False, include_custom: bool = True) -> dict[str, Any]:
     choices = {
-        PCAI_MODEL: "GPT-OSS 120B — grader",
-        PCAI_QWEN_MODEL: "Qwen3.8 27B FP8 — comparison model",
+        PCAI_QWEN_MODEL: "Qwen3.8 27B FP8 — grader",
+        PCAI_MODEL: "GPT-OSS 120B — comparison model",
     }
     return {"St. Jude PCAI": choices} if grouped else choices
 
@@ -1479,17 +1524,16 @@ def get_concurrency_assessment(
     status = "safe" if conc <= 2 else "caution"
     display = ALLOWED_MODELS.get(model, model)
     if conc == 1:
-        msg = f"✓ {display}: one outcome per PCAI request."
-    elif conc == 2:
-        msg = f"⚠️ {display}: parallel requests are disabled in the simplified dashboard."
+        msg = f"✓ {display}: one outcome at a time."
+    elif conc <= 2:
+        msg = f"✓ {display}: {conc} concurrent outcome requests (recommended)."
     else:
         msg = (
-            f"⚠️ {display}: {conc} parallel requests is experimental and may "
-            "increase provider timeouts or rate limiting."
+            f"⚠️ {display}: {conc} concurrent requests may increase provider rate limiting."
         )
     return {
-        "recommended": 1,
-        "max_safe": 1,
+        "recommended": PCAI_QWEN_CONCURRENCY,
+        "max_safe": 2,
         "estimated_ram_gb": 0.0,
         "total_ram_gb": 0.0,
         "status": status,
@@ -1499,7 +1543,8 @@ def get_concurrency_assessment(
 
 
 def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:
-    return 1
+    # Two Qwen requests in flight cuts wall-clock time without flooding Bifrost.
+    return PCAI_QWEN_CONCURRENCY if model == PCAI_QWEN_MODEL else 1
 
 
 def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> bool:

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
-Write-Host "SCOGS-Scribe GPT-OSS Dashboard" -ForegroundColor Cyan
+Write-Host "SCOGS-Scribe Qwen Dashboard" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 
 if (-not $env:PCAI_API_KEY) {

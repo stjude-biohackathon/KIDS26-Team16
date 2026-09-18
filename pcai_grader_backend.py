@@ -14,7 +14,7 @@ from openai import OpenAI
 from conformal_utils import apply_conformal, normalize_probabilities
 
 GATEWAY_URL = "https://bifrost.ai-application.stjude.org/v1"
-DEFAULT_MODEL = "gpt-oss-120b"
+DEFAULT_MODEL = "Qwen/Qwen3.8-27B-FP8"
 
 RESULT_FIELDS = [
     "case_id",
@@ -264,17 +264,7 @@ def call_model(
                 "max_tokens": max(1800, 1300 * len(batch_rules)),
             }
 
-            try:
-                response = client.chat.completions.create(
-                    **kwargs, reasoning_effort="low"
-                )
-            except TypeError:
-                response = client.chat.completions.create(**kwargs)
-            except Exception as exc:
-                if "reasoning_effort" in str(exc).lower() and not is_timeout(exc):
-                    response = client.chat.completions.create(**kwargs)
-                else:
-                    raise
+            response = client.chat.completions.create(**kwargs)
 
             raw = extract_text(response.choices[0].message)
             parsed = clean_json(raw)
