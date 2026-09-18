@@ -94,7 +94,7 @@ def explore_view_state(run_data: dict | None, uid: str, outcome_num: str) -> dic
     grade_result = outcome.get("grade_result", {})
     # PMC-Patients stores age as [[value, unit], ...].
     ages = record.get("age", [])
-    age = ages[0][0] if (isinstance(ages, list) and ages and isinstance(ages[0], list)) else None
+    age = ages[0][0] if (isinstance(ages, list) and ages and isinstance(ages[0], list) and len(ages[0]) > 0) else None
     return {
         "mode": "explore",
         "patient_uid": uid,

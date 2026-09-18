@@ -82,7 +82,7 @@ def server(input, output, session):
         """
         try:
             return input[name]()
-        except SilentException:
+        except (SilentException, KeyError, AttributeError):
             return default
 
     # The clinical-notes CSV is tens of megabytes and only the live evaluator
@@ -668,12 +668,11 @@ def server(input, output, session):
         if mode == "all_53":
             return [normalize_outcome_id(k) for k in sorted(TABLES.keys())]
         elif mode == "custom":
-            if picked:
+            if picked is not None:
                 if isinstance(picked, str):
                     picked = (picked,)
                 chosen = [normalize_outcome_id(num) for num in picked if normalize_outcome_id(num) in TABLES]
-                if chosen:
-                    return chosen
+                return chosen
             return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
         else:
             # Mode "14_focus" (default)
@@ -694,7 +693,7 @@ def server(input, output, session):
         if results:
             return clicked if clicked in results else sorted(results.items(), key=outcome_rank)[0][0]
         chosen = selected_live_outcomes()
-        return clicked if clicked in chosen else chosen[0]
+        return clicked if clicked in chosen else (chosen[0] if chosen else "")
 
     # Trigger Live Note Evaluation
     @reactive.effect
@@ -713,6 +712,7 @@ def server(input, output, session):
                 manual_dict = json.loads(raw_manual.strip())
             except Exception as e:
                 ui.notification_show(f"JSON Parse Error in manual features: {e}", type="warning")
+                return
 
         manual_dict["present"] = present
         context = {"patient_sex": patient_sex, "patient_age": patient_age}
@@ -730,6 +730,10 @@ def server(input, output, session):
         except (ValueError, TypeError):
             user_concurrency = get_live_concurrency(selected_model)
         model_concurrency = max(1, min(user_concurrency, len(outcome_ids)))
+        if not outcome_ids:
+            ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
+            return
+
         with ui.Progress(min=0, max=len(outcome_ids)) as progress:
             progress.set(0, message="Grading outcomes", detail=f"0 of {len(outcome_ids)}")
             # A chunk at a time, so the overview fills in as outcomes land instead

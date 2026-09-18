@@ -38,7 +38,7 @@ def load_run_file(filepath: str | Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"Run file is not a valid JSON object: {filepath}")
 
-    detailed = data.get("detailed_records", [])
+    detailed = data.get("detailed_records") or []
     records_by_uid: dict[str, dict] = {}
     for r in detailed:
         if isinstance(r, dict) and "patient_uid" in r:
@@ -78,16 +78,22 @@ def load_csv_notes(filepath: str | Path = "data/clinical_notes.csv") -> pd.DataF
 
     # Note text mapping
     if "clinical_note" in df.columns:
-        df["note_text"] = df["clinical_note"].fillna("")
+        df["clinical_note"] = df["clinical_note"].fillna("")
+        df["note_text"] = df["clinical_note"]
     elif "note_text" in df.columns:
-        df["clinical_note"] = df["note_text"].fillna("")
+        df["note_text"] = df["note_text"].fillna("")
+        df["clinical_note"] = df["note_text"]
     else:
         df["note_text"] = ""
         df["clinical_note"] = ""
 
     # Gender mapping
     if "gender" in df.columns:
-        df["patient_sex"] = df["gender"].map({"Female": "female", "Male": "male"}).fillna("unknown")
+        df["patient_sex"] = (
+            df["gender"].astype(str).str.strip().str.lower()
+            .map({"female": "female", "male": "male"})
+            .fillna("unknown")
+        )
     else:
         df["patient_sex"] = "unknown"
 

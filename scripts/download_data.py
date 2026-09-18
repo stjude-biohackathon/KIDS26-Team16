@@ -92,7 +92,7 @@ def build_scd_cache():
     print(f"\n[FILTERING] Building Sickle Cell Disease cohort cache from {v2_path.name}...")
     pat = re.compile(r"sickle cell|\bSCD\b|HbSS|HbSC", re.I)
     raw = json.loads(v2_path.read_text(encoding="utf-8"))
-    scd = [r for r in raw if pat.search(r.get("patient", ""))]
+    scd = [r for r in raw if pat.search(str(r.get("patient") or ""))]
     scd.sort(key=lambda r: r["patient_uid"])
     cache_path.write_text(json.dumps(scd, indent=2), encoding="utf-8")
     print(f"[SUCCESS] Extracted {len(scd)} SCD patient cases into {cache_path} ({cache_path.stat().st_size / (1024*1024):.2f} MB)")

@@ -69,7 +69,12 @@ document.addEventListener('change', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', updateSegmentedRadios);
-const observer = new MutationObserver(updateSegmentedRadios);
+let _segmentedTimer = null;
+const debouncedUpdateSegmented = function() {
+    if (_segmentedTimer) clearTimeout(_segmentedTimer);
+    _segmentedTimer = setTimeout(updateSegmentedRadios, 50);
+};
+const observer = new MutationObserver(debouncedUpdateSegmented);
 if (document.body) {
     observer.observe(document.body, { childList: true, subtree: true });
 } else {

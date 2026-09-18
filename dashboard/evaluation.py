@@ -59,7 +59,7 @@ def get_installed_models(host: str = DEFAULT_HOST) -> list[str]:
     try:
         data = request_json(host, "/api/tags", timeout=3)
         installed = []
-        for item in data.get("models", []):
+        for item in (data.get("models") or []):
             name = str(item.get("name") or item.get("model") or "").strip()
             if name:
                 installed.append(name)
@@ -77,7 +77,7 @@ def is_model_installed(model: str, installed_models: list[str]) -> bool:
         item_canonical = item if ":" in item.rsplit("/", 1)[-1] else f"{item}:latest"
         if item == model or item == canonical or item_canonical == canonical or item_canonical == model:
             return True
-        if item.rstrip(":latest") == model.rstrip(":latest"):
+        if item.removesuffix(":latest") == model.removesuffix(":latest"):
             return True
     return False
 
@@ -642,9 +642,9 @@ def save_live_run_results(
         grade_res = item.get("grade_result")
         if isinstance(grade_res, GradeResult):
             grade_dict = asdict(grade_res)
-            grade_dict["grades"] = list(grade_dict.get("grades", []))
-            grade_dict["missing"] = list(grade_dict.get("missing", []))
-            grade_dict["undecided"] = [list(u) for u in grade_dict.get("undecided", [])]
+            grade_dict["grades"] = list(grade_dict.get("grades") or [])
+            grade_dict["missing"] = list(grade_dict.get("missing") or [])
+            grade_dict["undecided"] = [list(u) for u in (grade_dict.get("undecided") or [])]
         elif isinstance(grade_res, dict):
             grade_dict = dict(grade_res)
         else:
