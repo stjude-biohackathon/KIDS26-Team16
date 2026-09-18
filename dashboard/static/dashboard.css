@@ -1270,3 +1270,74 @@ textarea,
 [data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     background: rgba(148, 163, 184, 0.45);
 }
+
+
+/* Wardell v6: fixed 14-outcome scope */
+.focus-outcome-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.28rem;
+}
+.focus-outcome-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+.focus-outcome-item:last-child {
+  border-bottom: 0;
+}
+.focus-outcome-num {
+  min-width: 1.35rem;
+  color: var(--bs-secondary-color);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.69rem;
+  padding-top: 0.05rem;
+}
+.focus-outcome-name {
+  color: var(--bs-body-color);
+  font-weight: 550;
+}
+
+/* Official SCOGS table shown below a scored outcome */
+.scogs-grading-table-wrap {
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: 1rem;
+}
+.scogs-grading-table {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  --bs-table-bg: transparent;
+}
+.scogs-grading-table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color);
+  background: var(--bs-tertiary-bg);
+}
+.scogs-grading-table td {
+  vertical-align: top;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  padding: 0.6rem 0.7rem;
+}
+.scogs-grade-col {
+  width: 6.2rem;
+  white-space: nowrap;
+}
+.scogs-grade-label {
+  font-weight: 750;
+}
+.scogs-grade-row-selected td {
+  background: color-mix(in srgb, var(--bs-primary) 12%, transparent) !important;
+  border-top: 1px solid color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+  border-bottom: 1px solid color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+}
+.scogs-grade-row-selected .scogs-grade-label {
+  color: var(--bs-primary);
+}

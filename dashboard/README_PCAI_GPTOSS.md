@@ -61,3 +61,45 @@ Recommended comparison workflow:
 The confidence values from both models remain uncalibrated. Conformal calibration
 should be fitted separately for each model if model-specific conformal inference
 is later used.
+
+
+## v5 — simplified live clinical interface
+
+The live dashboard is intentionally simplified for presentation:
+
+- GPT-OSS 120B is fixed as the grading model.
+- One outcome is graded per PCAI request.
+- Model and concurrency selectors are retained internally but hidden.
+- Input source, age, and sex controls are hidden.
+- Live mode presents one large clinical-note text box.
+- The 14-vs-53 outcome selector remains visible.
+- Live execution telemetry is retained in code but hidden from the live UI.
+- Explore Saved Runs remains available.
+
+
+## v6 — fixed 14 outcomes + grading table
+
+- Live evaluation is fixed to the 14 PI-finalized outcomes; the 53-outcome option is no longer shown.
+- The sidebar lists all 14 included outcomes.
+- Once an outcome receives a numeric SCOGS grade, its official Grade 1-5 criteria table is shown directly below the result.
+- The selected model grade is highlighted in the table.
+- Display grading-table text is stored separately in `scogs_14_display_tables.json` and is based on the SCOGS booklet.
+
+
+## v7 — GPT-OSS empty-content fix
+
+A prior 1800-token completion cap could be exhausted by GPT-OSS reasoning before
+the final JSON was emitted, causing all outcomes to be recorded as inference
+errors. The dashboard now retries single-outcome requests with completion budgets
+of 3000, 4200, and 5200 tokens and records the provider finish reason when a
+response still has no final content.
+
+
+## v8 — 16,384 completion tokens by default
+
+Every GPT-OSS single-outcome grading request now uses:
+
+`max_tokens=16384`
+
+This applies to the initial request and retries. The dashboard still grades one
+outcome per request.

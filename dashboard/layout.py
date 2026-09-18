@@ -85,11 +85,11 @@ app_ui = ui.page_sidebar(
             ui.div(
                 ui.div(
                     ui.span("SCOGS", class_="badge-brand me-2"),
-                    ui.span("Clinical Evaluation & PCAI Model Comparison Dashboard", class_="app-title-main"),
+                    ui.span("Clinical Evaluation & SCOGS Severity Dashboard", class_="app-title-main"),
                     class_="d-flex align-items-center flex-wrap gap-2",
                 ),
                 ui.p(
-                    "SCOGS Severity Grading with selectable GPT-OSS 120B or Qwen3.8 27B FP8",
+                    "SCOGS Severity Grading with St. Jude PCAI / GPT-OSS 120B",
                     class_="app-title-sub mb-0 mt-1",
                 ),
                 class_="d-flex flex-column",

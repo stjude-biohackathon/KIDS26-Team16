@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -61,6 +62,31 @@ BUCKET_PILL_CLASS = {
     CANNOT_GRADE: "outcome-btn-cannot",
     ABSENT: "outcome-btn-absent",
 }
+
+
+# Official SCOGS grading tables displayed in the UI for the 14 finalized outcomes.
+_DISPLAY_TABLE_PATH = Path(__file__).resolve().parent / "scogs_14_display_tables.json"
+try:
+    SCOGS_14_DISPLAY_TABLES = json.loads(_DISPLAY_TABLE_PATH.read_text(encoding="utf-8"))
+except Exception:
+    SCOGS_14_DISPLAY_TABLES = {}
+
+FOCUS_OUTCOME_LIST = [
+    ("28", "Acute Sickle Cell Pain Episode"),
+    ("15", "Stroke (Hemorrhagic or Ischemic)"),
+    ("29", "Acute Splenic Sequestration"),
+    ("48", "Acute Chest Syndrome (ACS)"),
+    ("24", "Priapism"),
+    ("10", "Chronic Pain"),
+    ("21", "Chronic Kidney Disease (CKD)"),
+    ("17", "Sickle Cell Retinopathy (SCR)"),
+    ("11", "Cognitive Dysfunction"),
+    ("47", "Depression"),
+    ("12", "Elevated TCD Ultrasonography Velocity"),
+    ("49", "Asthma Exacerbation"),
+    ("39", "Avascular Necrosis of Joints (AVN)"),
+    ("40", "Leg Ulcer"),
+]
 
 
 # ==============================================================================
@@ -271,272 +297,132 @@ def server(input, output, session):
             )
         else:
             # Mode 2: Live Note Evaluator
-            model_choices = get_model_choices(grouped=True)
-            flat_choices = get_model_choices(grouped=False)
-            default_model = DEFAULT_LIVE_MODEL if DEFAULT_LIVE_MODEL in flat_choices else next(iter(flat_choices.keys()))
-
-            df = csv_notes()
-            csv_choices = {}
-            if df is not None and not df.empty:
-                for idx, row in df.head(50).iterrows():
-                    pid = str(row.get("patient_id", f"Row {idx}"))
-                    vdate = str(row.get("visit_datetime", ""))
-                    ftype = str(row.get("facility_type", ""))
-                    csv_choices[str(idx)] = f"{pid} - {vdate} ({ftype})"
-
+            #
+            # Presentation is intentionally minimal. The controls below preserve
+            # the existing reactive/server contract but keep fixed runtime choices
+            # out of the clinician-facing UI.
             outcome_choices = get_outcome_choices(grouped=True)
 
             return ui.div(
+                # Hidden runtime inputs retained for compatibility.
                 ui.div(
-                    ui.div(
-                        ui.span("INFERENCE RUNTIME", class_="sidebar-section-label mb-0"),
-                        ui.span("St. Jude PCAI", class_="sidebar-badge-subtle"),
-                        class_="d-flex justify-content-between align-items-center mb-2",
-                    ),
                     ui.input_select(
                         "live_model_select",
                         "PCAI Grading Model:",
-                        choices=model_choices,
-                        selected=default_model,
+                        choices={DEFAULT_LIVE_MODEL: "GPT-OSS 120B"},
+                        selected=DEFAULT_LIVE_MODEL,
                     ),
-                    ui.panel_conditional(
-                        "input.live_model_select === '__custom__'",
-                        ui.input_text(
-                            "custom_model_input",
-                            "Custom Ollama Model Name / Tag:",
-                            placeholder="e.g. llama3.2:3b, mistral:7b, qwen2.5:7b",
-                        ),
+                    ui.input_numeric(
+                        "live_concurrency_input",
+                        "Requests in Parallel:",
+                        value=1,
+                        min=1,
+                        max=1,
+                        step=1,
                     ),
-                    ui.input_action_button(
-                        "refresh_ollama_models",
-                        "↻ Refresh PCAI Status",
-                        class_="btn-sm btn-outline-secondary w-100 my-2",
+                    ui.input_radio_buttons(
+                        "live_source",
+                        "Input Source:",
+                        choices={"custom": "Paste Custom Note"},
+                        selected="custom",
                     ),
-                    ui.output_ui("live_model_status_badge"),
-                    ui.div(
-                        ui.input_numeric(
-                            "live_concurrency_input",
-                            "Requests in Parallel:",
-                            value=get_concurrency_assessment(default_model)["recommended"],
-                            min=1,
-                            max=4,
-                            step=1,
-                        ),
-                        class_="mt-2",
+                    ui.input_numeric(
+                        "patient_age_input",
+                        "Age (years):",
+                        value=None,
+                        min=0.0,
+                        max=120.0,
+                        step=0.5,
                     ),
-                    ui.output_ui("live_concurrency_advisory"),
-                    class_="sidebar-panel-card mb-2",
+                    ui.input_select(
+                        "patient_sex_input",
+                        "Sex:",
+                        choices={"": "Not supplied", "unknown": "Unknown"},
+                        selected="",
+                    ),
+                    ui.input_checkbox(
+                        "outcome_present_input",
+                        "Assume outcomes are clinically present",
+                        value=True,
+                    ),
+                    ui.input_text_area(
+                        "manual_features_json",
+                        "Simulated Feature Values (JSON):",
+                        rows=1,
+                        value='{}',
+                    ),
+                    style="display:none;",
                 ),
+
+                # Primary clinical input.
                 ui.div(
                     ui.div(
-                        ui.span("ENCOUNTER & NARRATIVE", class_="sidebar-section-label mb-0"),
-                        ui.span("Clinical Input", class_="sidebar-badge-subtle"),
+                        ui.span("CLINICAL NOTE", class_="sidebar-section-label mb-0"),
+                        ui.span("GPT-OSS 120B", class_="sidebar-badge-subtle"),
                         class_="d-flex justify-content-between align-items-center mb-2",
-                    ),
-                    ui.div(
-                        ui.input_radio_buttons(
-                            "live_source",
-                            "Input Source:",
-                            choices={"csv": "From CSV Dataset", "custom": "Paste Custom Note"},
-                            selected="custom",
-                        ),
-                        class_="sidebar-segmented-radios mb-2",
-                    ),
-                    ui.panel_conditional(
-                        "input.live_source === 'csv'",
-                        ui.div(
-                            ui.input_select(
-                                "csv_patient_idx",
-                                "Select Patient Encounter:",
-                                choices=csv_choices,
-                                selected=next(iter(csv_choices.keys())) if csv_choices else None,
-                            ),
-                            class_="mb-2",
-                        ),
-                    ),
-                    ui.layout_columns(
-                        ui.input_numeric("patient_age_input", "Age (years):", value=None, min=0.0, max=120.0, step=0.5),
-                        ui.input_select(
-                            "patient_sex_input",
-                            "Sex:",
-                            choices={"": "Select sex (optional)", "male": "Male", "female": "Female", "unknown": "Unknown"},
-                            selected="",
-                        ),
-                        col_widths=[6, 6],
-                        class_="mb-2",
                     ),
                     ui.input_text_area(
                         "live_note_text",
-                        "Clinical Narrative:",
-                        rows=6,
-                        placeholder="Enter or review clinical note text...",
+                        "",
+                        rows=18,
+                        placeholder="Paste the clinical note here...",
+                    ),
+                    ui.div(
+                        ui.span("● PCAI Online", class_="badge badge-grade-1 me-1"),
+                        ui.span("GPT-OSS 120B • one outcome at a time", class_="small text-muted"),
+                        class_="d-flex align-items-center flex-wrap gap-1 mt-2",
                     ),
                     class_="sidebar-panel-card mb-2",
                 ),
+
+                # Fixed 14-outcome scope for the clinical dashboard.
+                ui.div(
+                    ui.input_radio_buttons(
+                        "live_outcome_mode",
+                        "Outcomes:",
+                        choices={"14_focus": "14 Outcomes"},
+                        selected="14_focus",
+                    ),
+                    ui.input_selectize(
+                        "live_outcome",
+                        "Choose Target Outcomes:",
+                        choices={k: v for k, v in FOCUS_OUTCOME_LIST},
+                        selected=[k for k, _ in FOCUS_OUTCOME_LIST],
+                        multiple=True,
+                    ),
+                    ui.input_checkbox(
+                        "fast_screen_53",
+                        "Experimental Fast 53 pre-screen",
+                        value=False,
+                    ),
+                    style="display:none;",
+                ),
+
                 ui.div(
                     ui.div(
-                        ui.span("EVALUATION SCOPE", class_="sidebar-section-label mb-0"),
-                        ui.span("Consensus Tables", class_="sidebar-badge-subtle"),
+                        ui.span("14 SCOGS OUTCOMES", class_="sidebar-section-label mb-0"),
+                        ui.span("Fixed Scope", class_="sidebar-badge-subtle"),
                         class_="d-flex justify-content-between align-items-center mb-2",
                     ),
                     ui.div(
-                        ui.input_radio_buttons(
-                            "live_outcome_mode",
-                            "Target Outcomes Scope:",
-                            choices={
-                                "14_focus": "14 Outcomes",
-                                "all_53": "53 Outcomes",
-                            },
-                            selected="14_focus",
-                        ),
-                        class_="sidebar-segmented-radios mb-2",
-                    ),
-                    ui.panel_conditional(
-                        "input.live_outcome_mode === '14_focus'",
-                        ui.div(
+                        *[
                             ui.div(
-                                ui.span("🎯 14 Core Consensus Outcomes Active", class_="fw-bold d-block text-primary"),
-                                ui.span(
-                                    "Evaluates the 14 Delphi focus outcomes: VOC (#28), Stroke (#15), ACS (#48), Priapism (#24), "
-                                    "Splenic Sequestration (#29), CKD (#21), Retinopathy (#17), Chronic Pain (#10), "
-                                    "Cognitive Dysfunction (#11), TCD (#12), Depression (#47), Asthma (#49), "
-                                    "AVN (#39), and Leg Ulcer (#40).",
-                                    class_="small text-muted",
-                                ),
-                                class_="p-2 rounded bg-body-tertiary border mb-2",
-                                style="font-size: 0.75rem; line-height: 1.35;",
-                            ),
-                        ),
-                    ),
-                    ui.panel_conditional(
-                        "input.live_outcome_mode === 'all_53'",
-                        ui.div(
-                            ui.div(
-                                ui.span("🌐 All 53 SCOGS Decision Tables Active", class_="fw-bold d-block text-success"),
-                                ui.span(
-                                    "Evaluates all 53 SCOGS decision tables. The 14 PI-finalized outcomes use the finalized JSON rubrics; the additional 39 use GPT-OSS evidence extraction followed by the deterministic SCOGS rule engine.",
-                                    class_="small text-muted",
-                                ),
-                                class_="p-2 rounded bg-body-tertiary border mb-2",
-                                style="font-size: 0.75rem; line-height: 1.35;",
-                            ),
-                            ui.input_checkbox(
-                                "fast_screen_53",
-                                "Experimental Fast 53 pre-screen",
-                                value=False,
-                            ),
-                            ui.p(
-                                "When enabled, GPT-OSS first performs a high-recall screen and only deeply grades candidate outcomes. Screened-out outcomes are marked 'Cannot grade' rather than 'Absent'. If screening fails, the dashboard automatically falls back to exhaustive 53-outcome grading.",
-                                class_="sidebar-help-text mb-0",
-                            ),
-                        ),
-                    ),
-                    ui.panel_conditional(
-                        "input.live_outcome_mode === 'custom'",
-                        ui.div(
-                            ui.layout_columns(
-                                ui.input_action_button("btn_select_14", "Select 14 Focus", class_="btn-sm btn-outline-primary w-100"),
-                                ui.input_action_button("btn_select_53", "Select All 53", class_="btn-sm btn-outline-secondary w-100"),
-                                ui.input_action_button("btn_clear_outcomes", "Clear", class_="btn-sm btn-outline-danger w-100"),
-                                col_widths=[5, 5, 2],
-                                class_="mb-1",
-                            ),
-                            ui.input_selectize(
-                                "live_outcome",
-                                "Choose Target Outcomes:",
-                                choices=outcome_choices,
-                                selected=list(FOCUS_OUTCOMES),
-                                multiple=True,
-                                options={"plugins": ["remove_button"], "placeholder": "Search by outcome name or #number..."},
-                            ),
-                        ),
-                    ),
-                    ui.tags.details(
-                        ui.tags.summary(
-                            ui.span("📖 Directory of All 53 Possible Outcomes", class_="fw-semibold text-primary", style="font-size: 0.78rem;"),
-                            class_="d-flex align-items-center justify-content-between",
-                        ),
-                        ui.div(
-                            ui.div(
-                                ui.tags.table(
-                                    ui.tags.thead(
-                                        ui.tags.tr(
-                                            ui.tags.th("#", style="width: 15%;"),
-                                            ui.tags.th("Outcome", style="width: 55%;"),
-                                            ui.tags.th("Organ System", style="width: 30%;"),
-                                        ),
-                                        style="font-size: 0.74rem;",
-                                    ),
-                                    ui.tags.tbody(
-                                        *[
-                                            ui.tags.tr(
-                                                ui.tags.td(
-                                                    ui.span(
-                                                        f"#{norm}",
-                                                        class_="badge badge-grade-1" if meta["is_focus"] else "badge bg-secondary-subtle text-secondary-emphasis",
-                                                        style="font-size: 0.7rem;",
-                                                    )
-                                                ),
-                                                ui.tags.td(
-                                                    ui.span(meta["name"], class_="fw-medium" if meta["is_focus"] else ""),
-                                                    ui.span(" ★", class_="text-primary small fw-bold") if meta["is_focus"] else "",
-                                                ),
-                                                ui.tags.td(ui.span(meta["organ_system"], class_="text-muted small")),
-                                                style="font-size: 0.73rem;",
-                                            )
-                                            for norm, meta in get_all_scogs_outcomes().items()
-                                        ]
-                                    ),
-                                    class_="table table-sm table-hover mb-0",
-                                ),
-                                class_="sidebar-directory-table-wrap mt-2",
-                            ),
-                            ui.p("★ Green badge indicates a core Focus Outcome.", class_="text-muted mt-1 mb-0", style="font-size: 0.7rem;"),
-                        ),
-                        class_="sidebar-directory-details mt-2",
+                                ui.span(f"{i}.", class_="focus-outcome-num"),
+                                ui.span(label, class_="focus-outcome-name"),
+                                class_="focus-outcome-item",
+                            )
+                            for i, (_, label) in enumerate(FOCUS_OUTCOME_LIST, start=1)
+                        ],
+                        class_="focus-outcome-list",
                     ),
                     class_="sidebar-panel-card mb-2",
                 ),
-                ui.div(
-                    ui.div(
-                        ui.span("DETERMINISTIC SIMULATION", class_="sidebar-section-label mb-0"),
-                        ui.span("Offline Mode", class_="sidebar-badge-subtle"),
-                        class_="d-flex justify-content-between align-items-center mb-2",
-                    ),
-                    ui.p(
-                        "Active when Ollama is offline, or to test CTCAE rules directly without LLM extraction:",
-                        class_="small text-muted mb-2",
-                    ),
-                    ui.div(
-                        ui.input_checkbox(
-                            "outcome_present_input",
-                            "Assume outcomes are clinically present",
-                            value=True,
-                        ),
-                        class_="mb-1",
-                    ),
-                    ui.div(
-                        "When unchecked, outcomes evaluate as Absent (Grade 0). In online mode, the LLM extracts presence from text.",
-                        class_="small text-muted mb-2 ms-4",
-                        style="font-size: 0.75rem;",
-                    ),
-                    ui.div(
-                        ui.input_text_area(
-                            "manual_features_json",
-                            "Simulated Feature Values (JSON):",
-                            rows=3,
-                            value='{"care_setting": "inpatient", "pain_co_complication": false, "death_attributed": false, "life_support": false}',
-                        ),
-                        class_="simulation-json-wrapper",
-                    ),
-                    ui.div(
-                        "Manual feature simulation is retained for legacy testing; live clinical-note analysis uses PCAI/GPT-OSS.",
-                        class_="small text-muted mt-1 mb-0",
-                        style="font-size: 0.74rem;",
-                    ),
-                    class_="sidebar-panel-card sidebar-simulation-box mb-2",
+
+                ui.input_action_button(
+                    "btn_analyze",
+                    "Analyze & Grade Note",
+                    class_="btn btn-clinical-primary w-100 mt-1 mb-2",
                 ),
-                ui.input_action_button("btn_analyze", "Analyze & Grade Note", class_="btn btn-clinical-primary w-100 mt-1 mb-2"),
             )
 
     # Sync CSV fields when patient is selected
@@ -741,12 +627,10 @@ def server(input, output, session):
             )
             return
         results: dict[str, Any] = {}
-        raw_concurrency = current("live_concurrency_input", None)
-        try:
-            user_concurrency = int(raw_concurrency) if raw_concurrency is not None else get_live_concurrency(selected_model)
-        except (ValueError, TypeError):
-            user_concurrency = get_live_concurrency(selected_model)
-        model_concurrency = max(1, min(user_concurrency, len(outcome_ids)))
+        # Fixed sequential grading for stability and predictable progress:
+        # exactly one SCOGS outcome per PCAI request.
+        user_concurrency = 1
+        model_concurrency = 1
         if not outcome_ids:
             ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
             return
@@ -1091,6 +975,53 @@ def server(input, output, session):
         meta = FOCUS_OUTCOMES.get(str(state.get("outcome_num")), {})
         meta_info = f"Organ System: {meta.get('organ_system', 'General')} | Acuity: {meta.get('acuity', 'Standard')}"
 
+        grading_table_ui = None
+        table_info = SCOGS_14_DISPLAY_TABLES.get(str(state.get("outcome_num")))
+        if grade_val is not None and table_info:
+            grade_rows = []
+            for grade_num, definition in table_info.get("grades", {}).items():
+                is_selected = str(grade_num) == str(grade_val)
+                row_class = "scogs-grade-row scogs-grade-row-selected" if is_selected else "scogs-grade-row"
+                grade_rows.append(
+                    ui.tags.tr(
+                        ui.tags.td(
+                            ui.span(f"Grade {grade_num}", class_="scogs-grade-label"),
+                            class_="scogs-grade-col",
+                        ),
+                        ui.tags.td(str(definition), class_="scogs-grade-definition"),
+                        class_=row_class,
+                    )
+                )
+
+            grading_table_ui = ui.div(
+                ui.div(
+                    ui.div(
+                        ui.span("OFFICIAL SCOGS GRADING TABLE", class_="sidebar-section-label mb-0"),
+                        ui.span(
+                            f"Selected: Grade {grade_val}",
+                            class_="badge badge-grade-1",
+                        ),
+                        class_="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2",
+                    ),
+                    ui.tags.table(
+                        ui.tags.thead(
+                            ui.tags.tr(
+                                ui.tags.th("Grade", class_="scogs-grade-col"),
+                                ui.tags.th("Criteria"),
+                            )
+                        ),
+                        ui.tags.tbody(*grade_rows),
+                        class_="table table-sm scogs-grading-table mb-1",
+                    ),
+                    ui.div(
+                        f"SCOGS booklet • {table_info.get('title', state.get('outcome_name'))} • page {table_info.get('page')}",
+                        class_="small text-muted mt-2",
+                    ),
+                    class_="scogs-grading-table-wrap",
+                ),
+                class_="mt-3",
+            )
+
         return ui.card(
             ui.card_header(
                 ui.div(
@@ -1120,6 +1051,7 @@ def server(input, output, session):
                     ),
                     class_="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3",
                 ),
+                grading_table_ui,
                 class_="p-3",
             ),
         )
@@ -1198,10 +1130,11 @@ def server(input, output, session):
         return ui.div(
             ui.div(
                 ui.span(f"Patient ID: {state.get('patient_uid')}", class_="badge-engine me-2"),
-                ui.span(f"Sex: {state.get('patient_sex') or 'unknown'}", class_="badge-engine me-2"),
+                ui.span(f"Sex: {state.get('patient_sex') or 'unknown'}", class_="badge-engine me-2", style="display:none;"),
                 ui.span(
                     f"Age: {state.get('patient_age'):.1f} yrs" if state.get("patient_age") is not None else "Age: N/A",
                     class_="badge-engine",
+                    style="display:none;",
                 ),
                 class_="mb-2 d-flex align-items-center flex-wrap gap-1",
             ),
@@ -1215,6 +1148,11 @@ def server(input, output, session):
         # Read for its reactive dependencies only: re-render when the selected case changes.
         _ = get_current_view_state()
         mode = input.app_mode()
+
+        # Keep live telemetry implementation below for future use, but hide it
+        # from the live clinical workflow for a cleaner presentation.
+        if mode == "live":
+            return ui.div(style="display:none;")
 
         if mode == "explore":
             run_data = current_run_cache.get()

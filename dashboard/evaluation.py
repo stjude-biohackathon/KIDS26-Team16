@@ -976,6 +976,10 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
     )
 
     last_error = None
+    # GPT-OSS may use a substantial part of the completion budget for reasoning.
+    # Use the full 16,384-token completion allowance for every single-outcome
+    # request so the model has room to reason and still emit the final JSON.
+    token_budgets = (16384, 16384, 16384)
     for attempt in range(1, 4):
         try:
             kwargs = dict(
@@ -983,12 +987,16 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
                 messages=[
                     {
                         "role": "system",
-                        "content": "Apply the SCOGS rubric strictly. Return valid JSON only.",
+                        "content": (
+                            "Apply the SCOGS rubric strictly. "
+                            "Return the final answer immediately as one valid JSON object only. "
+                            "Do not include markdown."
+                        ),
                     },
                     {"role": "user", "content": _pcai_prompt(note_text + ("\n\nCLINICIAN CONTEXT: " + _pcai_json.dumps(patient_context, ensure_ascii=False) if patient_context else ""), rule)},
                 ],
                 temperature=0,
-                max_tokens=1800,
+                max_tokens=token_budgets[attempt - 1],
             )
             try:
                 response = client.chat.completions.create(
@@ -1003,7 +1011,15 @@ def _pcai_call_one(note_text: str, outcome_id: str, model: str = PCAI_MODEL, pat
                 else:
                     raise
 
-            item = _pcai_clean_json(_pcai_extract_text(response.choices[0].message))
+            choice = response.choices[0]
+            raw_final = _pcai_extract_text(choice.message)
+            if not raw_final:
+                finish_reason = getattr(choice, "finish_reason", None)
+                raise ValueError(
+                    f"GPT-OSS returned empty final content "
+                    f"(finish_reason={finish_reason!r}, max_tokens={token_budgets[attempt - 1]})."
+                )
+            item = _pcai_clean_json(raw_final)
             break
         except Exception as exc:
             last_error = exc
@@ -1463,17 +1479,17 @@ def get_concurrency_assessment(
     status = "safe" if conc <= 2 else "caution"
     display = ALLOWED_MODELS.get(model, model)
     if conc == 1:
-        msg = f"✓ {display}: 1 request at a time is the safest setting."
+        msg = f"✓ {display}: one outcome per PCAI request."
     elif conc == 2:
-        msg = f"✓ {display}: 2 parallel PCAI requests is the recommended speed setting."
+        msg = f"⚠️ {display}: parallel requests are disabled in the simplified dashboard."
     else:
         msg = (
             f"⚠️ {display}: {conc} parallel requests is experimental and may "
             "increase provider timeouts or rate limiting."
         )
     return {
-        "recommended": 2,
-        "max_safe": 2,
+        "recommended": 1,
+        "max_safe": 1,
         "estimated_ram_gb": 0.0,
         "total_ram_gb": 0.0,
         "status": status,
@@ -1483,7 +1499,7 @@ def get_concurrency_assessment(
 
 
 def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:
-    return 2
+    return 1
 
 
 def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST) -> bool:

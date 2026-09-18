@@ -1,0 +1,156 @@
+{
+  "28": {
+    "title": "Acute Sickle Cell Pain Episode",
+    "page": 71,
+    "grades": {
+      "1": "Acute pain episode requiring pain treatment at home for pain exacerbation",
+      "2": "Acute pain episode requiring a visit to a medical facility (including Day Hospital) for any type of treatment for pain AND NOT requiring admission",
+      "3": "Acute pain episode requiring admission AND NO evidence of organ failure or any of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis",
+      "4": "Acute pain episode complicated with organ failure OR one of the following complications: acute chest syndrome, respiratory distress, DVT, PE, stroke, splenic sequestration, or hyperhaemolysis OR resulting in a life-threatening complication where life-supporting treatment is indicated, including mechanical ventilation, vasopressors, renal replacement therapy, or other life-supporting treatments",
+      "5": "Death in the setting of acute pain episode"
+    }
+  },
+  "15": {
+    "title": "Stroke (Hemorrhagic or Ischemic)",
+    "page": 41,
+    "grades": {
+      "1": "Incidental radiographic findings only (ischemia, hemorrhage, encephalomalacia, hemosiderosis) AND NO history of neurologic symptoms of stroke; exclude silent cerebral infarct",
+      "2": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms resolved completely (TIA episode) OR mRS of 0 at discharge",
+      "3": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) AND mRS of 1-3 at discharge",
+      "4": "Neurological symptoms during acute stroke (according to the NIHSS) AND symptoms did not resolve completely (remained with at least one neurologic sequela as listed in NIHSS) AND mRS of 4-5 at discharge",
+      "5": "Death from stroke"
+    }
+  },
+  "29": {
+    "title": "Acute Splenic Sequestration",
+    "page": 73,
+    "grades": {
+      "1": "Splenic sequestration not requiring any treatment",
+      "2": "N/A",
+      "3": "Splenic sequestration requiring treatment (i.e. erythrocyte transfusion, IV fluids, etc.) AND NO hemodynamic instability AND NOT requiring splenectomy",
+      "4": "Splenic sequestration AND hemodynamic instability OR requiring splenectomy",
+      "5": "Death due to splenic sequestration"
+    }
+  },
+  "48": {
+    "title": "Acute Chest Syndrome (ACS)",
+    "page": 119,
+    "grades": {
+      "1": "Requiring none of the following: supplemental oxygen; simple or exchange erythrocyte transfusion; erythropoietin; BiPAP; any other supportive treatment other than antibiotics",
+      "2": "Requiring FiO2 > 21% to < 50% OR simple erythrocyte transfusion AND none of the following: BiPAP; high flow O2; exchange transfusion",
+      "3": "Requiring ≥ 50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion",
+      "4": "Requiring ≥ 50% FiO2 OR BiPAP OR high flow O2 OR exchange transfusion AND critical cardio-respiratory supportive interventions (e.g., vasoactive/vasopressor infusions, intubation, invasive mechanical ventilation)",
+      "5": "Death from ACS complications"
+    }
+  },
+  "24": {
+    "title": "Priapism",
+    "page": 63,
+    "grades": {
+      "1": "Priapism episode with or without the use of medications at home AND NOT requiring a visit to a medical facility",
+      "2": "Priapism episode requiring visit to a medical facility AND requiring treatment (e.g., medication) AND NO shunt",
+      "3": "Priapism episode requiring a visit to a medical facility AND requiring aspiration/irrigation AND NO shunt",
+      "4": "Priapism episode requiring a visit to a medical facility AND requiring shunt surgical intervention",
+      "5": "N/A"
+    }
+  },
+  "10": {
+    "title": "Chronic Pain",
+    "page": 31,
+    "grades": {
+      "1": "No unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the following in the past 3 months: Pain and Hurt Score ≥ 81; PROMIS T-score ≤ 48 on pain interference; PROMIS T-score ≤ 41 on pain behavior",
+      "2": "1-3 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the following in the past 3 months: Pain and Hurt Score 61-80; PROMIS T-score > 48 but ≤ 64 on pain interference; PROMIS T-score > 41 but ≤ 57 on pain behavior",
+      "3": "4-10 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least one of the following in the past 3 months: Pain and Hurt Score < 60; PROMIS T-score > 64 on pain interference; PROMIS T-score > 57 on pain behavior",
+      "4": "> 10 unplanned visits to medical facilities for pain treatment within a 12-month period OR at least two of the following in the past 3 months: Pain and Hurt Score < 60; PROMIS T-score > 64 on pain interference; PROMIS T-score > 57 on pain behavior",
+      "5": "N/A"
+    }
+  },
+  "21": {
+    "title": "Chronic Kidney Disease (CKD)",
+    "page": 57,
+    "grades": {
+      "1": "eGFR 60-89 mL/min/1.73 m² AND albuminuria < 30 mg/g",
+      "2": "eGFR 45-59 mL/min/1.73 m² AND albuminuria < 30 mg/g OR eGFR ≥ 60 mL/min/1.73 m² AND albuminuria 30-300 mg/g",
+      "3": "eGFR 30-44 mL/min/1.73 m² AND albuminuria < 30 mg/g OR eGFR 45-59 mL/min/1.73 m² AND albuminuria 30-300 mg/g OR eGFR 60-89 mL/min/1.73 m² AND albuminuria > 300 mg/g",
+      "4": "eGFR 45-59 mL/min/1.73 m² AND albuminuria > 300 mg/g OR eGFR 30-44 mL/min/1.73 m² AND albuminuria > 30 mg/g OR eGFR 15-29 mL/min/1.73 m²",
+      "5": "eGFR < 15 mL/min/1.73 m² OR death due to CKD"
+    }
+  },
+  "17": {
+    "title": "Sickle Cell Retinopathy (SCR)",
+    "page": 46,
+    "grades": {
+      "1": "Stage 1 or Stage 2 SCR without vision loss",
+      "2": "Stage 3 SCR without vision loss OR Stage 1 or Stage 2 SCR with vision loss",
+      "3": "Stage 4 or Stage 5 SCR OR any Stage SCR with legal blindness",
+      "4": "N/A",
+      "5": "N/A"
+    }
+  },
+  "11": {
+    "title": "Cognitive Dysfunction",
+    "page": 34,
+    "grades": {
+      "1": "IQ evaluation 1-2 SD below mean",
+      "2": "IQ evaluation 2-3 SD below mean",
+      "3": "IQ evaluation 3 SD or more below mean",
+      "4": "N/A",
+      "5": "N/A"
+    }
+  },
+  "47": {
+    "title": "Depression",
+    "page": 115,
+    "grades": {
+      "1": "Mild depressive symptoms OR PHQ-9 score 5-9 AND treatment not recommended",
+      "2": "Moderate depressive symptoms OR PHQ-9 score 10-14 AND limiting instrumental activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+      "3": "Severe depressive symptoms OR PHQ-9 score 15-19 AND limiting activities of daily living AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+      "4": "PHQ-9 score 20-27 OR life-threatening consequences (i.e., attempted suicide) OR threats of harm to self or others AND treatment recommended (e.g., pharmacologic intervention, behavioral therapy)",
+      "5": "Death due directly to depressive symptoms (e.g., suicide)"
+    }
+  },
+  "12": {
+    "title": "Elevated TCD Ultrasonography Velocity",
+    "page": 36,
+    "grades": {
+      "1": "TAMV 170-184 cm/s (TCD) [i.e. low conditional]",
+      "2": "TAMV 185-199 cm/s (TCD) [i.e. high conditional]",
+      "3": "TAMV ≥ 200 cm/s (TCD) [i.e. abnormal]",
+      "4": "N/A",
+      "5": "N/A"
+    }
+  },
+  "49": {
+    "title": "Asthma Exacerbation",
+    "page": 121,
+    "grades": {
+      "1": "Mild symptoms AND NO medical intervention indicated",
+      "2": "Symptomatic AND medical intervention sought (but NO supplemental oxygen) OR limiting instrumental activities of daily living (ADL) OR intermittent asthma requiring short-acting beta-agonists as needed AND NOT status asthmaticus",
+      "3": "Limiting self-care ADL OR supplemental oxygen indicated OR status asthmaticus",
+      "4": "Life-threatening respiratory or hemodynamic compromise (i.e., requiring intubation, pressors, invasive or non-invasive ventilation)",
+      "5": "Death due to asthma complications"
+    }
+  },
+  "39": {
+    "title": "Avascular Necrosis of Joints (AVN)",
+    "page": 97,
+    "grades": {
+      "1": "Radiological findings of AVN AND NOT symptomatic",
+      "2": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND NO intervention",
+      "3": "Radiological findings of AVN AND/OR limiting instrumental activities of daily living AND intervention with physical therapy, analgesics, bone remodeling agents OR invasive intervention with steroid injection or core decompression",
+      "4": "Radiological findings of AVN AND limiting instrumental activities of daily living AND invasive intervention with total joint replacement",
+      "5": "N/A"
+    }
+  },
+  "40": {
+    "title": "Leg Ulcer",
+    "page": 99,
+    "grades": {
+      "1": "Intact skin with skin induration AND hyperpigmentation associated with pain/itching/burning/warmth, possibly edema",
+      "2": "Partial thickness skin loss AND less than 8 cm² AND minimal exudate AND periwound intact",
+      "3": "Full thickness skin loss involving subcutaneous tissue AND greater than 8 cm² AND < 50% wound bed with necrotic tissue AND moderate exudate AND periwound intact",
+      "4": "Full thickness skin loss involving damage or necrosis extending to the fascia AND greater than 8 cm² AND ≥ 50% wound bed with necrotic tissue AND heavy exudate, possibly malodorous AND periwound erythema, maceration + clinical signs of infection",
+      "5": "N/A"
+    }
+  }
+}
