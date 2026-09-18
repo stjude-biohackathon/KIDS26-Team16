@@ -116,13 +116,15 @@ def test_is_ollama_available_offline():
 
 
 def test_allowed_models_and_model_choices():
-    from dashboard.evaluation import ALLOWED_MODELS, get_model_choices
+    from dashboard.evaluation import ALLOWED_MODELS, OLLAMA_NUM_CTX, get_model_choices
     assert "medgemma-1.5-4b-it" in ALLOWED_MODELS
-    assert "gemma4:21b" in ALLOWED_MODELS
+    assert "gemma4:12b" in ALLOWED_MODELS
     assert "medgemma-27b-f16" in ALLOWED_MODELS
+    assert OLLAMA_NUM_CTX == 16384
     choices = get_model_choices(host="http://localhost:59999")
-    for k in ("medgemma-1.5-4b-it", "gemma4:21b", "medgemma-27b-f16"):
+    for k in ("medgemma-1.5-4b-it", "gemma4:12b", "medgemma-27b-f16"):
         assert k in choices
+    assert "__custom__" in choices
 
 
 def test_save_live_run_results_creates_valid_run_file(tmp_path):
@@ -201,12 +203,12 @@ def test_check_ollama_status_offline():
 
 def test_check_ollama_status_and_choices_mocked(monkeypatch):
     from dashboard import evaluation
-    monkeypatch.setattr(evaluation, "get_installed_models", lambda host: ["medgemma-1.5-4b-it:latest", "gemma4:12b"])
+    monkeypatch.setattr(evaluation, "get_installed_models", lambda host: ["medgemma-1.5-4b-it:latest", "gemma4:12b", "llama3:8b"])
 
     status_ready, _ = evaluation.check_ollama_status("medgemma-1.5-4b-it")
     assert status_ready == "ready"
 
-    status_missing, _ = evaluation.check_ollama_status("gemma4:21b")
+    status_missing, _ = evaluation.check_ollama_status("medgemma-27b-f16")
     assert status_missing == "not_installed"
 
     choices_grouped = evaluation.get_model_choices(grouped=True)
@@ -214,14 +216,20 @@ def test_check_ollama_status_and_choices_mocked(monkeypatch):
     assert "medgemma-1.5-4b-it" in choices_grouped["Installed in Ollama"]
     assert "(Installed)" in choices_grouped["Installed in Ollama"]["medgemma-1.5-4b-it"]
     assert "gemma4:12b" in choices_grouped["Installed in Ollama"]
+    assert "llama3:8b" in choices_grouped["Installed in Ollama"]
 
     assert "Not Installed (Pull Required)" in choices_grouped
-    assert "gemma4:21b" in choices_grouped["Not Installed (Pull Required)"]
-    assert "(Not Installed)" in choices_grouped["Not Installed (Pull Required)"]["gemma4:21b"]
+    assert "medgemma-27b-f16" in choices_grouped["Not Installed (Pull Required)"]
+    assert "(Not Installed)" in choices_grouped["Not Installed (Pull Required)"]["medgemma-27b-f16"]
+    assert "Custom Model" in choices_grouped
+    assert "__custom__" in choices_grouped["Custom Model"]
 
     choices_flat = evaluation.get_model_choices(grouped=False)
     assert "(Installed)" in choices_flat["medgemma-1.5-4b-it"]
-    assert "(Not Installed)" in choices_flat["gemma4:21b"]
+    assert "(Installed)" in choices_flat["gemma4:12b"]
+    assert "(Installed)" in choices_flat["llama3:8b"]
+    assert "(Not Installed)" in choices_flat["medgemma-27b-f16"]
+    assert "__custom__" in choices_flat
 
 
 def test_get_live_concurrency():
@@ -271,5 +279,51 @@ def test_get_concurrency_assessment_model_tiers():
     # 12B model on 64 GB workstation
     res_12b_workstation = get_concurrency_assessment("gemma4:12b", concurrency=2, ram_gb=64.0)
     assert res_12b_workstation["status"] == "safe"
+
+
+def test_get_all_scogs_outcomes_and_choices():
+    from dashboard.evaluation import (
+        FOCUS_OUTCOMES,
+        TABLES,
+        get_all_scogs_outcomes,
+        get_outcome_choices,
+        outcome_display_name,
+    )
+
+    outcomes = get_all_scogs_outcomes()
+    assert len(outcomes) == 53
+    assert len(TABLES) == 53
+
+    focus_count = sum(1 for m in outcomes.values() if m["is_focus"])
+    non_focus_count = sum(1 for m in outcomes.values() if not m["is_focus"])
+    assert focus_count == 14
+    assert non_focus_count == 39
+
+    # Verify specific focus and non-focus outcomes
+    assert outcomes["15"]["is_focus"] is True
+    assert outcomes["15"]["name"] == "Stroke"
+    assert outcomes["01"]["is_focus"] is False
+    assert outcomes["01"]["name"] == "Arrhythmia"
+    assert outcomes["53"]["is_focus"] is False
+    assert outcomes["53"]["name"] == "Sleep Apnea (obstructive or central)"
+
+    # Test grouped choices
+    choices_grouped = get_outcome_choices(grouped=True)
+    assert "14 Core Focus Outcomes (Delphi Consensus)" in choices_grouped
+    assert "Additional SCOGS Decision Tables (39 Outcomes)" in choices_grouped
+    assert len(choices_grouped["14 Core Focus Outcomes (Delphi Consensus)"]) == 14
+    assert len(choices_grouped["Additional SCOGS Decision Tables (39 Outcomes)"]) == 39
+
+    # Test flat choices
+    choices_flat = get_outcome_choices(grouped=False)
+    assert len(choices_flat) == 53
+
+    # Test outcome display name resolution
+    assert outcome_display_name("1") == "Arrhythmia"
+    assert outcome_display_name("01") == "Arrhythmia"
+    assert outcome_display_name("15") == "Stroke"
+    assert outcome_display_name("28") == "Acute Sickle Cell Pain Episode (VOC)"
+    assert outcome_display_name("53") == "Sleep Apnea (obstructive or central)"
+
 
 

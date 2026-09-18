@@ -81,9 +81,9 @@ def validate_model(info: dict, strict: bool = True, model: str | None = None) ->
         if arch != "gemma3":
             raise ValueError(f"Expected MedGemma 1.5 4B with gemma3 architecture; got {arch!r}")
         return str(precision or quant or "custom")
-    elif "21b" in target or ("gemma4" in target and "27b" not in target):
+    elif "12b" in target or "21b" in target or ("gemma4" in target and "27b" not in target):
         if arch != "gemma4" and (not isinstance(count, (int, float)) or not 10e9 <= count < 25e9):
-            raise ValueError(f"Expected Gemma 4 21B architecture or parameter count; got arch={arch!r}, count={count!r}")
+            raise ValueError(f"Expected Gemma 4 12B/21B architecture or parameter count; got arch={arch!r}, count={count!r}")
         return str(precision or quant or "custom")
     else:
         # Default / MedGemma 27B strict validation
@@ -132,7 +132,9 @@ def preflight(model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST,
     tags = request_json(host, "/api/tags", timeout=timeout)
     canonical = model if ":" in model.rsplit("/", 1)[-1] else f"{model}:latest"
     entry = next((item for item in tags.get("models", [])
-                  if item.get("name") == canonical or item.get("model") == canonical), None)
+                  if item.get("name") == canonical or item.get("model") == canonical
+                  or item.get("name") == model or item.get("model") == model
+                  or str(item.get("name", "")).rstrip(":latest") == model.rstrip(":latest")), None)
     if entry is None or not entry.get("digest"):
         raise ValueError(f"No model digest found for {canonical}; check `ollama list`")
     reply = call_ollama(

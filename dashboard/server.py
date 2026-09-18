@@ -14,15 +14,21 @@ from dashboard.data import get_available_run_files, load_csv_notes, load_run_fil
 from dashboard.evaluation import (
     DEFAULT_LIVE_MODEL,
     FOCUS_OUTCOMES,
+    OLLAMA_NUM_CTX,
+    TABLES,
     check_ollama_status,
     detect_system_hardware,
     extract_and_grade_note,
+    get_all_scogs_outcomes,
     get_concurrency_assessment,
+    get_installed_models,
     get_live_concurrency,
     get_model_choices,
+    get_outcome_choices,
     grade_badge,
     is_derived,
     is_ollama_available,
+    normalize_outcome_id,
     save_live_run_results,
 )
 from dashboard.highlight import highlight_note_quotes
@@ -86,18 +92,30 @@ def server(input, output, session):
     def csv_notes():
         return load_csv_notes("data/clinical_notes.csv")
 
+    def get_effective_model() -> str:
+        try:
+            sel = input.live_model_select() if hasattr(input, "live_model_select") else None
+        except Exception:
+            sel = None
+        sel = sel or DEFAULT_LIVE_MODEL
+        if sel == "__custom__":
+            try:
+                custom = input.custom_model_input() if hasattr(input, "custom_model_input") else None
+            except Exception:
+                custom = None
+            if custom and custom.strip():
+                return custom.strip()
+            return DEFAULT_LIVE_MODEL
+        return sel
+
     @output
     @render.ui
     def header_status_badge():
-        selected_model = (
-            input.live_model_select()
-            if (hasattr(input, "live_model_select") and input.live_model_select())
-            else DEFAULT_LIVE_MODEL
-        )
+        selected_model = get_effective_model()
         status, _ = check_ollama_status(model=selected_model)
 
         if status == "ready":
-            return ui.span(f"Ollama Online ({selected_model})", class_="badge badge-grade-1", style="font-size: 0.76rem;")
+            return ui.span(f"Ollama Online ({selected_model} • 16,384 ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
         elif status == "not_installed":
             return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
         return ui.span("Ollama Offline", class_="badge bg-secondary", style="font-size: 0.76rem;")
@@ -105,11 +123,7 @@ def server(input, output, session):
     @output
     @render.ui
     def live_model_status_badge():
-        selected_model = (
-            input.live_model_select()
-            if (hasattr(input, "live_model_select") and input.live_model_select())
-            else DEFAULT_LIVE_MODEL
-        )
+        selected_model = get_effective_model()
         status, _ = check_ollama_status(model=selected_model)
 
         if status == "ready":
@@ -127,11 +141,7 @@ def server(input, output, session):
     @output
     @render.ui
     def live_concurrency_advisory():
-        selected_model = (
-            input.live_model_select()
-            if (hasattr(input, "live_model_select") and input.live_model_select())
-            else DEFAULT_LIVE_MODEL
-        )
+        selected_model = get_effective_model()
         try:
             val = input.live_concurrency_input()
             conc = int(val) if val else get_live_concurrency(selected_model)
@@ -154,12 +164,44 @@ def server(input, output, session):
         )
 
     @reactive.effect
-    @reactive.event(input.live_model_select)
+    @reactive.event(input.live_model_select, input.custom_model_input)
     def _update_concurrency_for_selected_model():
-        model = input.live_model_select()
+        model = get_effective_model()
         if model:
             rec = get_concurrency_assessment(model)["recommended"]
             ui.update_numeric("live_concurrency_input", value=rec)
+
+    @reactive.effect
+    @reactive.event(input.refresh_ollama_models)
+    def _refresh_ollama_models():
+        choices = get_model_choices(grouped=True, include_custom=True)
+        flat = get_model_choices(grouped=False, include_custom=True)
+        cur = input.live_model_select() if hasattr(input, "live_model_select") else None
+        sel = cur if cur in flat else DEFAULT_LIVE_MODEL
+        ui.update_select("live_model_select", choices=choices, selected=sel)
+        installed = get_installed_models()
+        if installed:
+            ui.notification_show(f"Refreshed: {len(installed)} model(s) served by Ollama.", type="message")
+        else:
+            ui.notification_show("Ollama is offline or reports 0 installed models.", type="warning")
+
+    @reactive.effect
+    @reactive.event(input.btn_select_14)
+    def _select_14_outcomes():
+        ui.update_selectize("live_outcome", selected=list(FOCUS_OUTCOMES))
+
+    @reactive.effect
+    @reactive.event(input.btn_select_53)
+    def _select_53_outcomes():
+        choices = get_outcome_choices(grouped=False)
+        ui.update_selectize("live_outcome", selected=list(choices.keys()))
+
+    @reactive.effect
+    @reactive.event(input.btn_clear_outcomes)
+    def _clear_outcomes():
+        ui.update_selectize("live_outcome", selected=[])
+
+
 
     # Dynamic Sidebar Controls
     @output
@@ -192,7 +234,7 @@ def server(input, output, session):
                     ftype = str(row.get("facility_type", ""))
                     csv_choices[str(idx)] = f"{pid} - {vdate} ({ftype})"
 
-            outcome_choices = {k: f"#{k} {v['name']}" for k, v in FOCUS_OUTCOMES.items()}
+            outcome_choices = get_outcome_choices(grouped=True)
 
             return ui.div(
                 ui.span("NOTE SOURCE & INFERENCE", class_="sidebar-section-label"),
@@ -201,6 +243,19 @@ def server(input, output, session):
                     "Inference Model:",
                     choices=model_choices,
                     selected=default_model,
+                ),
+                ui.panel_conditional(
+                    "input.live_model_select === '__custom__'",
+                    ui.input_text(
+                        "custom_model_input",
+                        "Custom Ollama Model Name / Tag:",
+                        placeholder="e.g. llama3.2:3b, mistral:7b, qwen2.5:7b",
+                    ),
+                ),
+                ui.input_action_button(
+                    "refresh_ollama_models",
+                    "↻ Refresh Ollama Models",
+                    class_="btn-sm btn-outline-secondary w-100 mb-2",
                 ),
                 ui.output_ui("live_model_status_badge"),
                 ui.input_numeric(
@@ -227,16 +282,110 @@ def server(input, output, session):
                         selected=next(iter(csv_choices.keys())) if csv_choices else None,
                     ),
                 ),
-                # All 14 focus outcomes by default: the clinical question is
-                # "what has this patient got?", which one outcome cannot answer.
-                # Narrowing the list is the way to a faster run, not the way in.
-                ui.input_selectize(
-                    "live_outcome",
-                    "Target Focus Outcomes:",
-                    choices=outcome_choices,
-                    selected=list(FOCUS_OUTCOMES),
-                    multiple=True,
-                    options={"plugins": ["remove_button"]},
+                ui.input_radio_buttons(
+                    "live_outcome_mode",
+                    "Target Outcomes Scope:",
+                    choices={
+                        "14_focus": "#14 Focus Outcomes (Default)",
+                        "all_53": "All 53 SCOGS Outcomes",
+                        "custom": "Custom Selection (Pick & Choose)",
+                    },
+                    selected="14_focus",
+                ),
+                ui.panel_conditional(
+                    "input.live_outcome_mode === '14_focus'",
+                    ui.div(
+                        ui.div(
+                            ui.span("🎯 14 Core Consensus Outcomes Active", class_="fw-bold d-block text-primary"),
+                            ui.span(
+                                "Evaluates the 14 Delphi focus outcomes: VOC (#28), Stroke (#15), ACS (#48), Priapism (#24), "
+                                "Splenic Sequestration (#29), CKD (#21), Retinopathy (#17), Chronic Pain (#10), "
+                                "Cognitive Dysfunction (#11), TCD (#12), Depression (#47), Asthma (#49), "
+                                "AVN (#39), and Leg Ulcer (#40).",
+                                class_="small text-muted",
+                            ),
+                            class_="p-2 rounded bg-body-tertiary border mb-2",
+                            style="font-size: 0.75rem; line-height: 1.35;",
+                        ),
+                    ),
+                ),
+                ui.panel_conditional(
+                    "input.live_outcome_mode === 'all_53'",
+                    ui.div(
+                        ui.div(
+                            ui.span("🌐 All 53 SCOGS Decision Tables Active", class_="fw-bold d-block text-success"),
+                            ui.span(
+                                "Comprehensive evaluation across all 53 CTCAE v5.0 and Delphi consensus tables (#01 to #53).",
+                                class_="small text-muted",
+                            ),
+                            class_="p-2 rounded bg-body-tertiary border mb-2",
+                            style="font-size: 0.75rem; line-height: 1.35;",
+                        ),
+                    ),
+                ),
+                ui.panel_conditional(
+                    "input.live_outcome_mode === 'custom'",
+                    ui.div(
+                        ui.layout_columns(
+                            ui.input_action_button("btn_select_14", "Select 14 Focus", class_="btn-sm btn-outline-primary w-100"),
+                            ui.input_action_button("btn_select_53", "Select All 53", class_="btn-sm btn-outline-secondary w-100"),
+                            ui.input_action_button("btn_clear_outcomes", "Clear", class_="btn-sm btn-outline-danger w-100"),
+                            col_widths=[5, 5, 2],
+                            class_="mb-1",
+                        ),
+                        ui.input_selectize(
+                            "live_outcome",
+                            "Choose Target Outcomes:",
+                            choices=outcome_choices,
+                            selected=list(FOCUS_OUTCOMES),
+                            multiple=True,
+                            options={"plugins": ["remove_button"], "placeholder": "Search by outcome name or #number..."},
+                        ),
+                    ),
+                ),
+                ui.tags.details(
+                    ui.tags.summary(
+                        ui.span("📖 Directory of All 53 Possible Outcomes", class_="fw-semibold text-primary", style="cursor: pointer; font-size: 0.78rem;"),
+                        class_="mt-1 mb-2",
+                    ),
+                    ui.div(
+                        ui.div(
+                            ui.tags.table(
+                                ui.tags.thead(
+                                    ui.tags.tr(
+                                        ui.tags.th("#", style="width: 15%;"),
+                                        ui.tags.th("Outcome", style="width: 55%;"),
+                                        ui.tags.th("Organ System", style="width: 30%;"),
+                                    ),
+                                    style="font-size: 0.74rem;",
+                                ),
+                                ui.tags.tbody(
+                                    *[
+                                        ui.tags.tr(
+                                            ui.tags.td(
+                                                ui.span(
+                                                    f"#{norm}",
+                                                    class_="badge badge-grade-1" if meta["is_focus"] else "badge bg-secondary-subtle text-secondary-emphasis",
+                                                    style="font-size: 0.7rem;",
+                                                )
+                                            ),
+                                            ui.tags.td(
+                                                ui.span(meta["name"], class_="fw-medium" if meta["is_focus"] else ""),
+                                                ui.span(" ★", class_="text-primary small fw-bold") if meta["is_focus"] else "",
+                                            ),
+                                            ui.tags.td(ui.span(meta["organ_system"], class_="text-muted small")),
+                                            style="font-size: 0.73rem;",
+                                        )
+                                        for norm, meta in get_all_scogs_outcomes().items()
+                                    ]
+                                ),
+                                class_="table table-sm table-hover mb-0",
+                            ),
+                            style="max-height: 220px; overflow-y: auto; border: 1px solid var(--bs-border-color); border-radius: 6px;",
+                        ),
+                        ui.p("★ Green badge indicates a core Focus Outcome.", class_="text-muted mt-1 mb-2", style="font-size: 0.7rem;"),
+                    ),
+                    class_="mb-2",
                 ),
                 ui.layout_columns(
                     ui.input_numeric("patient_age_input", "Age (years):", value=None, min=0.0, max=120.0, step=0.5),
@@ -411,14 +560,31 @@ def server(input, output, session):
         return ui.input_select("selected_outcome_num", "Select Outcome:", choices=choices, selected=selected_k)
 
     def selected_live_outcomes() -> list[str]:
-        """-> the outcomes the live evaluator grades: the sidebar's picks, or all
-        14 focus outcomes while it has not reported them or the clinician has
-        cleared the box."""
-        picked = current("live_outcome") or ()
-        if isinstance(picked, str):
-            picked = (picked,)
-        chosen = [str(num) for num in picked if str(num) in FOCUS_OUTCOMES]
-        return chosen or list(FOCUS_OUTCOMES)
+        """-> the outcomes the live evaluator grades: 14 focus (default), all 53, or custom picks."""
+        mode = current("live_outcome_mode", "14_focus")
+        picked = current("live_outcome")
+
+        if mode == "all_53":
+            return [normalize_outcome_id(k) for k in sorted(TABLES.keys())]
+        elif mode == "custom":
+            if picked:
+                if isinstance(picked, str):
+                    picked = (picked,)
+                chosen = [normalize_outcome_id(num) for num in picked if normalize_outcome_id(num) in TABLES]
+                if chosen:
+                    return chosen
+            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
+        else:
+            # Mode "14_focus" (default)
+            # If specifically overridden in a test or caller passing a custom subset in live_outcome:
+            if picked is not None:
+                if isinstance(picked, str):
+                    picked = (picked,)
+                picked_norm = [normalize_outcome_id(p) for p in picked if normalize_outcome_id(p) in TABLES]
+                focus_norm = [normalize_outcome_id(f) for f in FOCUS_OUTCOMES]
+                if set(picked_norm) != set(focus_norm) and len(picked_norm) > 0:
+                    return picked_norm
+            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
 
     def live_outcome_num(results: dict | None) -> str:
         """-> the outcome the live cards below the overview show: the pill the
@@ -454,7 +620,7 @@ def server(input, output, session):
         # of blocking work, and on the event loop it starves the session's
         # websocket: the browser gives up on the ping, and the finished results
         # are then written to a closed socket ("socket.send() raised exception").
-        selected_model = current("live_model_select", DEFAULT_LIVE_MODEL) or DEFAULT_LIVE_MODEL
+        selected_model = get_effective_model()
         online = await asyncio.to_thread(is_ollama_available, model=selected_model)
         results: dict[str, Any] = {}
         raw_concurrency = current("live_concurrency_input", None)
@@ -480,6 +646,7 @@ def server(input, output, session):
                     # selected outcome is graded against it.
                     manual_features={num: dict(manual_dict) for num in chunk},
                     concurrency=model_concurrency,
+                    num_ctx=OLLAMA_NUM_CTX,
                 ))
                 live_eval_result.set(dict(results))
                 progress.set(len(results), detail=f"{len(results)} of {len(outcome_ids)}")
@@ -495,6 +662,7 @@ def server(input, output, session):
                 backend="ollama" if online else "deterministic",
                 patient_age=patient_age,
                 patient_sex=patient_sex,
+                num_ctx=OLLAMA_NUM_CTX,
             )
             ui.notification_show(
                 f"Analysis and grading complete ({len(results)} outcomes). Saved to {saved_path}",
@@ -900,11 +1068,7 @@ def server(input, output, session):
                 ),
             )
         else:
-            live_model = (
-                input.live_model_select()
-                if (hasattr(input, "live_model_select") and input.live_model_select())
-                else DEFAULT_LIVE_MODEL
-            )
+            live_model = get_effective_model()
             status, _ = check_ollama_status(model=live_model)
 
             try:

@@ -205,9 +205,48 @@ def test_live_model_status_badge_installed_and_uninstalled(monkeypatch):
     assert "Ollama Online" in out_installed["live_model_status_badge"]
     assert "Ready" in out_installed["live_model_status_badge"]
 
-    # When gemma4:21b is selected (not installed)
-    out_uninstalled = _render(mode="live", then={"live_model_select": "gemma4:21b"}, inputs={})
+    # When gemma4:12b is selected (not installed)
+    out_uninstalled = _render(mode="live", then={"live_model_select": "gemma4:12b"}, inputs={})
     assert "Model Not Installed" in out_uninstalled["live_model_status_badge"]
-    assert "gemma4:21b" in out_uninstalled["live_model_status_badge"]
+    assert "gemma4:12b" in out_uninstalled["live_model_status_badge"]
     assert "ollama pull" in out_uninstalled["live_model_status_badge"]
+
+    # When custom model is entered
+    out_custom = _render(
+        mode="live",
+        then={"live_model_select": "__custom__", "custom_model_input": "custom-biomed-model"},
+        inputs={},
+    )
+    assert "custom-biomed-model" in out_custom["live_model_status_badge"]
+
+
+def test_live_outcome_modes_and_directory():
+    from tests.shiny_session import live
+
+    sidebar = live()["sidebar_controls"]
+    # Radio buttons for scope
+    assert "live_outcome_mode" in sidebar
+    assert "14 Focus Outcomes" in sidebar
+    assert "All 53 SCOGS Outcomes" in sidebar
+    assert "Custom Selection" in sidebar
+
+    # Directory of all 53 tables
+    assert "Directory of All 53 Possible Outcomes" in sidebar
+    assert "#01" in sidebar
+    assert "Arrhythmia" in sidebar
+    assert "#53" in sidebar
+    assert "Sleep Apnea" in sidebar
+
+
+def test_live_analysis_all_53_outcomes():
+    from tests.shiny_session import analyze_live_note
+
+    out = analyze_live_note(live_outcome_mode="all_53")
+    assert "53 outcomes graded" in out["outcomes_card_title"]
+    summary = out["patient_outcomes_summary_ui"]
+    assert "Arrhythmia" in summary
+    assert "Sleep Apnea" in summary
+    assert "Stroke" in summary
+
+
 

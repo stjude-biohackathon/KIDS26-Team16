@@ -45,10 +45,12 @@ FOCUS_OUTCOMES: dict[str, dict[str, str]] = {
 # Supported models for live extraction
 ALLOWED_MODELS: dict[str, str] = {
     "medgemma-1.5-4b-it": "MedGemma 1.5 4B-IT",
-    "gemma4:21b": "Gemma 4 21B",
+    "gemma4:12b": "Gemma 4 12B",
     "medgemma-27b-f16": "MedGemma 27B",
 }
 DEFAULT_LIVE_MODEL = "medgemma-1.5-4b-it"
+OLLAMA_NUM_CTX = 16384
+
 
 
 def get_installed_models(host: str = DEFAULT_HOST) -> list[str]:
@@ -104,7 +106,7 @@ def check_ollama_status(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOS
         return ("not_installed", f"Model '{model}' not installed in Ollama")
 
 
-def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False) -> dict[str, Any]:
+def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False, include_custom: bool = True) -> dict[str, Any]:
     """-> choices mapping for live evaluation.
 
     Categorizes models into installed and not-installed, clearly labeled.
@@ -128,8 +130,14 @@ def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False) -> dict[s
         for tag, label in ALLOWED_MODELS.items():
             uninstalled_group[tag] = f"{label} (Ollama Offline)"
         if grouped:
-            return {"Supported Models (Ollama Offline)": uninstalled_group}
-        return uninstalled_group
+            res_offline: dict[str, dict[str, str]] = {"Supported Models (Ollama Offline)": uninstalled_group}
+            if include_custom:
+                res_offline["Custom Model"] = {"__custom__": "Custom / Other Ollama Model..."}
+            return res_offline
+        res_offline_flat = dict(uninstalled_group)
+        if include_custom:
+            res_offline_flat["__custom__"] = "Custom / Other Ollama Model..."
+        return res_offline_flat
 
     for tag, label in ALLOWED_MODELS.items():
         if is_model_installed(tag, installed_tags):
@@ -148,9 +156,14 @@ def get_model_choices(host: str = DEFAULT_HOST, grouped: bool = False) -> dict[s
             res["Installed in Ollama"] = installed_group
         if uninstalled_group:
             res["Not Installed (Pull Required)"] = uninstalled_group
+        if include_custom:
+            res["Custom Model"] = {"__custom__": "Custom / Other Ollama Model..."}
         return res
 
-    return {**installed_group, **uninstalled_group}
+    res_flat = {**installed_group, **uninstalled_group}
+    if include_custom:
+        res_flat["__custom__"] = "Custom / Other Ollama Model..."
+    return res_flat
 
 
 # The patient id a pasted note gets inside the harness; it never leaves this module.
@@ -234,31 +247,47 @@ def get_concurrency_assessment(
         ram = float(ram_gb)
 
     model_lower = (model or "").lower()
-    if "4b" in model_lower:
+    import re
+    m = re.search(r"(\d+(?:\.\d+)?)\s*b\b", model_lower)
+    param_b = float(m.group(1)) if m else None
+
+    if "4b" in model_lower or (param_b is not None and param_b <= 5.0):
         weight_gb = 2.4
         kv_slot_gb = 1.0
         rec = 4 if ram >= 12 else 2
         max_safe = 4 if ram < 32 else 8
-        model_tier = "4B"
-    elif any(k in model_lower for k in ("12b", "14b")):
+        model_tier = f"{int(param_b) if param_b else 4}B"
+    elif any(k in model_lower for k in ("7b", "8b", "9b")) or (param_b is not None and 5.0 < param_b <= 10.0):
+        weight_gb = 5.5
+        kv_slot_gb = 1.5
+        rec = 2 if ram >= 16 else 1
+        max_safe = 2 if ram <= 16 else 4
+        model_tier = f"{int(param_b) if param_b else 8}B"
+    elif any(k in model_lower for k in ("12b", "14b")) or (param_b is not None and 10.0 < param_b <= 16.0):
         weight_gb = 8.0
         kv_slot_gb = 2.0
         rec = 1 if ram <= 16 else 2
         max_safe = 1 if ram <= 16 else 3
         model_tier = "12B"
-    elif any(k in model_lower for k in ("20b", "21b")):
+    elif any(k in model_lower for k in ("20b", "21b")) or (param_b is not None and 16.0 < param_b <= 24.0):
         weight_gb = 14.0
         kv_slot_gb = 2.5
         rec = 1 if ram <= 24 else 2
         max_safe = 1 if ram <= 24 else 2
         model_tier = "21B"
+    elif param_b is not None and param_b > 45.0:
+        weight_gb = 45.0
+        kv_slot_gb = 5.0
+        rec = 1
+        max_safe = 1 if ram < 64 else 2
+        model_tier = f"{int(param_b)}B"
     else:
-        # Default / 27B models
+        # Default / 27B-35B models
         weight_gb = 27.0
         kv_slot_gb = 3.5
         rec = 1 if ram <= 32 else 2
         max_safe = 1 if ram <= 32 else 2
-        model_tier = "27B"
+        model_tier = f"{int(param_b)}B" if param_b else "27B"
 
     conc = max(1, int(concurrency))
     est_footprint = round(weight_gb + (conc * kv_slot_gb), 1)
@@ -304,6 +333,107 @@ def get_live_concurrency(model: str = DEFAULT_LIVE_MODEL) -> int:
 SEX_TO_SCHEMA = {"m": "male", "male": "male", "f": "female", "female": "female"}
 
 
+OUTCOME_ORGAN_SYSTEMS: dict[str, str] = {
+    "01": "Cardiovascular",
+    "02": "Cardiovascular",
+    "03": "Cardiovascular",
+    "04": "Cardiovascular",
+    "05": "Cardiovascular",
+    "06": "Cardiovascular",
+    "07": "Cardiovascular",
+    "08": "Cardiovascular",
+    "09": "Central Nervous System",
+    "10": "Pain / Neurological",
+    "11": "Neurological",
+    "12": "Neurological / Screening",
+    "13": "Central Nervous System",
+    "14": "Central Nervous System",
+    "15": "Neurological",
+    "16": "Eyes & ENT",
+    "17": "Ophthalmologic",
+    "18": "Gastrointestinal",
+    "19": "Renal",
+    "20": "Renal",
+    "21": "Renal",
+    "22": "Genitourinary (Female)",
+    "23": "Genitourinary (Male)",
+    "24": "Genitourinary (Male)",
+    "25": "Growth & Development",
+    "26": "Growth & Development",
+    "27": "Growth & Development",
+    "28": "Pain / Vascular",
+    "29": "Hematologic",
+    "30": "Hematologic / Transfusion",
+    "31": "Hematologic",
+    "32": "Hematologic / Hepatic",
+    "33": "Hematologic",
+    "34": "Hematologic / Iron",
+    "35": "Hematologic / Infection",
+    "36": "Infectious Disease",
+    "37": "Infectious Disease",
+    "38": "Malignancies",
+    "39": "Musculoskeletal",
+    "40": "Dermatologic",
+    "41": "Musculoskeletal",
+    "42": "Musculoskeletal",
+    "43": "Multiorgan",
+    "44": "Pregnancy & Perinatal",
+    "45": "Pregnancy & Perinatal",
+    "46": "Pregnancy & Perinatal",
+    "47": "Psychiatric",
+    "48": "Pulmonary",
+    "49": "Pulmonary",
+    "50": "Pulmonary",
+    "51": "Pulmonary",
+    "52": "Pulmonary",
+    "53": "Pulmonary / Sleep",
+}
+
+
+def get_all_scogs_outcomes() -> dict[str, dict[str, Any]]:
+    """-> metadata for all 53 SCOGS decision tables."""
+    outcomes: dict[str, dict[str, Any]] = {}
+    for num in sorted(TABLES.keys()):
+        table = TABLES[num]
+        norm = normalize_outcome_id(num)
+        int_id = str(int(norm))
+        is_focus = int_id in FOCUS_OUTCOMES or norm in FOCUS_OUTCOMES
+        focus_meta = FOCUS_OUTCOMES.get(int_id) or FOCUS_OUTCOMES.get(norm)
+        name = focus_meta["name"] if focus_meta else table.name
+        organ = focus_meta.get("organ_system") if focus_meta else OUTCOME_ORGAN_SYSTEMS.get(norm, "General")
+        outcomes[norm] = {
+            "id": norm,
+            "int_id": int_id,
+            "name": name,
+            "table_name": table.name,
+            "organ_system": organ,
+            "is_focus": is_focus,
+        }
+    return outcomes
+
+
+def get_outcome_choices(grouped: bool = True) -> dict[str, Any]:
+    """-> choice dictionary for selectize input containing all 53 outcomes."""
+    all_outcomes = get_all_scogs_outcomes()
+    focus_group: dict[str, str] = {}
+    other_group: dict[str, str] = {}
+
+    for norm, meta in all_outcomes.items():
+        choice_key = meta["int_id"] if meta["is_focus"] else norm
+        label = f"#{norm} {meta['name']}"
+        if meta["is_focus"]:
+            focus_group[choice_key] = f"{label} (Focus • {meta['organ_system']})"
+        else:
+            other_group[choice_key] = f"{label} ({meta['organ_system']})"
+
+    if grouped:
+        return {
+            "14 Core Focus Outcomes (Delphi Consensus)": focus_group,
+            "Additional SCOGS Decision Tables (39 Outcomes)": other_group,
+        }
+    return {**focus_group, **other_group}
+
+
 def normalize_outcome_id(raw: str | int) -> str:
     """-> a two-digit outcome id ("5" -> "05"); non-numeric ids pass through."""
     return f"{int(raw):02d}" if str(raw).isdigit() else str(raw)
@@ -311,8 +441,14 @@ def normalize_outcome_id(raw: str | int) -> str:
 
 def outcome_display_name(outcome: str) -> str:
     """-> the dashboard's name for an outcome, falling back to the rubric's."""
-    table = TABLES.get(outcome)
-    return FOCUS_OUTCOMES.get(outcome, {}).get("name") or getattr(table, "name", f"Outcome {outcome}")
+    norm = normalize_outcome_id(outcome)
+    int_id = str(int(norm)) if norm.isdigit() else norm
+    table = TABLES.get(norm) or TABLES.get(outcome)
+    return (
+        FOCUS_OUTCOMES.get(int_id, {}).get("name")
+        or FOCUS_OUTCOMES.get(outcome, {}).get("name")
+        or getattr(table, "name", f"Outcome {outcome}")
+    )
 
 
 def clinician_context(patient_sex: str | None, patient_age: Any) -> dict[str, Any]:
@@ -362,7 +498,7 @@ def extract_with_harness(note_text: str, outcomes: list[str], *, backend: str = 
                          model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST,
                          prompt_stage: str = DEFAULT_PROMPT_STAGE, patient_sex: str = "unknown",
                          patient_age: Any = None, concurrency: int = 1,
-                         num_ctx: int = 16384) -> dict[str, dict[str, Any]]:
+                         num_ctx: int = OLLAMA_NUM_CTX) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for one pasted note, extracted exactly as the CLI does.
 
     Runs the note as a one-note batch through `run()`: the CLI's prompt stage,
@@ -399,7 +535,7 @@ def extract_and_grade_note(note_text: str, outcomes: list[str],
                            manual_features: dict[str, dict[str, Any]] | None = None,
                            model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOST,
                            concurrency: int | None = None,
-                           num_ctx: int = 16384) -> dict[str, dict[str, Any]]:
+                           num_ctx: int = OLLAMA_NUM_CTX) -> dict[str, dict[str, Any]]:
     """-> {outcome: result item} for the live evaluator, from the model or from typed values.
 
     Every item has the same keys in both modes, so the UI renders them identically.
@@ -460,7 +596,7 @@ def is_ollama_available(model: str = DEFAULT_LIVE_MODEL, host: str = DEFAULT_HOS
     if status != "ready":
         return False
     try:
-        preflight(model=model, host=host, timeout=PREFLIGHT_TIMEOUT, strict=False)
+        preflight(model=model, host=host, timeout=PREFLIGHT_TIMEOUT, strict=False, num_ctx=OLLAMA_NUM_CTX)
         return True
     except Exception:
         return False
@@ -475,7 +611,7 @@ def save_live_run_results(
     patient_age: Any = None,
     patient_sex: str | None = None,
     output_dir: str | Path = "results/live",
-    num_ctx: int = 16384,
+    num_ctx: int = OLLAMA_NUM_CTX,
 ) -> Path:
     """Save live note evaluation results to a JSON file compatible with the run explorer.
 
