@@ -25,9 +25,9 @@ OUTCOME_BUCKETS = (PRESENT, CANNOT_GRADE, ABSENT)
 #: Headings over each group in the overview, and the short words the filter
 #: above it uses for the same three groups.
 BUCKET_LABELS = {
-    PRESENT: "Complications Detected & Graded",
-    CANNOT_GRADE: "Detected Complications (Missing Rule Criteria)",
-    ABSENT: "Confirmed Absent Outcomes",
+    PRESENT: "Present / Graded",
+    CANNOT_GRADE: "Present / Cannot Grade Exactly",
+    ABSENT: "Not Present",
 }
 FILTER_LABELS = {
     PRESENT: "Present",

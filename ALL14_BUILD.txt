@@ -1,0 +1,7 @@
+PCAI_2 QWEN ALL14 BUILD
+- Qwen3.8 27B FP8
+- 4096 output tokens default (PCAI_MAX_TOKENS can override)
+- Exactly 1 outcome request at a time
+- Always grades all 14 PI-finalized outcomes
+- Overview shows Present, Cannot Grade, and Not Present by default
+- Explicit event/synonym presence rule strengthened

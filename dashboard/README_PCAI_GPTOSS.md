@@ -103,3 +103,54 @@ Every GPT-OSS single-outcome grading request now uses:
 
 This applies to the initial request and retries. The dashboard still grades one
 outcome per request.
+
+
+## v11 — speed diagnostics
+
+This version keeps the existing behavior of one outcome at a time and
+`max_tokens=16384`, but makes the bottleneck measurable.
+
+Changes:
+- Reuses a single PCAI/OpenAI client connection pool instead of recreating it
+  for every outcome.
+- Uses at most one retry per outcome instead of two retries after the first try.
+- Prints per-outcome START / RESPONSE / ERROR timing to the PowerShell terminal.
+- Shows the current outcome name in the Shiny progress indicator.
+- Saves and displays response latency, finish reason, token usage (when returned),
+  and a collapsed copy of the raw GPT-OSS response.
+
+
+## v12 — no explicit max_tokens
+
+The PCAI GPT-OSS request no longer sends a `max_tokens` parameter. The provider/model
+now uses its default completion behavior. All other speed diagnostics remain in place.
+
+
+## v13 — fast per-outcome confidence + conformal display
+
+This version is based on the speed/no-explicit-max-tokens dashboard.
+
+- Model-Level Confidence is outcome-specific validation grade accuracy.
+- Individual-Level Confidence is expected-evidence support for the current
+  labeled validation case.
+- Confidence is computed once after the run and cached; it does not make
+  additional PCAI calls and does not rescan saved results per card.
+- Existing conformal prediction-set display remains enabled and is read from
+  each outcome's `extracted_features`.
+- No API key is included in the repository or ZIP. `PCAI_API_KEY` must be set
+  in the terminal environment before Shiny is launched.
+
+## v14 — timeout fix / fast PCAI request behavior
+
+The GPT-OSS outcome request now matches the known-fast PCAI build again:
+
+- Restores an explicit `max_tokens=16384` completion/reasoning cap by default.
+- The cap is configurable with the `PCAI_MAX_TOKENS` environment variable.
+- Uses a fresh OpenAI/PCAI client for each outcome request instead of a cached
+  connection pool, avoiding stale pooled connections that can wait until timeout.
+- Keeps `reasoning_effort="low"`, per-outcome timing diagnostics, validation
+  confidence, and conformal display from PCAI_2.
+
+PowerShell override example:
+
+`$env:PCAI_MAX_TOKENS="16384"`

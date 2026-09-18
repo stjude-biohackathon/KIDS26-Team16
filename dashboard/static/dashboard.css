@@ -1341,3 +1341,70 @@ textarea,
 .scogs-grade-row-selected .scogs-grade-label {
   color: var(--bs-primary);
 }
+
+
+/* v11: PCAI speed diagnostics */
+.raw-response-details {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.45rem;
+  background: var(--bs-tertiary-bg);
+  padding: 0.55rem 0.7rem;
+}
+.raw-response-summary {
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 650;
+  color: var(--bs-secondary-color);
+}
+.raw-response-pre {
+  margin: 0.65rem 0 0;
+  padding: 0.7rem;
+  max-height: 18rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  border-radius: 0.35rem;
+  background: var(--bs-body-bg);
+}
+
+
+/* v13: fast outcome-specific validation confidence */
+.validation-confidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+}
+.validation-confidence-box {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  background: var(--bs-tertiary-bg);
+  padding: 0.6rem 0.7rem;
+}
+.validation-confidence-label {
+  display: block;
+  color: var(--bs-secondary-color);
+  font-size: 0.62rem;
+  line-height: 1.15;
+  letter-spacing: 0.05em;
+  font-weight: 750;
+  margin-bottom: 0.2rem;
+}
+.validation-confidence-value {
+  font-size: 1.05rem;
+  line-height: 1.15;
+  font-weight: 800;
+}
+.validation-confidence-sub {
+  color: var(--bs-secondary-color);
+  font-size: 0.67rem;
+  line-height: 1.25;
+  margin-top: 0.25rem;
+}
+@media (max-width: 767.98px) {
+  .validation-confidence-grid {
+    grid-template-columns: 1fr;
+  }
+}

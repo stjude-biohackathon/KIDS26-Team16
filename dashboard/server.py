@@ -35,6 +35,7 @@ from dashboard.evaluation import (
     screened_out_item,
 )
 from dashboard.highlight import highlight_note_quotes
+from dashboard.validation_metrics_fast import per_outcome_confidence
 from dashboard.view_state import (
     ABSENT,
     BUCKET_LABELS,
@@ -97,6 +98,7 @@ def server(input, output, session):
     # Reactive state
     current_run_cache = reactive.value(None)
     live_eval_result = reactive.value(None)
+    live_outcome_confidence = reactive.value({})
     session_case_outcomes: dict[tuple[str, str], str] = {}
 
     def current(name: str, default: Any = None) -> Any:
@@ -143,7 +145,7 @@ def server(input, output, session):
         status, _ = check_ollama_status(model=selected_model)
 
         if status == "ready":
-            return ui.span(f"PCAI Online ({selected_model} • 16,384 ctx)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
+            return ui.span(f"PCAI Online ({selected_model} • all 14 sequential)", class_="badge badge-grade-1", style="font-size: 0.76rem;")
         elif status == "not_installed":
             return ui.span(f"Model Not Installed ({selected_model})", class_="badge badge-cannot-grade", style="font-size: 0.76rem;")
         return ui.span("PCAI Not Configured", class_="badge bg-secondary", style="font-size: 0.76rem;")
@@ -309,7 +311,7 @@ def server(input, output, session):
                     ui.input_select(
                         "live_model_select",
                         "PCAI Grading Model:",
-                        choices={DEFAULT_LIVE_MODEL: "GPT-OSS 120B"},
+                        choices={DEFAULT_LIVE_MODEL: "Qwen3.8 27B FP8"},
                         selected=DEFAULT_LIVE_MODEL,
                     ),
                     ui.input_numeric(
@@ -358,7 +360,7 @@ def server(input, output, session):
                 ui.div(
                     ui.div(
                         ui.span("CLINICAL NOTE", class_="sidebar-section-label mb-0"),
-                        ui.span("GPT-OSS 120B", class_="sidebar-badge-subtle"),
+                        ui.span("Qwen3.8 27B FP8", class_="sidebar-badge-subtle"),
                         class_="d-flex justify-content-between align-items-center mb-2",
                     ),
                     ui.input_text_area(
@@ -369,7 +371,7 @@ def server(input, output, session):
                     ),
                     ui.div(
                         ui.span("● PCAI Online", class_="badge badge-grade-1 me-1"),
-                        ui.span("GPT-OSS 120B • one outcome at a time", class_="small text-muted"),
+                        ui.span("Qwen3.8 27B FP8 • 4K output • 1 outcome at a time", class_="small text-muted"),
                         class_="d-flex align-items-center flex-wrap gap-1 mt-2",
                     ),
                     class_="sidebar-panel-card mb-2",
@@ -557,30 +559,13 @@ def server(input, output, session):
         )
 
     def selected_live_outcomes() -> list[str]:
-        """-> the outcomes the live evaluator grades: 14 focus (default), all 53, or custom picks."""
-        mode = current("live_outcome_mode", "14_focus")
-        picked = current("live_outcome")
+        """Always grade the complete PI-finalized 14-outcome SCOGS scope.
 
-        if mode == "all_53":
-            return [normalize_outcome_id(k) for k in sorted(TABLES.keys())]
-        elif mode == "custom":
-            if picked is not None:
-                if isinstance(picked, str):
-                    picked = (picked,)
-                chosen = [normalize_outcome_id(num) for num in picked if normalize_outcome_id(num) in TABLES]
-                return chosen
-            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
-        else:
-            # Mode "14_focus" (default)
-            # If specifically overridden in a test or caller passing a custom subset in live_outcome:
-            if picked is not None:
-                if isinstance(picked, str):
-                    picked = (picked,)
-                picked_norm = [normalize_outcome_id(p) for p in picked if normalize_outcome_id(p) in TABLES]
-                focus_norm = [normalize_outcome_id(f) for f in FOCUS_OUTCOMES]
-                if set(picked_norm) != set(focus_norm) and len(picked_norm) > 0:
-                    return picked_norm
-            return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
+        The clinical dashboard is intentionally fixed-scope: one Qwen request is
+        made for each of the 14 outcomes, sequentially. Hidden/stale browser
+        inputs cannot silently reduce the evaluation to a subset.
+        """
+        return [normalize_outcome_id(k) for k in FOCUS_OUTCOMES]
 
     def live_outcome_num(results: dict | None) -> str:
         """-> the outcome the live cards below the overview show: the pill the
@@ -595,6 +580,7 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(input.btn_analyze)
     async def _perform_live_eval():
+        live_outcome_confidence.set({})
         note_text = current("live_note_text", "") or ""
         outcome_ids = selected_live_outcomes()
         patient_sex = current("patient_sex_input", "") or "unknown"
@@ -627,22 +613,23 @@ def server(input, output, session):
             )
             return
         results: dict[str, Any] = {}
-        # Fixed sequential grading for stability and predictable progress:
-        # exactly one SCOGS outcome per PCAI request.
-        user_concurrency = 1
+        # Qwen is fast enough to run a small worker pool. Two concurrent requests
+        # reduce total wall-clock time while keeping load on Bifrost modest.
+        # Fixed for reliability: exactly one PCAI/Qwen outcome request at a time.
         model_concurrency = 1
+        user_concurrency = 1
         if not outcome_ids:
             ui.notification_show("No outcomes selected. Choose at least one outcome in the sidebar.", type="warning")
             return
 
         # Optional high-recall pre-screen for the 53-outcome mode. This can cut
-        # the number of expensive detailed GPT-OSS calls substantially, but we
+        # the number of expensive detailed Qwen calls substantially, but we
         # do not call screened-out outcomes absent: they remain CANNOT_GRADE
         # unless they receive a full outcome-level evaluation.
         outcome_ids_to_grade = list(outcome_ids)
         if current("live_outcome_mode", "14_focus") == "all_53" and bool(current("fast_screen_53", False)):
             ui.notification_show(
-                "Running high-recall GPT-OSS screen across 53 outcomes…",
+                "Running high-recall Qwen screen across 53 outcomes…",
                 type="message",
                 duration=4,
             )
@@ -677,6 +664,13 @@ def server(input, output, session):
             # of staying empty until the last one is graded.
             for start in range(0, len(outcome_ids_to_grade), model_concurrency):
                 chunk = outcome_ids_to_grade[start:start + model_concurrency]
+                current_id = str(chunk[0]) if chunk else ""
+                current_name = FOCUS_OUTCOMES.get(current_id, {}).get("name", current_id)
+                progress.set(
+                    len(results),
+                    message="Grading outcomes",
+                    detail=f"{len(results) + 1} of {len(outcome_ids)} • {current_name}",
+                )
                 results.update(await asyncio.to_thread(
                     extract_and_grade_note,
                     note_text=note_text,
@@ -707,9 +701,23 @@ def server(input, output, session):
                 num_ctx=OLLAMA_NUM_CTX,
             )
             ui.notification_show(
-                f"Analysis and grading complete ({len(results)} outcomes). Saved to {saved_path}",
+                f"All {len(outcome_ids)} SCOGS outcomes evaluated ({len(results)} results returned). Saved to {saved_path}",
                 type="message",
             )
+
+            # Compute validation confidence only once per completed run.
+            # This is pure Python and adds no PCAI/model calls.
+            try:
+                confidence_snapshot = await asyncio.to_thread(
+                    per_outcome_confidence,
+                    note_text,
+                    dict(results),
+                    selected_model,
+                )
+                live_outcome_confidence.set(confidence_snapshot)
+            except Exception as conf_exc:
+                print(f"[CONFIDENCE] skipped: {conf_exc}", flush=True)
+                live_outcome_confidence.set({})
         except Exception as e:
             ui.notification_show(
                 f"Analysis complete ({len(results)} outcomes), but saving to results/live failed: {e}",
@@ -814,7 +822,7 @@ def server(input, output, session):
 
         # Unset (the page has not reported the boxes yet) means all three; the
         # client sends None once the clinician unticks the last one.
-        shown = set(current("outcome_filter", (PRESENT,)) or ())
+        shown = set(current("outcome_filter", (PRESENT, CANNOT_GRADE)) or ())
         selected_outcome = str(state.get("outcome_num"))
 
         groups: dict[str, list] = {bucket: [] for bucket in OUTCOME_BUCKETS}
@@ -859,6 +867,8 @@ def server(input, output, session):
                 tuple(grade_result.get("grades") or ()),
             )
             label.append(ui.span(badge_txt, class_=f"badge {badge_css} px-2 py-1"))
+        else:
+            label.append(ui.span("NOT PRESENT", class_="badge badge-not-applicable px-2 py-1"))
 
         return ui.tags.button(
             *label,
@@ -900,16 +910,92 @@ def server(input, output, session):
 
         details_row = []
 
-        # PCAI/GPT-OSS metadata travels in extracted_features so it remains
+        # PCAI/Qwen metadata travels in extracted_features so it remains
         # compatible with saved-run JSON and the existing view-state contract.
         model_meta = state.get("extracted_features") or {}
-        model_conf = model_meta.get("model_confidence_pct")
-        if model_conf is not None:
+
+        # Fast outcome-specific confidence: calculated once per completed run
+        # from the labeled validation set, then reused by every outcome card.
+        if input.app_mode() == "live":
+            conf_map = live_outcome_confidence.get() or {}
+            outcome_key = " ".join(str(state.get("outcome_name") or "").lower().split())
+            conf = conf_map.get(outcome_key, {}) or {}
+
+            model_score = conf.get("model_score")
+            model_n = int(conf.get("model_n", 0) or 0)
+            individual_score = conf.get("individual_score")
+            supported = conf.get("individual_supported")
+            expected_total = conf.get("individual_total")
+
+            model_text = (
+                "N/A" if model_score is None
+                else f"{float(model_score):.1f} / 100"
+            )
+            model_sub = (
+                "No labeled grade comparisons"
+                if model_score is None
+                else f"{model_n} labeled comparison(s) for this outcome"
+            )
+
+            individual_text = (
+                "N/A" if individual_score is None
+                else f"{float(individual_score):.1f} / 100"
+            )
+            individual_sub = (
+                "Current note is not in the validation answer key"
+                if individual_score is None
+                else f"{int(supported or 0)} of {int(expected_total or 0)} expected evidence criteria"
+            )
+
             details_row.append(
                 ui.div(
-                    ui.span("Selected-Model Confidence", class_="sidebar-section-label mb-1"),
-                    ui.span(f"{float(model_conf):.1f}% (uncalibrated)", class_="fs-7 text-secondary"),
+                    ui.div(
+                        ui.div(
+                            ui.span("MODEL-LEVEL CONFIDENCE", class_="validation-confidence-label"),
+                            ui.div(model_text, class_="validation-confidence-value"),
+                            ui.div(model_sub, class_="validation-confidence-sub"),
+                            class_="validation-confidence-box",
+                        ),
+                        ui.div(
+                            ui.span("INDIVIDUAL-LEVEL CONFIDENCE", class_="validation-confidence-label"),
+                            ui.div(individual_text, class_="validation-confidence-value"),
+                            ui.div(individual_sub, class_="validation-confidence-sub"),
+                            class_="validation-confidence-box",
+                        ),
+                        class_="validation-confidence-grid",
+                    ),
                     class_="mb-2",
+                )
+            )
+
+        response_meta = model_meta.get("pcai_response_meta") or {}
+        if response_meta:
+            latency = response_meta.get("total_call_seconds") or response_meta.get("latency_seconds")
+            finish_reason = response_meta.get("finish_reason")
+            total_tokens = response_meta.get("total_tokens")
+            perf_parts = []
+            if latency is not None:
+                perf_parts.append(f"{float(latency):.2f}s")
+            if total_tokens is not None:
+                perf_parts.append(f"{int(total_tokens):,} tokens")
+            if finish_reason:
+                perf_parts.append(f"finish={finish_reason}")
+            if perf_parts:
+                details_row.append(
+                    ui.div(
+                        ui.span("PCAI Response", class_="sidebar-section-label mb-1"),
+                        ui.span(" • ".join(perf_parts), class_="fs-7 text-secondary"),
+                        class_="mb-2",
+                    )
+                )
+
+        raw_response_text = model_meta.get("pcai_raw_response_text")
+        if raw_response_text:
+            details_row.append(
+                ui.tags.details(
+                    ui.tags.summary("View raw Qwen response", class_="raw-response-summary"),
+                    ui.tags.pre(str(raw_response_text), class_="raw-response-pre"),
+                    class_="raw-response-details mb-2",
                 )
             )
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from shiny import ui
 
-from dashboard.view_state import FILTER_LABELS, OUTCOME_BUCKETS, PRESENT
+from dashboard.view_state import FILTER_LABELS, OUTCOME_BUCKETS, PRESENT, CANNOT_GRADE
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -27,7 +27,7 @@ outcomes_overview_card = ui.card(
                     "outcome_filter",
                     label="",
                     choices={b: FILTER_LABELS[b] for b in OUTCOME_BUCKETS},
-                    selected=[PRESENT],
+                    selected=[PRESENT, CANNOT_GRADE],
                     inline=True,
                 ),
                 class_="d-flex align-items-center outcome-filter",
@@ -89,7 +89,7 @@ app_ui = ui.page_sidebar(
                     class_="d-flex align-items-center flex-wrap gap-2",
                 ),
                 ui.p(
-                    "SCOGS Severity Grading with St. Jude PCAI / GPT-OSS 120B",
+                    "SCOGS Severity Grading with St. Jude PCAI / Qwen3.8 27B FP8",
                     class_="app-title-sub mb-0 mt-1",
                 ),
                 class_="d-flex flex-column",

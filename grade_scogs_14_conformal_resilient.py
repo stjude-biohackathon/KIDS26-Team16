@@ -13,7 +13,7 @@ from openai import OpenAI
 from conformal_utils import apply_conformal, normalize_probabilities
 
 GATEWAY_URL = "https://bifrost.ai-application.stjude.org/v1"
-DEFAULT_MODEL = "gpt-oss-120b"
+DEFAULT_MODEL = "Qwen/Qwen3.8-27B-FP8"
 
 FIELDS = [
     "case_id",
@@ -243,25 +243,12 @@ def call_model(client, model, summary, batch_rules, max_attempts=2):
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0,
-                # Give gpt-oss room to reason and still emit final JSON.
+                # Keep enough room for the structured Qwen grading response.
                 max_tokens=max(2500, 1400 * len(batch_rules)),
             )
 
-            # gpt-oss supports lower reasoning effort on compatible gateways.
-            # If a gateway rejects this parameter, retry without it.
-            try:
-                response = client.chat.completions.create(
-                    **kwargs,
-                    reasoning_effort="low",
-                )
-            except TypeError:
-                response = client.chat.completions.create(**kwargs)
-            except Exception as e:
-                # If the provider rejects reasoning_effort, retry same request without it.
-                if "reasoning_effort" in str(e).lower() and not is_timeout(e):
-                    response = client.chat.completions.create(**kwargs)
-                else:
-                    raise
+            # Qwen uses the standard OpenAI-compatible request directly.
+            response = client.chat.completions.create(**kwargs)
 
             message = response.choices[0].message
             raw = extract_text(message)

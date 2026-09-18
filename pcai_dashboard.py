@@ -413,7 +413,7 @@ with st.sidebar:
 
     st.divider()
     show_ref = st.toggle("Show reference labels", value=False)
-    st.caption("Reference labels are never sent to GPT-OSS.")
+    st.caption("Reference labels are never sent to Qwen.")
 
 case = df.iloc[st.session_state.case_index]
 case_id = str(case["case_id"])
@@ -464,7 +464,7 @@ with left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Enter Clinical Note</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="panel-sub">Paste or review the clinical note/summary below. GPT-OSS will apply all 14 SCOGS rubrics.</div>',
+        '<div class="panel-sub">Paste or review the clinical note/summary below. Qwen will apply all 14 SCOGS rubrics.</div>',
         unsafe_allow_html=True,
     )
 
@@ -480,7 +480,7 @@ with left:
 
     st.markdown(
         '<div style="text-align:center;color:#738197;font-size:.72rem;margin-top:9px;">'
-        'Research prototype • Uses GPT-OSS through St. Jude PCAI/Bifrost'
+        'Research prototype • Uses Qwen through St. Jude PCAI/Bifrost'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -493,7 +493,7 @@ if analyze:
         client = create_client()
         calibration = load_calibration(CALIBRATION_PATH)
 
-        progress = st.progress(0, text="Starting GPT-OSS grading…")
+        progress = st.progress(0, text="Starting Qwen grading…")
         status = st.empty()
         new_rows = []
         errors = []
@@ -571,7 +571,7 @@ with right:
     if not primary:
         st.markdown('<div class="panel-title">Analysis Results</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="panel-sub">Click <b>Analyze Note</b> to run GPT-OSS across all 14 finalized SCOGS outcomes.</div>',
+            '<div class="panel-sub">Click <b>Analyze Note</b> to run Qwen across all 14 finalized SCOGS outcomes.</div>',
             unsafe_allow_html=True,
         )
         st.info("No model output is available for this case yet.")
@@ -754,6 +754,6 @@ with st.expander("View original clinical note"):
     st.text(str(case.get("original_case_text","") or ""))
 
 st.caption(
-    "GPT-OSS model confidence is uncalibrated. "
+    "Qwen model confidence is uncalibrated. "
     "Conformal prediction is shown only after a valid held-out expert calibration file is added."
 )
