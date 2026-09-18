@@ -1,0 +1,7 @@
+{
+  "validation_info": {
+    "description": "Replace this file with the team's labeled validation answer key.",
+    "schema_note": "No validation cases are bundled because none were supplied in this chat."
+  },
+  "cases": []
+}
